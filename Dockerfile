@@ -21,7 +21,10 @@ COPY docs docs
 COPY legal legal
 # logo intégré au captcha puzzle (include_bytes!)
 COPY public/assets/icone.png public/assets/icone.png
-RUN cargo build --release --locked
+# COPY garde la date des fichiers du clone, plus ancienne que le faux main.rs : sans ce touch,
+# cargo croit le site à jour et garde le binaire vide (le rm ci-dessus ne suffit plus avec les
+# versions récentes de cargo, qui rangent leurs fichiers ailleurs dans target/).
+RUN touch src/main.rs && cargo build --release --locked
 
 # ---------- 3 : fichiers statiques précompressés ----------
 FROM debian:bookworm-slim AS assets
