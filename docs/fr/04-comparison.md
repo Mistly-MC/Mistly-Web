@@ -1,17 +1,17 @@
 +++
-title = "Misty face aux autres launchers"
-description = "Misty comparé à Lunar Client, Badlion Client, Horizon, Modrinth App et l'app CurseForge : fonctionnalités, comptes, mods et performances mesurées."
+title = "Mistly face aux autres launchers"
+description = "Mistly comparé à Lunar Client, Badlion Client, Horizon, Modrinth App et l'app CurseForge : fonctionnalités, comptes, mods et performances mesurées."
 section = "start"
 +++
 
-Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font pas toutes le même travail : voici une comparaison honnête pour t'aider à choisir. Misty ne cherche pas à remplacer un client PvP : c'est un **launcher général et léger**, pour toutes les versions et tous les mod loaders.
+Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font pas toutes le même travail : voici une comparaison honnête pour t'aider à choisir. Mistly ne cherche pas à remplacer un client PvP : c'est un **launcher général et léger**, pour toutes les versions et tous les mod loaders.
 
 > [!NOTE]
 > Cette page compare ce que propose chaque launcher. Les fonctionnalités évoluent : si une information n'est plus à jour, dis-le-nous sur [GitHub](https://github.com/Misty-MC/Misty/issues).
 
 ## En un coup d'œil
 
-| | Misty | Lunar Client | Badlion Client | Horizon | Modrinth App | App CurseForge |
+| | Mistly | Lunar Client | Badlion Client | Horizon | Modrinth App | App CurseForge |
 |---|---|---|---|---|---|---|
 | **Type** | Launcher général | Client PvP | Client PvP | Réécriture du jeu en Rust + launcher | Launcher général | Launcher général |
 | **Prix** | Gratuit | Gratuit (cosmétiques payants) | Gratuit (cosmétiques payants) | Gratuit | Gratuit (abonnement facultatif) | Gratuit |
@@ -25,21 +25,21 @@ Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font 
 | **Compte Microsoft** | Oui, plusieurs | Oui | Oui | Oui | Oui | Oui |
 | **Comptes hors-ligne** | Oui | Non | Non | Oui | Non | Non |
 | **Éditeur de packs de textures** | Oui | Non | Non | Non | Non | Non |
-| **Cosmétiques** | Bientôt (cape et élytres Misty à essayer) | Oui | Oui | Non | Non | Non |
+| **Cosmétiques** | Bientôt (cape et élytres Mistly à essayer) | Oui | Oui | Non | Non | Non |
 | **Windows / macOS / Linux** | Windows | Les trois | Windows, macOS | Non vérifié | Les trois | Les trois |
 
 **En résumé :**
 
 - Tu joues en **PvP sur quelques versions** et tu veux des mods FPS intégrés : Lunar Client ou Badlion Client.
-- Tu veux **toutes les versions, tous les loaders et les mods de Modrinth comme de CurseForge**, dans une petite app native avec des comptes hors-ligne : **Misty**.
+- Tu veux **toutes les versions, tous les loaders et les mods de Modrinth comme de CurseForge**, dans une petite app native avec des comptes hors-ligne : **Mistly**.
 - Tu n'utilises que **Modrinth** : la Modrinth App est excellente. Seulement des modpacks **CurseForge** : l'app CurseForge.
 - Tu es curieux d'un **autre moteur** pour le jeu lui-même : Horizon réécrit Minecraft en Rust ([playhorizon.dev](https://playhorizon.dev)).
 
 ## Performances
 
-Mesuré sur un **Ryzen 7 7435HS, 24 Go de RAM, Windows 10**, Misty 0.3.4 (version release), sur l'accueil, 15 secondes après le lancement. Moyenne de 3 lancements.
+Mesuré sur un **Ryzen 7 7435HS, 24 Go de RAM, Windows 10**, Mistly 0.3.4 (version release), sur l'accueil, 15 secondes après le lancement. Moyenne de 3 lancements.
 
-| | Misty |
+| | Mistly |
 |---|---|
 | **Taille du téléchargement** | 38 Mo (un seul `Misty.exe`) |
 | **Fenêtre affichée après** | environ 50 ms (l'écran de chargement, puis l'accueil) |

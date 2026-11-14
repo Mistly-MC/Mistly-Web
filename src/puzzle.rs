@@ -1,4 +1,4 @@
-//! Captcha « puzzle » : une image (le paysage de nuit du site et le logo de Misty) avec un trou,
+//! Captcha « puzzle » : une image (le paysage de nuit du site et le logo de Mistly) avec un trou,
 //! et la pièce qui y entre. Le membre fait glisser la pièce jusqu'au trou.
 //!
 //! Les deux images sont des PNG dessinés ici : la position du trou n'apparaît nulle part dans la

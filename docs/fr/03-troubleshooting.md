@@ -10,7 +10,7 @@ section = "help"
 
 ## Un mod loader n'apparaît pas
 
-Misty ne propose que les loaders qui existent pour la version choisie. NeoForge commence à la 1.20.1, Fabric et Quilt à la 1.14, et LiteLoader s'arrête à la 1.12.2. Voir [Versions et mod loaders](/docs/versions-and-loaders).
+Mistly ne propose que les loaders qui existent pour la version choisie. NeoForge commence à la 1.20.1, Fabric et Quilt à la 1.14, et LiteLoader s'arrête à la 1.12.2. Voir [Versions et mod loaders](/docs/versions-and-loaders).
 
 ## Un mod refuse de s'installer
 
@@ -23,7 +23,7 @@ Misty ne propose que les loaders qui existent pour la version choisie. NeoForge 
 
 ## Le jeu ne démarre pas ou plante
 
-1. Regarde l'erreur affichée dans Misty (*Échec du lancement*, *Échec du téléchargement*…).
+1. Regarde l'erreur affichée dans Mistly (*Échec du lancement*, *Échec du téléchargement*…).
 2. Ouvre le dossier du jeu et lis `logs\latest.log`, ou le fichier le plus récent de `crash-reports\`. Voir [Fichiers et dossiers](/docs/files-and-folders#les-journaux-du-jeu).
 3. Si tu utilises beaucoup de mods, augmente la mémoire dans les [Paramètres](/docs/settings).
 4. Désactive un par un les derniers mods ajoutés, depuis l'onglet **Contenu** du profil.
@@ -38,13 +38,13 @@ Certains fichiers ne peuvent pas être supprimés pendant que Minecraft tourne. 
 
 ## « Limite de requêtes atteinte »
 
-Mojang limite temporairement le nombre de demandes. Misty affiche ton dernier skin et tes capes connus et réessaie tout seul. Voir [Skin et capes](/docs/skins).
+Mojang limite temporairement le nombre de demandes. Mistly affiche ton dernier skin et tes capes connus et réessaie tout seul. Voir [Skin et capes](/docs/skins).
 
 ## Signaler un bug
 
 Ouvre une issue sur [GitHub](https://github.com/Misty-MC/Misty/issues) avec :
 
-- la version de Misty (Options → À propos) ;
+- la version de Mistly (Options → À propos) ;
 - la version de Minecraft et le mod loader ;
 - ce que tu as fait, ce que tu attendais et ce qui s'est passé ;
 - `logs\latest.log` et, après un plantage, le rapport de `crash-reports\`.

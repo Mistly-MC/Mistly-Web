@@ -1,5 +1,5 @@
 //! Page de statut « faite maison » : le site vérifie lui-même, toutes les minutes, les services dont
-//! Misty a besoin (Mojang, connexion Microsoft, Modrinth, CurseForge, mod loaders, GitHub, Horizon…).
+//! Mistly a besoin (Mojang, connexion Microsoft, Modrinth, CurseForge, mod loaders, GitHub, Horizon…).
 //!
 //! Chaque vérification est une simple requête (sans suivre les redirections) avec un délai maximal :
 //! - en ligne : réponse sous 2,5 s, statut < 500 (un 403 ou un 404 prouve que le serveur répond) ;
@@ -68,7 +68,7 @@ pub struct Service {
     pub role: Role,
 }
 
-/// À quoi sert le service dans Misty (texte traduit dans la page).
+/// À quoi sert le service dans Mistly (texte traduit dans la page).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Role {
     Telechargement,

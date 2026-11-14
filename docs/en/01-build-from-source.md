@@ -4,7 +4,7 @@ description = "Compile the launcher, run its tests, publish a release, and find 
 section = "dev"
 +++
 
-Misty is open source under the MIT license. The code is on [GitHub](https://github.com/Misty-MC/Misty); the Rust project is in the `misty-rust` folder.
+Mistly is open source under the MIT license. The code is on [GitHub](https://github.com/Misty-MC/Misty); the Rust project is in the `misty-rust` folder.
 
 ## Requirements
 
@@ -30,7 +30,7 @@ cargo build --release  # final exe: target\release\Misty.exe
 
 ## Tests
 
-The tests use the Internet and your Misty folder, but never start the game:
+The tests use the Internet and your Mistly folder, but never start the game:
 
 ```powershell
 cargo test -- --ignored --nocapture

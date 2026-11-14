@@ -1,10 +1,10 @@
 +++
-title = "Compiler Misty"
+title = "Compiler Mistly"
 description = "Compiler le launcher, lancer ses tests, publier une release et s'y retrouver dans le code."
 section = "dev"
 +++
 
-Misty est open source, sous licence MIT. Le code est sur [GitHub](https://github.com/Misty-MC/Misty) ; le projet Rust est dans le dossier `misty-rust`.
+Mistly est open source, sous licence MIT. Le code est sur [GitHub](https://github.com/Misty-MC/Misty) ; le projet Rust est dans le dossier `misty-rust`.
 
 ## Prérequis
 
@@ -30,7 +30,7 @@ cargo build --release  # exe final : target\release\Misty.exe
 
 ## Tests
 
-Les tests utilisent Internet et ton dossier Misty, mais ne lancent jamais le jeu :
+Les tests utilisent Internet et ton dossier Mistly, mais ne lancent jamais le jeu :
 
 ```powershell
 cargo test -- --ignored --nocapture

@@ -127,7 +127,7 @@
 .locker h2{font-size:19px;font-weight:700;margin:20px 0 6px}
 .locker>p.muted{font-size:14px}
 
-/* Article Misty à essayer (première case de Capes et Ailes) */
+/* Article Mistly à essayer (première case de Capes et Ailes) */
 .slot.item{
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px;padding:10px 8px;
   border-style:solid;border-color:rgba(156,192,255,.45);

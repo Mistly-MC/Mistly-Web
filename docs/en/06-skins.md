@@ -25,6 +25,6 @@ Every cape on your account is shown with a preview. One click equips a cape; **N
 
 ## Fast and offline-friendly
 
-Your skin and capes are loaded in the background when Misty starts and kept on your disk, so the tab opens instantly.
+Your skin and capes are loaded in the background when Mistly starts and kept on your disk, so the tab opens instantly.
 
-When Mojang limits the number of requests, Misty keeps showing your last known skin and capes, tells you with a message, and checks again by itself once the limit is lifted.
+When Mojang limits the number of requests, Mistly keeps showing your last known skin and capes, tells you with a message, and checks again by itself once the limit is lifted.

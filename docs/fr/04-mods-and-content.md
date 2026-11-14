@@ -13,18 +13,18 @@ Le contenu s'installe par [profil](/docs/profiles). Ouvre un profil, puis utilis
 3. Cherche, et trie par pertinence, téléchargements, popularité, plus récents, mis à jour, en vedette ou nom.
 4. Clique sur **Installer**.
 
-Les résultats sont filtrés pour rester **compatibles** avec la version et le mod loader du profil. Quand un mod a besoin d'autres mods, Misty installe aussi ses **dépendances** et t'indique combien.
+Les résultats sont filtrés pour rester **compatibles** avec la version et le mod loader du profil. Quand un mod a besoin d'autres mods, Mistly installe aussi ses **dépendances** et t'indique combien.
 
 > [!NOTE]
-> Les mods ont besoin d'un mod loader. Sur un profil Vanilla ou OptiFine, Misty te demande d'abord de choisir un loader. Voir [Versions et mod loaders](/docs/versions-and-loaders).
+> Les mods ont besoin d'un mod loader. Sur un profil Vanilla ou OptiFine, Mistly te demande d'abord de choisir un loader. Voir [Versions et mod loaders](/docs/versions-and-loaders).
 
 ### Datapacks
 
-Les datapacks s'installent **dans un monde**. Misty te demande lequel utiliser. Si le profil n'a encore aucun monde, lance-le une fois, crée un monde, puis reviens.
+Les datapacks s'installent **dans un monde**. Mistly te demande lequel utiliser. Si le profil n'a encore aucun monde, lance-le une fois, crée un monde, puis reviens.
 
 ### Shaders
 
-Les shaders ont besoin d'OptiFine, ou du mod Iris (Fabric, NeoForge) ou Oculus (Forge). S'il manque, Misty propose de l'installer avec le shader. Voir [Shaders](/docs/versions-and-loaders#shaders).
+Les shaders ont besoin d'OptiFine, ou du mod Iris (Fabric, NeoForge) ou Oculus (Forge). S'il manque, Mistly propose de l'installer avec le shader. Voir [Shaders](/docs/versions-and-loaders#shaders).
 
 ## Contenu
 
@@ -37,4 +37,4 @@ Les fichiers que tu as ajoutés à la main dans les dossiers sont aussi identifi
 
 ## CurseForge
 
-Certains auteurs CurseForge n'autorisent pas le téléchargement depuis d'autres applications que CurseForge. Dans ce cas, Misty liste les fichiers et ouvre leurs pages : télécharge-les et place-les dans le dossier indiqué. Voir [Modpacks](/docs/modpacks#téléchargements-manuels).
+Certains auteurs CurseForge n'autorisent pas le téléchargement depuis d'autres applications que CurseForge. Dans ce cas, Mistly liste les fichiers et ouvre leurs pages : télécharge-les et place-les dans le dossier indiqué. Voir [Modpacks](/docs/modpacks#téléchargements-manuels).

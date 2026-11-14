@@ -16,7 +16,7 @@ Sign in, switch between your Microsoft accounts, forget one, or sign out. See [A
 
 ## Shortcut
 
-Creates a Misty shortcut in the folder you choose, kept up to date automatically after each update. **Recreate** makes it again if you deleted it.
+Creates a Mistly shortcut in the folder you choose, kept up to date automatically after each update. **Recreate** makes it again if you deleted it.
 
 ## Language
 
@@ -24,7 +24,7 @@ English, French, Spanish, Italian or Russian. The interface changes immediately.
 
 ## Memory
 
-The RAM given to Minecraft, with a slider. Misty shows how much memory your PC has. The default is **4 GB**.
+The RAM given to Minecraft, with a slider. Mistly shows how much memory your PC has. The default is **4 GB**.
 
 > [!TIP]
 > 4 GB is plenty for vanilla. Large modpacks may need 6 to 8 GB. Do not give the game more than about half of your PC's memory: Windows and the other apps need some too.
@@ -35,15 +35,15 @@ Releases are always shown. Turn on **Snapshots**, **Betas** and **Alphas and Ind
 
 ## Storage
 
-Shows how much space the Misty folder takes. **Delete everything** erases it entirely: versions, mods, worlds and profiles. Misty then offers to close, so it does not recreate data right away.
+Shows how much space the Mistly folder takes. **Delete everything** erases it entirely: versions, mods, worlds and profiles. Mistly then offers to close, so it does not recreate data right away.
 
 > [!WARNING]
 > **Delete everything** cannot be undone. Back up the worlds you want to keep first.
 
 ## Discord
 
-Shows Misty as your Discord activity: *In the launcher*, *Editing a texture pack* or *Playing Minecraft* with the version. Turn it off here if you prefer.
+Shows Mistly as your Discord activity: *In the launcher*, *Editing a texture pack* or *Playing Minecraft* with the version. Turn it off here if you prefer.
 
 ## About
 
-The installed version of Misty, its license (MIT) and the **Check for updates** button. See [Updates](/docs/updates).
+The installed version of Mistly, its license (MIT) and the **Check for updates** button. See [Updates](/docs/updates).

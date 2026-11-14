@@ -1,4 +1,4 @@
-//! Page de statut : l'état des services dont Misty a besoin, vérifiés par le site lui-même.
+//! Page de statut : l'état des services dont Mistly a besoin, vérifiés par le site lui-même.
 //! Une case = une minute (la dernière heure), disponibilité sur 30 jours, et les incidents des 90 derniers jours.
 
 use super::layout::{self, Head, Page};

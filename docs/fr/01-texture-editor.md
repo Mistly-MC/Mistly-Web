@@ -45,7 +45,7 @@ La texture en cours est enregistrée quand tu quittes la page.
 
 ### Éditeur externe
 
-Tu préfères Paint.NET ou un autre logiciel ? Clique sur **Éditeur externe** et choisis ton programme (par exemple `paintdotnet.exe` ; annule pour utiliser l'application par défaut). Modifie et enregistre dans ton logiciel : Misty recharge la texture automatiquement dès que le fichier change.
+Tu préfères Paint.NET ou un autre logiciel ? Clique sur **Éditeur externe** et choisis ton programme (par exemple `paintdotnet.exe` ; annule pour utiliser l'application par défaut). Modifie et enregistre dans ton logiciel : Mistly recharge la texture automatiquement dès que le fichier change.
 
 ## Icône du pack
 
@@ -57,4 +57,4 @@ Dans l'éditeur, **Changer l'icône du pack** définit l'image affichée dans la
 2. Place le zip dans le dossier `resourcepacks` d'un [profil](/docs/profiles).
 3. Dans Minecraft, active-le dans **Options → Packs de ressources**.
 
-Misty écrit le bon `pack_format` pour la version, y compris pour les versions très anciennes et très récentes.
+Mistly écrit le bon `pack_format` pour la version, y compris pour les versions très anciennes et très récentes.

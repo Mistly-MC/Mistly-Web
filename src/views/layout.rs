@@ -5,7 +5,7 @@ use crate::i18n::{Lang, Tr};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use std::sync::LazyLock;
 
-/// Serveur Discord de Misty.
+/// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
 /// Ajouté aux adresses des CSS et du JS (`?v=`) : change à chaque démarrage du serveur,
@@ -69,7 +69,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 meta name="description" content=(head.description);
                 meta name="theme-color" content="#0a0f1d";
                 meta name="robots" content="index, follow, max-image-preview:large";
-                meta name="application-name" content="Misty MC";
+                meta name="application-name" content="Mistly MC";
                 // Une URL par langue (?lang=xx) : la canonique pointe sur la langue affichée,
                 // et les variantes hreflang annoncent les autres à Google.
                 @let base = format!("{}{}", p.site_url, p.path);
@@ -82,7 +82,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 // Aperçus de liens (Discord, réseaux sociaux…)
                 @let image = format!("{}/assets/screens/en/home.png?v={}", p.site_url, ASSET_VERSION.as_str());
                 meta property="og:type" content="website";
-                meta property="og:site_name" content="Misty MC";
+                meta property="og:site_name" content="Mistly MC";
                 meta property="og:title" content=(head.title);
                 meta property="og:description" content=(head.description);
                 meta property="og:url" content=(canonical);
@@ -133,7 +133,7 @@ fn nav(p: &Page) -> Markup {
     html! {
         header.nav #top {
             div.wrap.nav-in {
-                a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Misty" } }
+                a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
                 nav.links aria-label="Navigation" {
                     a href="/#features" { (tr.nav_features) }
                     a href="/#loaders" { (tr.nav_loaders) }
@@ -209,7 +209,7 @@ fn footer(p: &Page) -> Markup {
             div.wrap {
                 div.ftop {
                     div {
-                        a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Misty" } }
+                        a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
                         p.tag { (tr.ft_tag) }
                     }
                     p.disclaimer { (tr.ft_disclaimer) }

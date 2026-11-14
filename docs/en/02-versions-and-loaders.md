@@ -1,12 +1,12 @@
 +++
 title = "Versions and mod loaders"
-description = "Which Minecraft versions Misty shows, and which mod loaders it offers for each of them."
+description = "Which Minecraft versions Mistly shows, and which mod loaders it offers for each of them."
 section = "play"
 +++
 
 ## Minecraft versions
 
-Misty lists the versions published by Mojang. **Releases** are always shown. The other types can be turned on in the **Shown versions** card of [Settings](/docs/settings):
+Mistly lists the versions published by Mojang. **Releases** are always shown. The other types can be turned on in the **Shown versions** card of [Settings](/docs/settings):
 
 - **Snapshots**: test versions of the next release;
 - **Betas**;
@@ -16,7 +16,7 @@ If the list could not be loaded (no connection, for example), use the **Reload t
 
 ## Mod loaders
 
-A mod loader is what lets Minecraft load mods. When you pick a version, Misty asks each loader whether it exists for that version, and only shows the ones that do. *Vanilla* (no loader) is always available.
+A mod loader is what lets Minecraft load mods. When you pick a version, Mistly asks each loader whether it exists for that version, and only shows the ones that do. *Vanilla* (no loader) is always available.
 
 | Loader | Minecraft versions | Notes |
 |---|---|---|
@@ -34,13 +34,13 @@ These ranges are a first filter: a loader may still be missing for a given versi
 
 ## Shaders
 
-Minecraft cannot load shaders by itself. Misty tells you what is needed when you install a shader:
+Minecraft cannot load shaders by itself. Mistly tells you what is needed when you install a shader:
 
 - **OptiFine** loads shaders directly;
 - with **Fabric** or **NeoForge**, the **Iris** mod is needed;
 - with **Forge**, the **Oculus** mod is needed.
 
-When the required mod is missing, Misty offers to install it with the shader.
+When the required mod is missing, Mistly offers to install it with the shader.
 
 ## What gets downloaded
 

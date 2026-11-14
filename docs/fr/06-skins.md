@@ -25,6 +25,6 @@ Toutes les capes de ton compte s'affichent avec un aperçu. Un clic équipe une 
 
 ## Rapide, même hors connexion
 
-Ton skin et tes capes sont chargés en arrière-plan au démarrage de Misty et gardés sur ton disque : l'onglet s'ouvre instantanément.
+Ton skin et tes capes sont chargés en arrière-plan au démarrage de Mistly et gardés sur ton disque : l'onglet s'ouvre instantanément.
 
-Quand Mojang limite le nombre de demandes, Misty continue d'afficher ton dernier skin et tes capes connus, te prévient par un message, et revérifie tout seul dès que la limite est levée.
+Quand Mojang limite le nombre de demandes, Mistly continue d'afficher ton dernier skin et tes capes connus, te prévient par un message, et revérifie tout seul dès que la limite est levée.

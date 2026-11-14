@@ -107,7 +107,7 @@
     };
     animButtons.forEach(b => b.addEventListener("click", () => setAnim(b.dataset.anim)));
 
-    // Cape et élytres : la vraie cape du joueur (Mojang) ou la texture Misty
+    // Cape et élytres : la vraie cape du joueur (Mojang) ou la texture Mistly
     const mistyTexture = () => {
       const c = document.createElement("canvas");
       c.width = 64; c.height = 32;
@@ -187,7 +187,7 @@
       const on = back.mode === b.dataset.back && back.source === "misty";
       setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : "misty");
     }));
-    // Vignettes des articles Misty, dessinées depuis la texture
+    // Vignettes des articles Mistly, dessinées depuis la texture
     document.querySelectorAll("canvas.thumb").forEach(c => {
       const g = c.getContext("2d");
       g.imageSmoothingEnabled = false;
@@ -249,7 +249,7 @@
       ownCape = info?.cape ? `/cape/${info.name}${bust}` : null;
       if (capeBtn) capeBtn.disabled = !ownCape;
       // Comme NameMC : la vraie cape est portée d'office. Lors d'un rafraîchissement, on garde
-      // un cosmétique Misty équipé.
+      // un cosmétique Mistly équipé.
       if (fresh && back.source === "misty") setBack(back.mode, "misty");
       else setBack(ownCape ? "cape" : "none", "own");
       if (studio && info) {

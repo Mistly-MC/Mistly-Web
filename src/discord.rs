@@ -84,7 +84,7 @@ impl Discord {
             .map(|m| format!("{:.0} Go", m as f64 / 1024.0))
             .unwrap_or_else(|| "?".into());
         let message = json!({
-            "username": "Misty",
+            "username": "Mistly",
             "allowed_mentions": { "parse": [] },
             "embeds": [{
                 "title": format!("{} {code}", if plantage { "💥 Plantage" } else { "📨 Logs envoyés" }),
@@ -92,7 +92,7 @@ impl Discord {
                 "color": if plantage { ROUGE } else { BLEU },
                 "fields": [
                     { "name": "Jeu", "value": champ("game"), "inline": false },
-                    { "name": "Misty", "value": champ("version"), "inline": true },
+                    { "name": "Mistly", "value": champ("version"), "inline": true },
                     { "name": "Windows", "value": champ("os"), "inline": true },
                     { "name": "RAM", "value": ram, "inline": true },
                     { "name": "Langue", "value": champ("langue"), "inline": true },
@@ -145,7 +145,7 @@ impl Discord {
             if texte.is_empty() { "–".into() } else { texte.join("\n") }
         };
         let message = json!({
-            "username": "Misty",
+            "username": "Mistly",
             "allowed_mentions": { "parse": [] },
             "embeds": [{
                 "title": format!("📊 Résumé du {}", c["day"].as_str().unwrap_or("?")),
@@ -156,7 +156,7 @@ impl Discord {
                     { "name": "Plantages", "value": format!("{plantages} ({taux})"), "inline": true },
                     { "name": "Parties par loader", "value": liste("games_by_loader"), "inline": true },
                     { "name": "Plantages par loader", "value": liste("crashes_by_loader"), "inline": true },
-                    { "name": "Versions de Misty", "value": liste("launcher_versions"), "inline": true },
+                    { "name": "Versions de Mistly", "value": liste("launcher_versions"), "inline": true },
                     { "name": "Rapports de logs", "value": n("reports").to_string(), "inline": true },
                     { "name": "Mises à jour", "value": n("updates").to_string(), "inline": true },
                 ],

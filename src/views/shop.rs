@@ -3,7 +3,7 @@
 //! - Sans pseudo : formulaire, avec Steve en 3D à côté (aperçu en direct pendant la saisie).
 //! - Avec un pseudo : le studio. À gauche, le skin du joueur en 3D (vues face / profil / dos,
 //!   animations, sa vraie cape, élytres) ; à droite, sa fiche et les catégories de
-//!   cosmétiques, toutes « bientôt disponibles », avec la cape et les élytres Misty à essayer.
+//!   cosmétiques, toutes « bientôt disponibles », avec la cape et les élytres Mistly à essayer.
 
 use super::icons;
 use super::layout::{self, Head, Page};
@@ -225,7 +225,7 @@ fn locker(p: &Page, player: &str) -> Markup {
                         _ => None,
                     };
                     div.slots {
-                        // Première case : l'article Misty à essayer, s'il y en a un dans cette catégorie.
+                        // Première case : l'article Mistly à essayer, s'il y en a un dans cette catégorie.
                         @if let Some((back, name)) = item {
                             div.slot.item {
                                 canvas.thumb data-thumb=(back) width="60" height="96" aria-hidden="true" {}

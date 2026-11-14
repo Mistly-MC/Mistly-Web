@@ -1,12 +1,12 @@
 +++
 title = "Versions et mod loaders"
-description = "Les versions de Minecraft affichées par Misty, et les mod loaders proposés pour chacune."
+description = "Les versions de Minecraft affichées par Mistly, et les mod loaders proposés pour chacune."
 section = "play"
 +++
 
 ## Versions de Minecraft
 
-Misty liste les versions publiées par Mojang. Les **releases** sont toujours affichées. Les autres types s'activent dans la carte **Versions affichées** des [Paramètres](/docs/settings) :
+Mistly liste les versions publiées par Mojang. Les **releases** sont toujours affichées. Les autres types s'activent dans la carte **Versions affichées** des [Paramètres](/docs/settings) :
 
 - **Snapshots** : versions de test de la prochaine release ;
 - **Bêtas** ;
@@ -16,7 +16,7 @@ Si la liste n'a pas pu être chargée (pas de connexion, par exemple), utilise l
 
 ## Mod loaders
 
-Un mod loader permet à Minecraft de charger des mods. Quand tu choisis une version, Misty demande à chaque loader s'il existe pour cette version, et n'affiche que ceux qui répondent oui. *Vanilla* (sans loader) est toujours disponible.
+Un mod loader permet à Minecraft de charger des mods. Quand tu choisis une version, Mistly demande à chaque loader s'il existe pour cette version, et n'affiche que ceux qui répondent oui. *Vanilla* (sans loader) est toujours disponible.
 
 | Loader | Versions de Minecraft | Remarques |
 |---|---|---|
@@ -34,13 +34,13 @@ Ces plages sont un premier filtre : un loader peut quand même manquer pour une 
 
 ## Shaders
 
-Minecraft ne sait pas charger de shaders tout seul. Misty t'indique ce qu'il faut quand tu installes un shader :
+Minecraft ne sait pas charger de shaders tout seul. Mistly t'indique ce qu'il faut quand tu installes un shader :
 
 - **OptiFine** charge les shaders directement ;
 - avec **Fabric** ou **NeoForge**, il faut le mod **Iris** ;
 - avec **Forge**, il faut le mod **Oculus**.
 
-Quand le mod nécessaire manque, Misty propose de l'installer avec le shader.
+Quand le mod nécessaire manque, Mistly propose de l'installer avec le shader.
 
 ## Ce qui est téléchargé
 

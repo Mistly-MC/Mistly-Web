@@ -1,4 +1,4 @@
-//! Site de Misty : serveur web en Rust (axum).
+//! Site de Mistly : serveur web en Rust (axum).
 //!
 //! Variables d'environnement :
 //! - `PORT` (3000 par défaut)
@@ -10,9 +10,9 @@
 //! - `GITHUB_API` (`https://api.github.com` par défaut) : utile pour tester avec une fausse API
 //! - `GITHUB_WEB` (`https://github.com` par défaut) : flux Atom et fichiers des releases
 //! - `MISTY_CACHE_DIR` (dossier temporaire par défaut) : caches, statut, copie des versions, télémétrie
-//! - `EARLY_BEFORE` (AAAA-MM-JJ, facultatif) : la cape early player de Misty Client est réservée aux
+//! - `EARLY_BEFORE` (AAAA-MM-JJ, facultatif) : la cape early player de Mistly Client est réservée aux
 //!   comptes connectés avant cette date ; sans elle, tous les comptes y ont droit
-//! - `VERIFY_SECRET` et `DISCORD_TOKEN` (facultatifs) : captcha `/verify` de Misty Bot (même secret
+//! - `VERIFY_SECRET` et `DISCORD_TOKEN` (facultatifs) : captcha `/verify` de Mistly Bot (même secret
 //!   que le bot, et le token du bot pour donner le rôle) ; `DISCORD_CLIENT_SECRET` en plus pour le
 //!   captcha dans Discord (Activité, page `/activity`)
 //! - `DISCORD_WEBHOOK` (facultatif) : webhook d'un salon privé de l'équipe, qui reçoit les rapports
@@ -67,11 +67,11 @@ pub struct AppState {
     pub telemetrie: Arc<telemetrie::Telemetrie>,
     /// Launchers ouverts en ce moment (/api/online).
     pub presence: presence::Presence,
-    /// Joueurs en jeu avec Misty Client, et leurs cosmétiques Misty (/api/client/…).
+    /// Joueurs en jeu avec Mistly Client, et leurs cosmétiques Mistly (/api/client/…).
     pub client: client::Client,
     /// Salon Discord de l'équipe (rapports, résumé du jour).
     pub discord: Arc<discord::Discord>,
-    /// Captcha de vérification des serveurs Discord qui utilisent Misty Bot.
+    /// Captcha de vérification des serveurs Discord qui utilisent Mistly Bot.
     pub verification: Arc<verify::Verification>,
 }
 

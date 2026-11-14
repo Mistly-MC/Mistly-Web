@@ -1,10 +1,10 @@
 +++
-title = "What is Misty"
+title = "What is Mistly"
 description = "A light Minecraft: Java Edition launcher for Windows, written in Rust. What it does, and what it doesn't."
 section = "start"
 +++
 
-Misty is a free launcher for **Minecraft: Java Edition** on Windows. It downloads the game from Mojang's official servers, manages your profiles and mods, and starts Minecraft with the right settings. It is written in [Rust](https://www.rust-lang.org/) with a [Slint](https://slint.dev) interface: a single `Misty.exe` file, with nothing else to install.
+Mistly is a free launcher for **Minecraft: Java Edition** on Windows. It downloads the game from Mojang's official servers, manages your profiles and mods, and starts Minecraft with the right settings. It is written in [Rust](https://www.rust-lang.org/) with a [Slint](https://slint.dev) interface: a single `Misty.exe` file, with nothing else to install.
 
 ## In one minute
 
@@ -23,17 +23,17 @@ Misty is a free launcher for **Minecraft: Java Edition** on Windows. It download
 - An Internet connection for the first launch of each version (game files, libraries and Java are downloaded once).
 - A Microsoft account that owns Minecraft: Java Edition to play online. Offline accounts are also available. See [Accounts](/docs/accounts).
 
-Java does not need to be installed: Misty downloads the Java version each Minecraft version needs, from Mojang.
+Java does not need to be installed: Mistly downloads the Java version each Minecraft version needs, from Mojang.
 
 ## Languages
 
 The interface is available in English, French, Spanish, Italian and Russian. English is the default; change it in [Settings](/docs/settings), the change applies immediately.
 
-## What Misty is not
+## What Mistly is not
 
-- **Not an official product.** Misty is not affiliated with Mojang Studios or Microsoft.
-- **Not a way to get Minecraft for free.** Misty ships no game files. To play online you need an account that owns the game.
-- **Not for macOS or Linux.** Misty is a Windows application.
+- **Not an official product.** Mistly is not affiliated with Mojang Studios or Microsoft.
+- **Not a way to get Minecraft for free.** Mistly ships no game files. To play online you need an account that owns the game.
+- **Not for macOS or Linux.** Mistly is a Windows application.
 
 ## Where to go next
 

@@ -1,14 +1,14 @@
 +++
 title = "Politique de confidentialité"
-description = "Ce que le site et le launcher Misty envoient, ce que nous gardons, combien de temps, et vos droits."
+description = "Ce que le site et le launcher Mistly envoient, ce que nous gardons, combien de temps, et vos droits."
 updated = "2026-11-11"
 +++
 
-Misty n'a ni compte utilisateur, ni publicité, ni outil de mesure d'audience. Nous collectons le moins possible, et presque tout reste en mémoire quelques minutes. Cette page détaille chaque cas.
+Mistly n'a ni compte utilisateur, ni publicité, ni outil de mesure d'audience. Nous collectons le moins possible, et presque tout reste en mémoire quelques minutes. Cette page détaille chaque cas.
 
 ## Responsable du traitement
 
-L'équipe Misty, joignable sur [Discord](https://discord.gg/rdQJUgvUh3) ou sur [GitHub](https://github.com/Misty-MC/Misty/issues). Voir les [mentions légales](/legal).
+L'équipe Mistly, joignable sur [Discord](https://discord.gg/rdQJUgvUh3) ou sur [GitHub](https://github.com/Misty-MC/Misty/issues). Voir les [mentions légales](/legal).
 
 ## En visitant le site
 
@@ -31,19 +31,19 @@ Vous pouvez les supprimer à tout moment depuis votre navigateur.
 
 Le pseudo Minecraft saisi dans la boutique est envoyé à l'**API de Mojang** (et, si elle ne répond pas, à **mc-heads.net**) pour récupérer le skin et la cape. Le résultat est gardé en mémoire une dizaine de minutes. Aucun achat n'est possible pour l'instant.
 
-## Dans le launcher Misty
+## Dans le launcher Mistly
 
 ### Mises à jour et compteur de joueurs
 
 - Le launcher demande au site si une nouvelle version existe.
-- Tant que Misty est ouvert, il envoie toutes les minutes un signe de vie : un **identifiant tiré au hasard à chaque démarrage** (rien qui reste d'une session à l'autre ni qui relie à votre compte) et le fait qu'une partie soit en cours ou non. Cela sert au nombre de joueurs en ligne affiché sur le site. Rien n'est écrit : le site l'oublie après 3 minutes.
+- Tant que Mistly est ouvert, il envoie toutes les minutes un signe de vie : un **identifiant tiré au hasard à chaque démarrage** (rien qui reste d'une session à l'autre ni qui relie à votre compte) et le fait qu'une partie soit en cours ou non. Cela sert au nombre de joueurs en ligne affiché sur le site. Rien n'est écrit : le site l'oublie après 3 minutes.
 
 ### Télémétrie (seulement si vous l'acceptez)
 
-Au premier lancement, Misty vous demande si vous acceptez la télémétrie anonyme ; vous pouvez changer d'avis à tout moment dans les options. Si vous l'acceptez, le launcher envoie :
+Au premier lancement, Mistly vous demande si vous acceptez la télémétrie anonyme ; vous pouvez changer d'avis à tout moment dans les options. Si vous l'acceptez, le launcher envoie :
 
 - un **identifiant d'installation** tiré au hasard, sans lien avec votre compte ;
-- la version de Misty, la version de Windows, la quantité de RAM et la langue ;
+- la version de Mistly, la version de Windows, la quantité de RAM et la langue ;
 - les événements : démarrage, partie lancée, partie terminée ou plantée, mise à jour ;
 - en cas de plantage, les **dernières lignes de la console** du jeu, nettoyées (dossier personnel, pseudo et jetons retirés).
 
@@ -53,14 +53,14 @@ Jamais votre compte, votre mot de passe ni votre adresse e-mail. Ces données so
 
 Le bouton « Envoyer les logs » de la console envoie, à votre demande, les dernières lignes de la console nettoyées de la même manière, même sans télémétrie. Vous recevez un code à donner sur Discord pour que l'équipe retrouve le rapport. Les rapports sont **conservés 90 jours** et transmis au salon Discord privé de l'équipe.
 
-### Misty Client (en jeu)
+### Mistly Client (en jeu)
 
-Misty Client, le mod en jeu du launcher, permet aux joueurs Misty de se reconnaître (badge, capes, élytres et chapeaux Misty). Il est activé par défaut et se désactive dans les options du launcher. Quand il est actif :
+Mistly Client, le mod en jeu du launcher, permet aux joueurs Mistly de se reconnaître (badge, capes, élytres et chapeaux Mistly). Il est activé par défaut et se désactive dans les options du launcher. Quand il est actif :
 
 - votre compte est vérifié comme le ferait un serveur Minecraft : votre **pseudo** est vérifié auprès de **Mojang**, qui nous renvoie votre **UUID** Minecraft. Votre jeton Minecraft ne quitte jamais votre jeu ;
-- le jeu envoie toutes les minutes un signe de vie avec les **cosmétiques Misty portés** ;
-- pour la cape « early player », réservée aux premiers joueurs, nous gardons votre **UUID** et la **date de votre première connexion** à Misty Client. Rien d'autre (ni pseudo, ni adresse IP) ;
-- il demande quels joueurs autour de vous utilisent Misty (leurs UUID, 100 au plus). Ces listes ne sont pas gardées.
+- le jeu envoie toutes les minutes un signe de vie avec les **cosmétiques Mistly portés** ;
+- pour la cape « early player », réservée aux premiers joueurs, nous gardons votre **UUID** et la **date de votre première connexion** à Mistly Client. Rien d'autre (ni pseudo, ni adresse IP) ;
+- il demande quels joueurs autour de vous utilisent Mistly (leurs UUID, 100 au plus). Ces listes ne sont pas gardées.
 
 Le reste est en mémoire : un joueur est oublié 3 minutes après son dernier signe de vie, une connexion après une heure d'inactivité. Les comptes hors ligne ne peuvent pas être vérifiés et ne sont pas visibles des autres.
 
@@ -68,9 +68,9 @@ Le reste est en mémoire : un joueur est oublié 3 minutes après son dernier si
 
 La connexion à votre compte Microsoft se fait directement entre le launcher et Microsoft. Le site n'en reçoit rien.
 
-## Vérification Discord (Misty Bot)
+## Vérification Discord (Mistly Bot)
 
-Sur les serveurs Discord qui utilisent Misty Bot, la vérification des nouveaux membres passe par le site :
+Sur les serveurs Discord qui utilisent Mistly Bot, la vérification des nouveaux membres passe par le site :
 
 - le lien de vérification contient les **identifiants Discord** du serveur, du membre et du rôle à donner ;
 - depuis Discord (Activité), le site demande à Discord qui vous êtes (autorisation `identify` : identifiant et pseudo Discord) ;
@@ -80,7 +80,7 @@ Le captcha et son état restent en mémoire 10 minutes au plus. Le site garde se
 
 ## Bases légales
 
-- **Intérêt légitime** : faire fonctionner le site, le launcher et Misty Client, et les protéger contre les abus.
+- **Intérêt légitime** : faire fonctionner le site, le launcher et Mistly Client, et les protéger contre les abus.
 - **Consentement** : la télémétrie, que vous pouvez retirer à tout moment dans les options.
 - **Votre demande** : les rapports de logs que vous envoyez et la vérification Discord.
 
@@ -90,12 +90,12 @@ Le captcha et son état restent en mémoire 10 minutes au plus. Le site garde se
 | --- | --- |
 | Adresse IP (limitation des requêtes) | 1 minute à 1 heure, en mémoire |
 | Signe de vie du launcher | 3 minutes, en mémoire |
-| Misty Client | 3 minutes à 1 heure, en mémoire |
-| Misty Client : UUID et date de première connexion (cape early player) | tant que la cape early player existe |
+| Mistly Client | 3 minutes à 1 heure, en mémoire |
+| Mistly Client : UUID et date de première connexion (cape early player) | tant que la cape early player existe |
 | Profils de la boutique | 10 minutes environ, en mémoire |
 | Captcha de vérification | 10 minutes, en mémoire |
 | Télémétrie et rapports de logs | 90 jours |
-| Configuration des serveurs Discord | tant que le serveur utilise Misty Bot |
+| Configuration des serveurs Discord | tant que le serveur utilise Mistly Bot |
 | Cookies | 1 an |
 
 ## Partage des données
@@ -110,4 +110,4 @@ Vous pouvez aussi adresser une réclamation à la [CNIL](https://www.cnil.fr/fr/
 
 ## Modifications
 
-Cette page peut évoluer avec Misty. La date de dernière mise à jour figure en haut de la page.
+Cette page peut évoluer avec Mistly. La date de dernière mise à jour figure en haut de la page.

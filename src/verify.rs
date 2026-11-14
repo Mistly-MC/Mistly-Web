@@ -1,4 +1,4 @@
-//! Vérification Discord : captcha pour les nouveaux membres des serveurs qui utilisent Misty Bot.
+//! Vérification Discord : captcha pour les nouveaux membres des serveurs qui utilisent Mistly Bot.
 //!
 //! 1. Dans Discord, le membre clique sur « Vérifier » : le bot lui donne un lien signé
 //!    `/verify?t=v1.<serveur>.<membre>.<rôle>.<salon de logs ou 0>.<expiration>.<langue>.<signature>`
@@ -369,7 +369,7 @@ impl Verification {
             .http
             .put(url)
             .header("Authorization", format!("Bot {token}"))
-            .header("X-Audit-Log-Reason", "Misty%20%3A%20captcha%20r%C3%A9ussi")
+            .header("X-Audit-Log-Reason", "Mistly%20%3A%20captcha%20r%C3%A9ussi")
             .header("Content-Length", "0")
             .send()
             .await
@@ -386,7 +386,7 @@ impl Verification {
                 .http
                 .delete(url)
                 .header("Authorization", format!("Bot {token}"))
-                .header("X-Audit-Log-Reason", "Misty%20%3A%20captcha%20r%C3%A9ussi")
+                .header("X-Audit-Log-Reason", "Mistly%20%3A%20captcha%20r%C3%A9ussi")
                 .send()
                 .await
             {

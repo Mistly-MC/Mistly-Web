@@ -10,7 +10,7 @@ section = "help"
 
 ## A mod loader is missing
 
-Misty only offers the loaders that exist for the chosen version. NeoForge starts at 1.20.1, Fabric and Quilt at 1.14, and LiteLoader stops at 1.12.2. See [Versions and mod loaders](/docs/versions-and-loaders).
+Mistly only offers the loaders that exist for the chosen version. NeoForge starts at 1.20.1, Fabric and Quilt at 1.14, and LiteLoader stops at 1.12.2. See [Versions and mod loaders](/docs/versions-and-loaders).
 
 ## A mod won't install
 
@@ -23,7 +23,7 @@ Misty only offers the loaders that exist for the chosen version. NeoForge starts
 
 ## The game doesn't start or crashes
 
-1. Check the error shown in Misty (*Launch failed*, *Download failed*…).
+1. Check the error shown in Mistly (*Launch failed*, *Download failed*…).
 2. Open the game folder and read `logs\latest.log`, or the newest file in `crash-reports\`. See [Files and folders](/docs/files-and-folders#game-logs).
 3. If you use many mods, raise the memory in [Settings](/docs/settings).
 4. Disable the most recently added mods one by one from the profile's **Content** tab.
@@ -38,13 +38,13 @@ Some files cannot be deleted while Minecraft is open. Close the game, then try a
 
 ## "Request limit reached"
 
-Mojang temporarily limits the number of requests. Misty shows your last known skin and capes and retries by itself. See [Skin and capes](/docs/skins).
+Mojang temporarily limits the number of requests. Mistly shows your last known skin and capes and retries by itself. See [Skin and capes](/docs/skins).
 
 ## Report a bug
 
 Open an issue on [GitHub](https://github.com/Misty-MC/Misty/issues) with:
 
-- the Misty version (Settings → About);
+- the Mistly version (Settings → About);
 - the Minecraft version and the mod loader;
 - what you did, what you expected and what happened;
 - `logs\latest.log` and, after a crash, the report from `crash-reports\`.

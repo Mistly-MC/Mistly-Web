@@ -45,7 +45,7 @@ The texture you are working on is saved when you leave the page.
 
 ### External editor
 
-Prefer Paint.NET or another program? Click **External editor** and choose your program (for example `paintdotnet.exe`; cancel to use the default app). Edit and save in your program: Misty reloads the texture automatically when the file changes.
+Prefer Paint.NET or another program? Click **External editor** and choose your program (for example `paintdotnet.exe`; cancel to use the default app). Edit and save in your program: Mistly reloads the texture automatically when the file changes.
 
 ## Pack icon
 
@@ -57,4 +57,4 @@ In the editor, **Change the pack icon** sets the image shown in Minecraft's reso
 2. Put the zip in the `resourcepacks` folder of a [profile](/docs/profiles).
 3. In Minecraft, enable it in **Options → Resource Packs**.
 
-Misty writes the right `pack_format` for the version, including very old and very recent ones.
+Mistly writes the right `pack_format` for the version, including very old and very recent ones.

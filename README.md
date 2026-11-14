@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="public/assets/icone.png" alt="Misty" width="110" />
+<img src="public/assets/icone.png" alt="Mistly" width="110" />
 
-# Misty Web
+# Mistly Web
 
-**The website of Misty, the Minecraft launcher light as the mist.**
+**The website of Mistly, the Minecraft launcher light as the mist.**
 
 Rendered server-side in Rust: pages, translations, patch notes and the pixel-art night scene.
 
@@ -17,7 +17,7 @@ Rendered server-side in Rust: pages, translations, patch notes and the pixel-art
 
 [**Website**](https://misty-launcher.online/) · [**Docs**](https://misty-launcher.online/docs) · [**Patch notes**](https://misty-launcher.online/patch-notes) · [**Launcher**](https://github.com/Misty-MC/Misty) · [**Releases**](https://github.com/Misty-MC/Misty/releases)
 
-<img src="public/assets/screens/en/home.png" alt="Misty launcher, shown on the website" width="800" />
+<img src="public/assets/screens/en/home.png" alt="Mistly launcher, shown on the website" width="800" />
 
 </div>
 
@@ -69,7 +69,7 @@ The Silkscreen font is distributed under the [SIL Open Font License](public/asse
 
 <div align="center">
 <sub>
-Misty is an independent launcher and is not affiliated with Mojang Studios or Microsoft.<br/>
+Mistly is an independent launcher and is not affiliated with Mojang Studios or Microsoft.<br/>
 Minecraft is a trademark of Mojang AB.
 </sub>
 </div>

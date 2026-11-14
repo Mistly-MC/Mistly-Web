@@ -10,7 +10,7 @@ const WEB_REPO: &str = "Misty-MC/Misty-Web";
 
 pub fn render(p: &Page, d: &LegalPage) -> Markup {
     let tr = p.tr;
-    let title = format!("{} – Misty MC", d.title);
+    let title = format!("{} – Mistly MC", d.title);
     let main = html! {
         div.wrap.docs-grid {
             aside.docs-side aria-label=(tr.ft_legal_t) {
@@ -22,7 +22,7 @@ pub fn render(p: &Page, d: &LegalPage) -> Markup {
                     (menu(p, d.kind))
                 }
                 nav.crumbs aria-label="Breadcrumb" {
-                    a href="/" { "Misty" }
+                    a href="/" { "Mistly" }
                     span { "/" }
                     span { (tr.ft_legal_t) }
                 }

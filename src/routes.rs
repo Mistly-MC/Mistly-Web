@@ -466,7 +466,7 @@ fn redirection(url: &str) -> Response {
     res
 }
 
-/// `/status` : état des services dont Misty a besoin (vérifiés par le site toutes les minutes).
+/// `/status` : état des services dont Mistly a besoin (vérifiés par le site toutes les minutes).
 pub async fn status_page(
     State(state): State<Arc<AppState>>,
     Query(q): Query<PageQuery>,
@@ -525,7 +525,7 @@ pub async fn status_json(State(state): State<Arc<AppState>>) -> Response {
     res
 }
 
-// ---------- Vérification Discord (captcha puzzle de Misty Bot) ----------
+// ---------- Vérification Discord (captcha puzzle de Mistly Bot) ----------
 
 #[derive(Deserialize, Default)]
 pub struct VerifyQuery {

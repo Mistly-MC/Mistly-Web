@@ -1,6 +1,6 @@
-//! Réseau de Misty Client (le mod en jeu du launcher) : qui joue avec Misty en ce moment, et
-//! avec quel cosmétique Misty, pour que les joueurs Misty se reconnaissent en jeu (nuage dans la
-//! liste des joueurs et le chat, cape et élytres Misty).
+//! Réseau de Mistly Client (le mod en jeu du launcher) : qui joue avec Mistly en ce moment, et
+//! avec quel cosmétique Mistly, pour que les joueurs Mistly se reconnaissent en jeu (nuage dans la
+//! liste des joueurs et le chat, cape et élytres Mistly).
 //!
 //! - `POST /api/client/login` : le jeu prouve son compte comme auprès d'un serveur Minecraft. Il
 //!   « rejoint » un identifiant de serveur tiré au hasard auprès de Mojang (`joinServer`), le site
@@ -9,10 +9,10 @@
 //! - `POST /api/client/presence` (jeton) : signe de vie toutes les minutes, avec ce qui est porté
 //!   (dans le dos : cape ou élytres ; sur la tête : chapeau).
 //! - `POST /api/client/players` (jeton) : parmi ces joueurs (ceux du serveur où l'on joue),
-//!   lesquels sont en ligne avec Misty, et que portent-ils.
+//!   lesquels sont en ligne avec Mistly, et que portent-ils.
 //! - `GET /api/client/early/{uuid}` : ce compte a-t-il droit à la cape early player ?
 //!
-//! Cape early player : réservée aux comptes connectés à Misty Client avant la date `EARLY_BEFORE`
+//! Cape early player : réservée aux comptes connectés à Mistly Client avant la date `EARLY_BEFORE`
 //! (AAAA-MM-JJ ; sans elle, tous les comptes y ont droit). Pour le savoir, le site garde l'UUID et
 //! la date de première connexion de chaque compte (`premiers-joueurs.json` dans `MISTY_CACHE_DIR`).
 //! Le reste est en mémoire : les listes de joueurs demandées ne sont pas gardées, aucune adresse
@@ -44,9 +44,9 @@ const MAX_LOGIN_PAR_MINUTE: u32 = 12;
 const MAX_UUIDS: usize = 100;
 /// Au-delà, les jetons inactifs sont oubliés, puis les nouvelles connexions refusées (protection mémoire).
 const MAX_JETONS: usize = 200_000;
-/// Cosmétiques Misty portés dans le dos (les mêmes identifiants que le launcher et le mod).
+/// Cosmétiques Mistly portés dans le dos (les mêmes identifiants que le launcher et le mod).
 const COSMETIQUES: &[&str] = &["misty_cape", "misty_elytra", EARLY_CAPE];
-/// Chapeaux Misty.
+/// Chapeaux Mistly.
 const CHAPEAUX: &[&str] = &["cloudly"];
 /// La cape des premiers joueurs : seulement pour les comptes vus avant `EARLY_BEFORE`.
 const EARLY_CAPE: &str = "early_cape";
@@ -171,7 +171,7 @@ impl Client {
         self.joueurs.lock().unwrap().remove(uuid);
     }
 
-    /// Parmi ces UUID, ceux qui sont en ligne avec Misty : `{ "<uuid avec tirets>": { "cosmetic": "…", "hat": "…" } }`.
+    /// Parmi ces UUID, ceux qui sont en ligne avec Mistly : `{ "<uuid avec tirets>": { "cosmetic": "…", "hat": "…" } }`.
     fn en_ligne(&self, uuids: &[String]) -> Map<String, Value> {
         let joueurs = self.joueurs.lock().unwrap();
         uuids
@@ -277,7 +277,7 @@ pub async fn presence(State(state): State<Arc<AppState>>, entetes: HeaderMap, Js
 }
 
 /// `POST /api/client/players` (jeton) : `{ "uuids": ["…", …] }` (100 au plus)
-/// → `{ "players": { "<uuid>": { "cosmetic": "misty_cape" } } }` : seulement ceux en ligne avec Misty.
+/// → `{ "players": { "<uuid>": { "cosmetic": "misty_cape" } } }` : seulement ceux en ligne avec Mistly.
 pub async fn joueurs(State(state): State<Arc<AppState>>, entetes: HeaderMap, Json(corps): Json<Value>) -> Response {
     let c = &state.client;
     if !c.autorise(&crate::presence::adresse(&entetes), false) {

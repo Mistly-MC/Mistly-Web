@@ -7,10 +7,10 @@ use serde_json::json;
 
 /// Noms sous lesquels on cherche le launcher.
 const ALTERNATE_NAMES: [&str; 4] = [
-    "Misty MC",
-    "MistyMC",
-    "Misty Launcher",
-    "Misty Minecraft Launcher",
+    "Mistly MC",
+    "MistlyMC",
+    "Mistly Launcher",
+    "Mistly Minecraft Launcher",
 ];
 
 /// Sérialise du JSON-LD pour l'insérer dans une balise <script> sans risque de la refermer.
@@ -24,7 +24,7 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
         "@type": "Organization",
         "@id": format!("{site}/#organization"),
         "name": "Misty-MC",
-        "alternateName": "Misty MC",
+        "alternateName": "Mistly MC",
         "url": format!("{site}/"),
         "logo": format!("{site}/assets/icone.png"),
         "sameAs": ["https://github.com/Misty-MC", format!("https://github.com/{repo}")],
@@ -32,15 +32,15 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
     let website = json!({
         "@type": "WebSite",
         "@id": format!("{site}/#website"),
-        "name": "Misty MC",
-        "alternateName": ["Misty", "Misty Launcher"],
+        "name": "Mistly MC",
+        "alternateName": ["Mistly", "Mistly Launcher"],
         "url": format!("{site}/"),
         "inLanguage": Lang::ALL.iter().map(|l| l.code()).collect::<Vec<_>>(),
         "publisher": { "@id": format!("{site}/#organization") },
     });
     let mut app = json!({
         "@type": "SoftwareApplication",
-        "name": "Misty",
+        "name": "Mistly",
         "alternateName": ALTERNATE_NAMES,
         "description": tr.description,
         "url": format!("{site}/"),
@@ -78,13 +78,13 @@ pub fn doc_jsonld(site: &str, tr: &Tr, page: &docs::DocPage, lang: Lang) -> Stri
                 "description": page.description,
                 "url": url,
                 "inLanguage": lang.code(),
-                "about": { "@type": "SoftwareApplication", "name": "Misty", "alternateName": ALTERNATE_NAMES },
+                "about": { "@type": "SoftwareApplication", "name": "Mistly", "alternateName": ALTERNATE_NAMES },
                 "publisher": { "@id": format!("{site}/#organization") },
             },
             {
                 "@type": "BreadcrumbList",
                 "itemListElement": [
-                    { "@type": "ListItem", "position": 1, "name": "Misty MC", "item": format!("{site}/") },
+                    { "@type": "ListItem", "position": 1, "name": "Mistly MC", "item": format!("{site}/") },
                     { "@type": "ListItem", "position": 2, "name": tr.docs_label, "item": format!("{site}/docs") },
                     { "@type": "ListItem", "position": 3, "name": page.title, "item": url },
                 ],
@@ -178,7 +178,7 @@ mod tests {
     fn jsonld_is_valid_and_names_misty_mc() {
         let s = home_jsonld("https://example.com", Lang::En.tr(), "Misty-MC/Misty", None);
         let v: serde_json::Value = serde_json::from_str(&s).unwrap();
-        assert!(v.to_string().contains("Misty MC"));
+        assert!(v.to_string().contains("Mistly MC"));
         assert!(!s.contains("</"));
     }
 }

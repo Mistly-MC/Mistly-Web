@@ -16,7 +16,7 @@ Connecte-toi, passe d'un compte Microsoft à l'autre, oublies-en un ou déconnec
 
 ## Raccourci
 
-Crée un raccourci Misty dans le dossier de ton choix, mis à jour automatiquement après chaque mise à jour. **Recréer** le refait si tu l'as supprimé.
+Crée un raccourci Mistly dans le dossier de ton choix, mis à jour automatiquement après chaque mise à jour. **Recréer** le refait si tu l'as supprimé.
 
 ## Langue
 
@@ -24,7 +24,7 @@ Anglais, français, espagnol, italien ou russe. L'interface change immédiatemen
 
 ## Mémoire
 
-La RAM donnée à Minecraft, avec un curseur. Misty affiche la quantité de mémoire de ton PC. La valeur par défaut est **4 Go**.
+La RAM donnée à Minecraft, avec un curseur. Mistly affiche la quantité de mémoire de ton PC. La valeur par défaut est **4 Go**.
 
 > [!TIP]
 > 4 Go suffisent largement en vanilla. Les gros modpacks peuvent demander 6 à 8 Go. Ne donne pas au jeu plus de la moitié environ de la mémoire du PC : Windows et les autres applications en ont besoin aussi.
@@ -35,15 +35,15 @@ Les releases sont toujours affichées. Active **Snapshots**, **Bêtas** et **Alp
 
 ## Stockage
 
-Indique la place occupée par le dossier Misty. **Tout supprimer** l'efface entièrement : versions, mods, mondes et profils. Misty propose ensuite de se fermer, pour ne pas recréer de données tout de suite.
+Indique la place occupée par le dossier Mistly. **Tout supprimer** l'efface entièrement : versions, mods, mondes et profils. Mistly propose ensuite de se fermer, pour ne pas recréer de données tout de suite.
 
 > [!WARNING]
 > **Tout supprimer** est irréversible. Sauvegarde d'abord les mondes que tu veux garder.
 
 ## Discord
 
-Affiche Misty comme activité Discord : *Dans le launcher*, *Édite un pack de textures* ou *Joue à Minecraft* avec la version. Désactive-le ici si tu préfères.
+Affiche Mistly comme activité Discord : *Dans le launcher*, *Édite un pack de textures* ou *Joue à Minecraft* avec la version. Désactive-le ici si tu préfères.
 
 ## À propos
 
-La version de Misty installée, sa licence (MIT) et le bouton **Rechercher les mises à jour**. Voir [Mises à jour](/docs/updates).
+La version de Mistly installée, sa licence (MIT) et le bouton **Rechercher les mises à jour**. Voir [Mises à jour](/docs/updates).
