@@ -5,15 +5,6 @@ use crate::i18n::{Lang, Tr};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use std::sync::LazyLock;
 
-/// « MISTLY » en grandes lettres de blocs (hero de l'accueil et bas du pied de page).
-pub const BANNER: &str = "\
-███╗   ███╗ ██╗ ███████╗ ████████╗ ██╗      ██╗   ██╗
-████╗ ████║ ██║ ██╔════╝ ╚══██╔══╝ ██║      ╚██╗ ██╔╝
-██╔████╔██║ ██║ ███████╗    ██║    ██║       ╚████╔╝
-██║╚██╔╝██║ ██║ ╚════██║    ██║    ██║        ╚██╔╝
-██║ ╚═╝ ██║ ██║ ███████║    ██║    ███████╗    ██║
-╚═╝     ╚═╝ ╚═╝ ╚══════╝    ╚═╝    ╚══════╝    ╚═╝";
-
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
@@ -36,9 +27,9 @@ pub struct Page<'a> {
     pub release_count: Option<usize>,
     /// `owner/repo` du launcher sur GitHub.
     pub repo: &'a str,
-    /// Bande de brume animée (en caractères ASCII), réutilisée entre les sections.
+    /// Bande de brume animée (SVG), réutilisée entre les sections.
     pub fog: &'a str,
-    /// Paysage de fond (en caractères ASCII), identique sur toutes les pages.
+    /// Paysage de fond (SVG), identique sur toutes les pages.
     pub scene: &'a str,
     /// Adresse publique du site, sans `/` final (balises canoniques, Open Graph, sitemap).
     pub site_url: &'a str,
@@ -108,7 +99,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 @if let Some(json) = &head.jsonld {
                     script type="application/ld+json" { (PreEscaped(json)) }
                 }
-                link rel="preload" href="/assets/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin;
+                link rel="preload" href="/assets/Silkscreen-Bold.ttf" as="font" type="font/ttf" crossorigin;
                 @let v = ASSET_VERSION.as_str();
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
@@ -129,7 +120,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
     }
 }
 
-/// Bande de brume en tildes qui dérive, posée entre deux sections.
+/// Bande de brume pixel qui dérive, posée entre deux sections.
 pub fn fog_divider(p: &Page) -> Markup {
     html! { div.fog-divider aria-hidden="true" { (PreEscaped(p.fog)) } }
 }
@@ -279,7 +270,7 @@ fn footer(p: &Page) -> Markup {
                     }
                 }
             }
-            pre.giant.ascii aria-hidden="true" { (BANNER) }
+            div.giant aria-hidden="true" { "MISTLY" }
         }
     }
 }

@@ -4,14 +4,14 @@
 .st-summary{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap;margin-top:28px}
 .st-banner{flex:1 1 320px;display:flex;align-items:center;gap:14px;padding:18px 22px;background:var(--panel);border:1px solid var(--line-2);}
 .st-banner div{display:flex;flex-direction:column;gap:3px;min-width:0}
-.st-banner strong{font-size:19px;font-weight:750;}
+.st-banner strong{font-size:19px;font-weight:750;letter-spacing:-.01em}
 .st-banner .st-age{font-size:13px;color:var(--dim)}
 .st-banner .st-dot{width:14px;height:14px;}
 .st-banner.up{border-color:rgba(29,224,98,.4);background:linear-gradient(90deg,rgba(29,224,98,.12),var(--panel) 60%)}
 .st-banner.slow{border-color:rgba(255,190,90,.45);background:linear-gradient(90deg,rgba(255,190,90,.12),var(--panel) 60%)}
 .st-banner.down{border-color:rgba(255,110,110,.5);background:linear-gradient(90deg,rgba(255,110,110,.14),var(--panel) 60%)}
 .st-kpi{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:14px 24px;background:var(--panel);border:1px solid var(--line-2);}
-.st-kpi strong{font-family:var(--mono);font-size:26px;color:#1de062;letter-spacing:.02em}
+.st-kpi strong{font-family:var(--pix);font-size:26px;color:#1de062;letter-spacing:.02em}
 .st-kpi span{font-size:12.5px;color:var(--dim)}
 
 .st-dot{display:inline-block;width:10px;height:10px;flex:none;background:var(--dim)}
@@ -26,7 +26,7 @@
 .st-group{margin-top:38px}
 .st-group:first-child{margin-top:0}
 .st-ghead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px}
-.st-ghead h2{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.st-ghead h2{font-family:var(--pix);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 .st-ghead p{font-size:13.5px;color:var(--dim)}
 .st-list{display:grid;gap:10px}
 
@@ -38,7 +38,7 @@
 .st-name strong{font-size:15px;font-weight:650}
 .st-name span{font-size:12.5px;color:var(--dim)}
 .st-right{display:flex;align-items:center;gap:14px;white-space:nowrap}
-.st-state{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.st-state{display:inline-flex;align-items:center;gap:8px;font-family:var(--pix);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
 .st-state .st-dot{width:8px;height:8px;animation:none}
 .st-state.up{color:#1de062}
 .st-state.slow{color:#ffbe5a}
@@ -64,7 +64,7 @@
 .st-inc-h .st-dot{animation:none}
 .st-inc h3{font-size:15px;font-weight:650}
 .st-inc p{margin-top:6px;font-size:13px;color:var(--dim)}
-.st-tag{margin-left:auto;padding:3px 9px;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
+.st-tag{margin-left:auto;padding:3px 9px;font-family:var(--pix);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
 .st-tag.done{background:rgba(29,224,98,.12);color:#1de062}
 .st-tag.open{background:rgba(255,110,110,.14);color:#ff6e6e}
 

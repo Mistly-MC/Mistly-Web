@@ -8,7 +8,7 @@
 .cp section{display:flex;flex-direction:column;gap:16px}
 .cp-head{display:flex;align-items:center;gap:14px}
 .cp-logo{width:52px;height:52px;flex:none;box-shadow:0 0 0 1px var(--line-2)}
-.cp-head h2{font-size:22px;font-weight:750;}
+.cp-head h2{font-size:22px;font-weight:750;letter-spacing:-.01em}
 .cp-head p{font-size:14px;color:var(--dim)}
 .cp-head strong{color:var(--text);font-weight:650}
 
@@ -51,7 +51,7 @@
 .vf-end{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
 .vf-end h2{font-size:22px;font-weight:750}
 .vf-end p{color:var(--muted);font-size:15px}
-.vf-badge{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;font-family:var(--mono);font-size:20px}
+.vf-badge{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;font-family:var(--pix);font-size:20px}
 .vf-badge.ok{background:rgba(29,224,98,.14);color:#1de062;border:1px solid rgba(29,224,98,.4)}
 .vf-badge.bad{background:rgba(255,110,110,.14);color:#ff6e6e;border:1px solid rgba(255,110,110,.4)}
 .vf-hint{font-size:12.5px;color:var(--dim)}

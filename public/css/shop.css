@@ -6,7 +6,7 @@
 
 /* Formulaire du pseudo */
 .shop-form{margin-top:34px;max-width:560px}
-.shop-form label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.shop-form label{display:block;font-family:var(--pix);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
 .field{
   display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;
   background:rgba(17,26,48,.85);border:1px solid var(--line-2);
@@ -15,13 +15,13 @@
 .field:focus-within{border-color:var(--accent-strong)}
 .field.error{border-color:#ff8a7a}
 .field .prefix{display:grid;place-items:center;color:var(--dim)}
-.field input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:600 17px var(--mono);padding:10px 0}
+.field input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:600 17px var(--sans);padding:10px 0}
 .field input::placeholder{color:var(--dim);font-weight:400}
 .field .btn{flex:none}
 .help{margin-top:12px;font-size:13.5px;color:var(--dim)}
 .help.err{color:#ffb0a5}
 
-.soon{display:inline-flex;align-items:center;gap:8px;margin:10px 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;background:rgba(122,168,255,.12);border:1px solid rgba(122,168,255,.35);color:#bcd4ff}
+.soon{display:inline-flex;align-items:center;gap:8px;margin:10px 0 10px;font-family:var(--pix);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:6px 10px;background:rgba(122,168,255,.12);border:1px solid rgba(122,168,255,.35);color:#bcd4ff}
 .soon .dot{width:7px;height:7px;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.35}}
 
@@ -71,12 +71,12 @@
 .stage-top{top:14px}
 .stage-bar{bottom:14px}
 .seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:4px;background:rgba(10,15,29,.62);border:1px solid var(--line-2);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.seg button{font:600 13px var(--mono);color:var(--muted);background:none;border:0;padding:7px 11px;cursor:pointer;transition:background .15s,color .15s}
+.seg button{font:600 13px var(--sans);color:var(--muted);background:none;border:0;padding:7px 11px;cursor:pointer;transition:background .15s,color .15s}
 .seg button:hover{color:var(--text);background:rgba(255,255,255,.06)}
 .seg button[aria-pressed="true"]{color:#fff;background:var(--accent-strong);}
 .toggles{display:inline-flex;gap:6px}
 .toggle{
-  display:inline-flex;align-items:center;gap:7px;cursor:pointer;font:600 13px var(--mono);color:var(--muted);
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;font:600 13px var(--sans);color:var(--muted);
   padding:8px 12px;background:rgba(10,15,29,.62);border:1px solid var(--line-2);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .12s,box-shadow .12s,color .15s,border-color .15s;
 }
@@ -110,10 +110,10 @@
 .pcard{display:flex;gap:16px;align-items:flex-start}
 .pcard .head{flex:none;width:64px;height:64px;image-rendering:pixelated;background:var(--panel-2);border:1px solid var(--line-2);}
 .pinfo{min-width:0}
-.pinfo h1{font-size:24px;font-weight:720;line-height:1.15;word-break:break-all}
+.pinfo h1{font-size:24px;font-weight:720;letter-spacing:-.02em;line-height:1.15;word-break:break-all}
 .pmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 9px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--muted)}
-.chip.soon{font-family:var(--mono);font-weight:400;font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin:0}
+.chip.soon{font-family:var(--pix);font-weight:400;font-size:10px;letter-spacing:.05em;text-transform:uppercase;margin:0}
 .uuid{display:inline-flex;align-items:center;gap:8px;margin-top:10px;max-width:100%;cursor:pointer;background:none;border:0;padding:0;color:var(--dim)}
 .uuid code{font:12px ui-monospace,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .uuid .ic{width:14px;height:14px;flex:none}
@@ -150,7 +150,7 @@
 .cat-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:16px}
 .cat-tabs button{
   display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;cursor:pointer;
-  font:600 12.5px var(--mono);color:var(--muted);background:var(--panel);border:1px solid var(--line);transition:.15s;
+  font:600 12.5px var(--sans);color:var(--muted);background:var(--panel);border:1px solid var(--line);transition:.15s;
 }
 .cat-tabs button .ic{width:20px;height:20px;color:var(--accent)}
 .cat-tabs button:hover{color:var(--text);border-color:var(--line-2)}
@@ -160,7 +160,7 @@
 .cat-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cat-head h3{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:650}
 .cat-head h3 .ic{color:var(--accent)}
-.cat-head .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;padding:4px 8px;background:rgba(122,168,255,.12);border:1px solid rgba(122,168,255,.35);color:#bcd4ff;white-space:nowrap}
+.cat-head .badge{font-family:var(--pix);font-size:9.5px;letter-spacing:.05em;padding:4px 8px;background:rgba(122,168,255,.12);border:1px solid rgba(122,168,255,.35);color:#bcd4ff;white-space:nowrap}
 .cat-panel>p{font-size:14px;color:var(--muted);margin-top:6px}
 .slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
 .slot{
@@ -168,7 +168,7 @@
   background:repeating-linear-gradient(135deg,rgba(255,255,255,.015) 0 10px,rgba(255,255,255,.04) 10px 20px),var(--panel);border:1px dashed var(--line-2);
 }
 .slot .ic{width:30px;height:30px;color:var(--dim);opacity:.45}
-.slot span{position:absolute;bottom:7px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.slot span{position:absolute;bottom:7px;left:0;right:0;text-align:center;font-family:var(--pix);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 
 @media (max-width:980px){
   .shop-grid,.studio-grid{grid-template-columns:minmax(0,1fr)}

@@ -96,7 +96,6 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
         section.hero {
             div.wrap.hero-grid {
                 div.hero-copy {
-                    pre.banner.ascii aria-hidden="true" { (layout::BANNER) }
                     div.tags {
                         span { (icons::cube()) (tr.hero_tag_mc) }
                         span.sep { "·" }
@@ -104,21 +103,32 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
                     }
                     h1 { (tr.hero_title_1) br; span.accent { (tr.hero_title_2) } }
                     p.sub { (tr.hero_sub) }
-                    div.actions {
-                        a.btn.play href="/download/setup" { (icons::download()) (tr.hero_cta_download) }
-                        a.btn.ghost href="/patch-notes" { (icons::notes()) (tr.hero_cta_notes) }
+                    // Boîte de téléchargement : des onglets d'information, puis le fichier et son bouton.
+                    div.getbox {
+                        div.getbox-tabs {
+                            span { (icons::windows()) "Windows 10 / 11" }
+                            @if let Some(r) = latest { span { (r.tag_name) } }
+                            @if let Some(a) = setup { span { (format::size(tr, a.size)) } }
+                            span { (tr.hero_free) }
+                        }
+                        a.getbox-row href="/download/setup" {
+                            span.file {
+                                span.prompt aria-hidden="true" { ">" }
+                                @match setup { Some(a) => (a.name), None => (tr.inst_t) }
+                            }
+                            span.go { (icons::download()) (tr.nav_download) }
+                        }
                     }
-                    div.meta {
-                        span { (icons::windows()) "Windows 10 / 11" }
-                        @if let Some(r) = latest { span { (r.tag_name) } }
-                        @if let Some(a) = setup { span { (format::size(tr, a.size)) } }
-                        span { (tr.hero_free) }
-                    }
+                    a.hero-notes href="/patch-notes" { (icons::notes()) (tr.hero_cta_notes) " →" }
                 }
                 aside.latest {
                     div.term-bar {
-                        span.label { (tr.card_label) }
-                        span.ctl aria-hidden="true" { "[-][x]" }
+                        span.dots aria-hidden="true" { i {} i {} i {} }
+                        span.term-title { "mistly" }
+                    }
+                    div.term-tabs {
+                        span.on { "MISTLY" }
+                        span { (tr.card_label) }
                     }
                     div.term-body { @match latest {
                         Some(r) => {

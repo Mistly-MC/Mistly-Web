@@ -1,5 +1,4 @@
-//! Paysage nocturne en pixel art (montagnes, brume, lune, sapins), généré en SVG.
-//! Il sert de fond aux images du captcha (puzzle.rs) ; le décor du site, lui, est en ASCII (ascii.rs).
+//! Paysage nocturne en pixel art (montagnes, brume, lune, sapins), généré en SVG au démarrage.
 //! Le tirage est déterministe : la même graine donne toujours le même paysage.
 
 use std::fmt::Write;
@@ -112,6 +111,18 @@ fn puffs(svg: &mut String, rng: &mut Rng, n: i32, rows: (i32, i32), opacity: f32
             puff_path(rng)
         );
     }
+}
+
+/// Bande de brume seule (sans paysage), posée entre les sections et au-dessus du pied de page.
+pub fn fog_strip(seed: u64) -> String {
+    const SH: i32 = 160;
+    let mut rng = Rng(seed | 1);
+    let mut svg = format!(
+        r##"<svg class="fogstrip" viewBox="0 0 {W} {SH}" preserveAspectRatio="xMidYMid slice" shape-rendering="crispEdges" aria-hidden="true" focusable="false">"##
+    );
+    puffs(&mut svg, &mut rng, 16, (2, SH / P - 6), 0.1);
+    svg.push_str("</svg>");
+    svg
 }
 
 pub fn render(opt: &SceneOptions) -> String {
@@ -260,5 +271,8 @@ mod tests {
         assert_eq!(a, render(&opt));
         assert!(a.starts_with("<svg") && a.ends_with("</svg>"));
         assert!(a.contains(r#"class="moon""#) && a.contains(r#"class="puff""#));
+        let f = fog_strip(3);
+        assert_eq!(f, fog_strip(3));
+        assert!(f.starts_with("<svg") && f.ends_with("</svg>") && f.contains("puff"));
     }
 }

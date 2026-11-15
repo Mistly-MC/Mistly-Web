@@ -1,34 +1,37 @@
 /* Barre de navigation et pied de page. */
 
-/* ---------- Fond commun : ciel et paysage ASCII en haut de chaque page ---------- */
+/* ---------- Fond commun : ciel étoilé et paysage pixel art en haut de chaque page ---------- */
 .page-sky{
-  position:absolute;top:0;left:0;right:0;height:clamp(620px,96vh,900px);z-index:0;overflow:hidden;pointer-events:none;
-  background:linear-gradient(180deg,#080c17 0%,#0b1326 70%,var(--bg) 100%);
+  position:absolute;top:0;left:0;right:0;height:clamp(680px,100vh,940px);z-index:0;overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(1000px 520px at 82% 58%,rgba(111,156,255,.2),transparent 70%),
+    radial-gradient(700px 400px at 8% 0%,rgba(111,156,255,.1),transparent 70%),
+    linear-gradient(180deg,#070b18 0%,#0e1a3a 55%,#152448 80%,var(--bg) 100%);
   /* Fondu vers le bas : le paysage se fond dans la page, sans coupure nette. */
-  -webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent);
+  -webkit-mask-image:linear-gradient(180deg,#000 74%,transparent);mask-image:linear-gradient(180deg,#000 74%,transparent);
 }
-.page-sky .scene{position:absolute;left:50%;bottom:0;transform:translateX(-50%);-webkit-mask-image:linear-gradient(180deg,transparent,#000 38%);mask-image:linear-gradient(180deg,transparent,#000 38%)}
+.page-sky .scene{position:absolute;left:0;bottom:0;width:100%;height:clamp(300px,40vw,560px);-webkit-mask-image:linear-gradient(180deg,transparent,#000 14%);mask-image:linear-gradient(180deg,transparent,#000 14%)}
+/* Accueil : un paysage plus haut, qui remplit tout le premier écran derrière le hero */
+.home .page-sky{height:clamp(700px,108vh,1040px)}
+.home .page-sky .scene{height:clamp(420px,62vw,820px)}
+/* Pages sans hero (article de doc, page légale, seed viewer, studio) : le texte commence tout en
+   haut, donc le paysage s'efface derrière lui. */
+body:not(:has(.hero,.docs-hero,.tools-hero)) .page-sky .scene{opacity:.35}
+/* Trame de points par-dessus le paysage, comme une image tramée */
+.page-sky::after{content:"";position:absolute;inset:0;background:radial-gradient(rgba(4,7,16,.55) 1px,transparent 1.4px) 0 0/4px 4px}
 
 /* ---------- Navigation ---------- */
 .nav{position:sticky;top:0;z-index:50;border-bottom:1px solid transparent;transition:background .2s,border-color .2s}
 .nav.scrolled{background:rgba(7,10,18,.92);border-color:var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .nav-in{display:flex;align-items:center;gap:20px;height:64px}
-.brand{flex:none;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;text-transform:lowercase}
+.brand{flex:none;display:flex;align-items:center;gap:10px;font-family:var(--pix);font-size:21px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
 .brand img{height:26px;width:26px;image-rendering:pixelated}
-/* Curseur de terminal qui clignote après le nom */
-.brand span::after{content:"_";color:var(--accent);animation:blink 1.1s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
-.links{display:flex;gap:2px;margin-right:auto}
-.links a{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:13.5px;color:var(--muted);padding:4px 7px;transition:color .12s,background .12s}
-/* Survol en vidéo inverse */
-.links a:hover{color:var(--bg);background:var(--accent)}
-.links a[aria-current]{color:var(--accent)}
-.links a[aria-current]::before{content:">";color:var(--dim)}
-.links a[aria-current]:hover,.links a[aria-current]:hover::before{color:var(--bg)}
-.count{font-size:11.5px;line-height:1;color:var(--accent)}
-.count::before{content:"["}
-.count::after{content:"]"}
-a:hover>.count{color:inherit}
+.links{display:flex;gap:2px}
+.links{margin-left:auto;margin-right:8px}
+.links a{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:14.5px;font-weight:500;color:var(--text);padding:6px 10px;opacity:.86;transition:opacity .12s,color .12s}
+.links a:hover{opacity:1;color:var(--accent)}
+.links a[aria-current]{opacity:1;color:var(--accent)}
+.count{font-family:var(--mono);font-size:11px;line-height:1;padding:2px 5px;border:1px solid var(--line-2);color:var(--accent)}
 .nav-right{display:flex;align-items:center;gap:10px}
 .gh{display:inline-flex;align-items:center;gap:7px;font-size:14px;color:var(--muted);padding:7px 9px}
 .gh:hover{color:var(--accent)}
@@ -45,10 +48,9 @@ a:hover>.count{color:inherit}
 .langdd summary:hover,.langdd[open] summary{border-color:var(--accent)}
 .langdd .menu,.burger .menu{position:absolute;right:0;top:calc(100% + 8px);padding:6px;background:var(--bg);border:1px solid var(--line-2)}
 .langdd .menu{min-width:190px}
-.langdd .menu a{display:flex;align-items:center;gap:12px;font-size:13.5px;padding:7px 9px;color:var(--muted)}
-.langdd .menu a:hover{background:var(--accent);color:var(--bg)}
+.langdd .menu a{display:flex;align-items:center;gap:12px;font-size:14px;padding:7px 9px;color:var(--muted)}
+.langdd .menu a:hover{background:rgba(255,255,255,.06);color:var(--text)}
 .langdd .menu a[aria-current]{color:var(--accent)}
-.langdd .menu a[aria-current]:hover{color:var(--bg)}
 
 /* Menu mobile (affiché quand la barre de liens est masquée) */
 .burger{position:relative;display:none;order:3}
@@ -58,23 +60,20 @@ a:hover>.count{color:inherit}
 .burger[open] summary{border-color:var(--accent);color:var(--accent)}
 .burger .menu{min-width:230px;display:flex;flex-direction:column}
 .burger .menu a{display:flex;align-items:center;gap:8px;font-size:14.5px;padding:9px 11px;color:var(--muted)}
-.burger .menu a:hover{background:var(--accent);color:var(--bg)}
+.burger .menu a:hover{background:rgba(255,255,255,.06);color:var(--text)}
 .burger .menu a[aria-current]{color:var(--accent)}
-.burger .menu a[aria-current]:hover{color:var(--bg)}
 .burger .menu .ic{width:14px;height:14px;opacity:.6}
 
 /* ---------- Pied de page ---------- */
-.foot{position:relative;overflow:hidden;border-top:1px dashed var(--line-2);background:var(--bg);margin-top:clamp(10px,2vw,30px)}
+.foot{position:relative;overflow:hidden;border-top:1px solid var(--line);background:var(--bg);margin-top:clamp(10px,2vw,30px)}
 .ftop{display:flex;justify-content:space-between;align-items:flex-start;gap:24px 48px;flex-wrap:wrap;padding:clamp(40px,5vw,60px) 0 36px}
 .ftop .tag{color:var(--muted);font-size:13.5px;margin-top:10px;max-width:320px}
 .disclaimer{max-width:400px;text-align:right;font-size:12.5px;color:var(--dim)}
 .fcols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.6fr);gap:32px;padding-bottom:44px}
-.fcols h2{font-size:12.5px;font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
-.fcols h2::before{content:"# ";color:var(--dim)}
+.fcols h2{font-family:var(--pix);font-size:11px;font-weight:400;margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
 .fcols ul{display:flex;flex-direction:column;gap:7px}
 .fcols ul a{display:inline-flex;align-items:center;gap:5px;font-size:13.5px;color:var(--muted)}
-.fcols ul a:hover{color:var(--accent)}
-.fcols ul a:hover::before{content:">";color:var(--accent)}
+.fcols ul a:hover{color:var(--text)}
 .fcols ul a .ic{width:13px;height:13px;opacity:.6}
 .fcols .about p{font-size:13px;color:var(--muted)}
 .discord-cta{display:flex;align-items:center;gap:12px;margin-top:16px;padding:11px 13px;border:1px solid rgba(139,151,255,.45);color:var(--text);transition:border-color .15s,background .15s}
@@ -88,18 +87,17 @@ a:hover>.count{color:inherit}
 .flangs a{display:block;padding:6px 7px;border:1px solid var(--line);transition:border-color .15s}
 .flangs a:hover{border-color:var(--line-2)}
 .flangs a[aria-current]{border-color:var(--accent)}
-.fbottom{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap;padding:18px 0;border-top:1px dashed var(--line);font-size:12.5px;color:var(--dim);position:relative;z-index:1}
+.fbottom{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap;padding:18px 0;border-top:1px solid var(--line);font-size:13px;color:var(--dim);position:relative;z-index:1}
 .made,.fb-right,.fb-right a{display:inline-flex;align-items:center;gap:8px}
 .fb-right{gap:18px}
 .fb-right a{color:var(--muted)}
 .fb-right a:hover{color:var(--accent)}
 .made .ic,.fb-right .ic{width:15px;height:15px}
 .totop{padding:5px 9px;border:1px solid var(--line)}
-/* Le nom du launcher en grandes lettres de blocs, tout en bas */
 .giant{
-  display:block;width:max-content;margin:14px auto -1.2em;font-size:clamp(5.5px,2.9vw,34px);line-height:1.2;font-weight:400;
-  color:var(--accent);opacity:.2;
-  -webkit-mask-image:linear-gradient(180deg,#000 30%,transparent 95%);mask-image:linear-gradient(180deg,#000 30%,transparent 95%);
+  font-family:var(--pix);font-weight:700;text-align:center;line-height:.78;user-select:none;pointer-events:none;
+  font-size:clamp(70px,19vw,270px);margin-bottom:-.07em;
+  background:linear-gradient(180deg,rgba(156,192,255,.16),rgba(156,192,255,0) 85%);-webkit-background-clip:text;background-clip:text;color:transparent;
 }
 
 /* En dessous, le menu burger prend le relais (les liens ne tiennent plus sur une ligne) */
@@ -121,6 +119,3 @@ a:hover>.count{color:inherit}
   .fbottom{flex-direction:column;align-items:flex-start}
 }
 
-/* Pages sans hero (article de doc, page légale, seed viewer, studio) : le texte commence tout en
-   haut, donc pas de paysage derrière lui, seulement le dégradé du ciel. */
-body:not(:has(.hero,.docs-hero,.tools-hero)) .page-sky .scene{display:none}
