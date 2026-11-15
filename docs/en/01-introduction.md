@@ -13,9 +13,12 @@ Mistly is a free launcher for **Minecraft: Java Edition** on Windows. It downloa
 - **Profiles.** Each profile has its own version, mod loader and game folder, while the heavy files stay shared. See [Profiles](/docs/profiles).
 - **Mods from Modrinth and CurseForge.** Search, install with their dependencies, enable or disable them. See [Mods, packs and shaders](/docs/mods-and-content).
 - **Modpacks.** Modrinth `.mrpack` and CurseForge modpacks become a ready-to-play profile. See [Modpacks](/docs/modpacks).
-- **Skin and capes.** Change them straight from the launcher, with a 3D preview. See [Skin and capes](/docs/skins).
+- **Skin and cosmetics.** Change your skin and capes straight from the launcher, on a 3D character. See [Skin and cosmetics](/docs/skins).
+- **Mistly Client.** An optional in-game client: HUD, zoom, wardrobe and cosmetics the other Mistly players see. See [Mistly Client](/docs/mistly-client).
+- **Horizon.** Play the unofficial Rust rewrite of Minecraft from the same launcher. See [Horizon](/docs/horizon).
+- **Game console.** The game's logs live, for one game or several at once. See [Game console](/docs/console).
 - **Texture pack editor** (experimental). Draw textures pixel by pixel and export a resource pack. See [Texture pack editor](/docs/texture-editor).
-- **Light.** The launcher itself uses very little memory, so the RAM goes to the game.
+- **Light.** The launcher itself uses very little memory, and steps aside while a game runs, so your PC works for the game.
 
 ## Requirements
 
@@ -27,13 +30,17 @@ Java does not need to be installed: Mistly downloads the Java version each Minec
 
 ## Languages
 
-The interface is available in English, French, Spanish, Italian and Russian. English is the default; change it in [Settings](/docs/settings), the change applies immediately.
+The interface is available in English, French, Spanish, Italian, Portuguese and Russian. English is the default; change it in [Settings](/docs/settings), the change applies immediately.
 
 ## What Mistly is not
 
 - **Not an official product.** Mistly is not affiliated with Mojang Studios or Microsoft.
 - **Not a way to get Minecraft for free.** Mistly ships no game files. To play online you need an account that owns the game.
 - **Not for macOS or Linux.** Mistly is a Windows application.
+
+## License
+
+Mistly's code is public under the [Misty License](https://github.com/Misty-MC/Misty-Launcher/blob/main/LICENSE.txt): free to use, modify, share and contribute to, but it may not be sold.
 
 ## Where to go next
 

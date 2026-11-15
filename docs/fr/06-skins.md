@@ -1,30 +1,48 @@
 +++
-title = "Skin et capes"
-description = "Change ton skin et équipe tes capes depuis le launcher, avec un aperçu en 3D."
+title = "Skin et cosmétiques"
+description = "Change ton skin, équipe tes capes et essaie les cosmétiques Mistly sur un personnage en 3D."
 section = "play"
 +++
 
-L'onglet **SKIN**, tout à droite de l'accueil, change le skin et la cape de ton compte Microsoft. Le changement s'applique partout où tu joues.
+L'onglet **Skin** montre ton personnage en 3D dans une grande tuile. Il change le skin et la cape de ton compte Microsoft, ainsi que les cosmétiques Mistly que tu portes en jeu.
 
 > [!NOTE]
-> Cet onglet nécessite un compte Microsoft. Sans compte, il affiche un Steve complet en 3D et propose de te connecter. Voir [Comptes](/docs/accounts).
+> Changer le skin ou une cape Mojang demande un compte Microsoft. Sans compte, l'onglet affiche un Steve en 3D et propose de te connecter. Voir [Comptes](/docs/accounts).
+
+## Le personnage en 3D
+
+- **Fais glisser** le personnage pour le tourner ; la **molette** zoome.
+- **Face / Profil / Dos** et **Rotation** changent la vue ; **Réinitialiser** ramène la vue de face.
+- **Survole** le personnage : les parties que tu peux changer s'éclairent en bleu, avec leur nom à côté du curseur. **Clique** sur l'une d'elles (la tête pour les chapeaux, la cape pour les capes, les ailes pour les ailes, ton pseudo au-dessus de la tête pour les tags) et la liste de ce qui peut y aller s'ouvre sur le côté, pendant que la caméra se tourne vers cette partie.
 
 ## Changer de skin
 
-1. Clique sur **Choisir un skin (PNG)…** et choisis ton fichier.
-2. Choisis le modèle de bras : **Classique (Steve)** ou **Fin (Alex)**.
-3. Vérifie l'aperçu, puis clique sur **Appliquer le skin**.
+1. Sur ta carte de joueur, choisis un fichier de skin (PNG). Le modèle de bras, **Classique** ou **Fin**, est détecté d'après le fichier ; tu peux le changer.
+2. Vérifie l'aperçu, puis clique sur **Appliquer**.
 
 Le skin doit être une image PNG de **64×64** ou **64×32** pixels.
 
-L'aperçu est un vrai modèle 3D : **fais-le glisser pour le tourner** et voir ta cape de dos.
+**Mes skins** garde les têtes des derniers skins que tu as portés ou essayés : clique sur l'une d'elles pour le retrouver, puis sur **Appliquer**.
 
 ## Capes
 
-Toutes les capes de ton compte s'affichent avec un aperçu. Un clic équipe une cape ; **Aucune** la retire. Le changement s'affiche tout de suite et est envoyé à Mojang juste après.
+Toutes les capes de ton compte Mojang sont affichées avec un aperçu. Un clic équipe une cape ; **Aucune** la retire. Le changement est envoyé à Mojang juste après et s'applique partout où tu joues.
 
-## Rapide, même hors connexion
+## Cosmétiques Mistly
 
-Ton skin et tes capes sont chargés en arrière-plan au démarrage de Mistly et gardés sur ton disque : l'onglet s'ouvre instantanément.
+Une case par cosmétique montre ce que tu portes :
 
-Quand Mojang limite le nombre de demandes, Mistly continue d'afficher ton dernier skin et tes capes connus, te prévient par un message, et revérifie tout seul dès que la limite est levée.
+| Case | Ce qui s'y met |
+|---|---|
+| Cape | La cape Mistly, ou la cape early player réservée aux premiers joueurs de Mistly |
+| Ailes | Les élytres Mistly |
+| Chapeau | Cloudly, un petit nuage qui flotte au-dessus de ta tête |
+| Tag | Le style de ton pseudo au-dessus de ta tête : **Classique** ou **Nuage** |
+
+Les cosmétiques Mistly ne sont visibles en jeu qu'avec [Mistly Client](/docs/mistly-client) : tu les vois, et les autres joueurs Mistly Client aussi. Un cosmétique équipé pendant que le jeu tourne apparaît tout de suite.
+
+## Rapide, même sans connexion
+
+Ton skin et tes capes sont chargés en arrière-plan au démarrage de Mistly et gardés sur ton disque : l'onglet s'ouvre instantanément. Le personnage 3D se met en pause quand le launcher est en arrière-plan ou qu'une partie tourne.
+
+Quand Mojang limite le nombre de demandes, Mistly continue d'afficher ton dernier skin et tes capes connus, te prévient par un message, et revérifie tout seul une fois la limite levée.

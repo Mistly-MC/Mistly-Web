@@ -7,25 +7,25 @@ section = "start"
 There are many ways to launch Minecraft: Java Edition. They don't all do the same job, so here is an honest comparison to help you pick the right one. Mistly doesn't try to replace a PvP client: it is a **light, general launcher** for every version and every mod loader.
 
 > [!NOTE]
-> This page compares what each launcher offers. Features change over time: if something here is out of date, tell us on [GitHub](https://github.com/Misty-MC/Misty/issues).
+> This page compares what each launcher offers. Features change over time: if something here is out of date, tell us on [GitHub](https://github.com/Misty-MC/Misty-Launcher/issues).
 
 ## At a glance
 
 | | Mistly | Lunar Client | Badlion Client | Horizon | Modrinth App | CurseForge app |
 |---|---|---|---|---|---|---|
-| **Kind** | General launcher | PvP client | PvP client | Rust reimplementation of the game + launcher | General launcher | General launcher |
+| **Kind** | General launcher, with an optional in-game client | PvP client | PvP client | Rust reimplementation of the game + launcher | General launcher | General launcher |
 | **Price** | Free | Free (paid cosmetics) | Free (paid cosmetics) | Free | Free (optional subscription) | Free |
-| **Open source** | Yes (MIT) | No | No | Not checked | Yes (GPL-3.0) | No |
+| **Open source** | Public code (Misty License, no resale) | No | No | Not checked | Yes (GPL-3.0) | No |
 | **Technology** | Rust + Slint (native) | Electron | Electron | Rust | Tauri (Rust + web UI) | Electron |
 | **Every Minecraft version** | Yes, down to alpha and indev | A chosen set of versions | A chosen set of versions | Its own versions | Yes | Yes |
 | **Forge, NeoForge, Fabric, Quilt** | Yes, plus OptiFine and LiteLoader | No (built-in mods) | No (built-in mods) | Not checked | Yes | Yes |
 | **Mods from Modrinth** | Yes | No | No | Yes | Yes | No |
 | **Mods from CurseForge** | Yes | No | No | Not checked | No | Yes |
-| **Modpacks** | Modrinth (.mrpack) and CurseForge | No | No | Import | Modrinth | CurseForge |
+| **Modpacks** | Modrinth (.mrpack) and CurseForge: install, import, update, export | No | No | Import | Modrinth | CurseForge |
 | **Microsoft account** | Yes, several | Yes | Yes | Yes | Yes | Yes |
 | **Offline accounts** | Yes | No | No | Yes | No | No |
 | **Texture pack editor** | Yes | No | No | No | No | No |
-| **Cosmetics** | Coming soon (Mistly cape and elytra to try) | Yes | Yes | No | No | No |
+| **Cosmetics** | Yes, with Mistly Client (cape, wings, hat, name tag) | Yes | Yes | No | No | No |
 | **Windows / macOS / Linux** | Windows | All three | Windows, macOS | Not checked | All three | All three |
 
 **In short:**
@@ -33,11 +33,11 @@ There are many ways to launch Minecraft: Java Edition. They don't all do the sam
 - You play **PvP on a few versions** and want built-in FPS mods: Lunar Client or Badlion Client.
 - You want **every version, every loader and mods from both Modrinth and CurseForge**, in a small native app with offline accounts: **Mistly**.
 - You only use **Modrinth** content: the Modrinth App is excellent. Only **CurseForge** modpacks: the CurseForge app.
-- You are curious about **another engine** for the game itself: Horizon reimplements Minecraft in Rust ([playhorizon.dev](https://playhorizon.dev)).
+- You are curious about **another engine** for the game itself: Horizon reimplements Minecraft in Rust ([playhorizon.dev](https://playhorizon.dev)). Mistly can [start its builds](/docs/horizon) too.
 
 ## Performance
 
-Measured on a **Ryzen 7 7435HS, 24 GB of RAM, Windows 10**, Mistly 0.3.4 (release build), on the home page, 15 seconds after launch. Average of 3 launches.
+Measured on a **Ryzen 7 7435HS, 24 GB of RAM, Windows 10**, with Mistly 0.3.4 (release build; later versions have not been measured again), on the home page, 15 seconds after launch. Average of 3 launches.
 
 | | Mistly |
 |---|---|

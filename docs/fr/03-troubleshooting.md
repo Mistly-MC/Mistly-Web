@@ -6,7 +6,7 @@ section = "help"
 
 ## La liste des versions ne se charge pas
 
-*Impossible de charger les versions* signifie que les serveurs de Mojang n'ont pas répondu. Vérifie ta connexion Internet, puis clique sur **Recharger la liste des versions** à côté de la liste.
+*Impossible de charger les versions* signifie que les serveurs de Mojang n'ont pas répondu. Vérifie ta connexion Internet, puis redémarre Mistly.
 
 ## Un mod loader n'apparaît pas
 
@@ -24,9 +24,18 @@ Mistly ne propose que les loaders qui existent pour la version choisie. NeoForge
 ## Le jeu ne démarre pas ou plante
 
 1. Regarde l'erreur affichée dans Mistly (*Échec du lancement*, *Échec du téléchargement*…).
-2. Ouvre le dossier du jeu et lis `logs\latest.log`, ou le fichier le plus récent de `crash-reports\`. Voir [Fichiers et dossiers](/docs/files-and-folders#les-journaux-du-jeu).
-3. Si tu utilises beaucoup de mods, augmente la mémoire dans les [Paramètres](/docs/settings).
-4. Désactive un par un les derniers mods ajoutés, depuis l'onglet **Contenu** du profil.
+2. Ouvre la [console](/docs/console) (la tuile **Logs**) : elle s'ouvre toute seule après un plantage. Filtre sur **Erreurs** pour trouver la ligne qui compte.
+3. Pour les fichiers complets, lis `logs\latest.log`, ou le fichier le plus récent de `crash-reports\`. Voir [Fichiers et dossiers](/docs/files-and-folders#les-journaux-du-jeu).
+4. Si tu utilises beaucoup de mods, augmente la mémoire dans les [Paramètres](/docs/settings).
+5. Désactive un par un les derniers mods ajoutés, depuis l'onglet **Contenu** du profil.
+
+## « Session invalide » en rejoignant un serveur
+
+La session Microsoft avait expiré. Mistly la renouvelle maintenant avant de lancer une partie ; si cela arrive encore, ferme le jeu et clique à nouveau sur **JOUER**.
+
+## Les téléchargements échouent
+
+Baisse **Téléchargements simultanés** dans **Paramètres → Ressources**, puis réessaie.
 
 ## La connexion Microsoft échoue
 
@@ -38,13 +47,17 @@ Certains fichiers ne peuvent pas être supprimés pendant que Minecraft tourne. 
 
 ## « Limite de requêtes atteinte »
 
-Mojang limite temporairement le nombre de demandes. Mistly affiche ton dernier skin et tes capes connus et réessaie tout seul. Voir [Skin et capes](/docs/skins).
+Mojang limite temporairement le nombre de demandes. Mistly affiche ton dernier skin et tes capes connus et réessaie tout seul. Voir [Skin et cosmétiques](/docs/skins).
+
+## Te faire aider
+
+Le plus rapide : dans la [console](/docs/console), clique sur **Envoyer les logs** et donne le code de rapport sur le [serveur Discord](https://discord.gg/rdQJUgvUh3).
 
 ## Signaler un bug
 
-Ouvre une issue sur [GitHub](https://github.com/Misty-MC/Misty/issues) avec :
+Ouvre une issue sur [GitHub](https://github.com/Misty-MC/Misty-Launcher/issues) avec :
 
-- la version de Mistly (Options → À propos) ;
+- la version de Mistly (Paramètres → Dépannage), ou le fichier créé par **Exporter les infos** ;
 - la version de Minecraft et le mod loader ;
 - ce que tu as fait, ce que tu attendais et ce qui s'est passé ;
 - `logs\latest.log` et, après un plantage, le rapport de `crash-reports\`.

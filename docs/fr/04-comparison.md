@@ -7,25 +7,25 @@ section = "start"
 Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font pas toutes le même travail : voici une comparaison honnête pour t'aider à choisir. Mistly ne cherche pas à remplacer un client PvP : c'est un **launcher général et léger**, pour toutes les versions et tous les mod loaders.
 
 > [!NOTE]
-> Cette page compare ce que propose chaque launcher. Les fonctionnalités évoluent : si une information n'est plus à jour, dis-le-nous sur [GitHub](https://github.com/Misty-MC/Misty/issues).
+> Cette page compare ce que propose chaque launcher. Les fonctionnalités évoluent : si une information n'est plus à jour, dis-le-nous sur [GitHub](https://github.com/Misty-MC/Misty-Launcher/issues).
 
 ## En un coup d'œil
 
 | | Mistly | Lunar Client | Badlion Client | Horizon | Modrinth App | App CurseForge |
 |---|---|---|---|---|---|---|
-| **Type** | Launcher général | Client PvP | Client PvP | Réécriture du jeu en Rust + launcher | Launcher général | Launcher général |
+| **Type** | Launcher général, avec un client en jeu facultatif | Client PvP | Client PvP | Réécriture du jeu en Rust + launcher | Launcher général | Launcher général |
 | **Prix** | Gratuit | Gratuit (cosmétiques payants) | Gratuit (cosmétiques payants) | Gratuit | Gratuit (abonnement facultatif) | Gratuit |
-| **Open source** | Oui (MIT) | Non | Non | Non vérifié | Oui (GPL-3.0) | Non |
+| **Open source** | Code public (licence Misty, revente interdite) | Non | Non | Non vérifié | Oui (GPL-3.0) | Non |
 | **Technologie** | Rust + Slint (natif) | Electron | Electron | Rust | Tauri (Rust + interface web) | Electron |
 | **Toutes les versions de Minecraft** | Oui, jusqu'aux alphas et à l'indev | Une sélection de versions | Une sélection de versions | Ses propres versions | Oui | Oui |
 | **Forge, NeoForge, Fabric, Quilt** | Oui, plus OptiFine et LiteLoader | Non (mods intégrés) | Non (mods intégrés) | Non vérifié | Oui | Oui |
 | **Mods de Modrinth** | Oui | Non | Non | Oui | Oui | Non |
 | **Mods de CurseForge** | Oui | Non | Non | Non vérifié | Non | Oui |
-| **Modpacks** | Modrinth (.mrpack) et CurseForge | Non | Non | Import | Modrinth | CurseForge |
+| **Modpacks** | Modrinth (.mrpack) et CurseForge : installer, importer, mettre à jour, exporter | Non | Non | Import | Modrinth | CurseForge |
 | **Compte Microsoft** | Oui, plusieurs | Oui | Oui | Oui | Oui | Oui |
 | **Comptes hors-ligne** | Oui | Non | Non | Oui | Non | Non |
 | **Éditeur de packs de textures** | Oui | Non | Non | Non | Non | Non |
-| **Cosmétiques** | Bientôt (cape et élytres Mistly à essayer) | Oui | Oui | Non | Non | Non |
+| **Cosmétiques** | Oui, avec Mistly Client (cape, ailes, chapeau, tag) | Oui | Oui | Non | Non | Non |
 | **Windows / macOS / Linux** | Windows | Les trois | Windows, macOS | Non vérifié | Les trois | Les trois |
 
 **En résumé :**
@@ -33,11 +33,11 @@ Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font 
 - Tu joues en **PvP sur quelques versions** et tu veux des mods FPS intégrés : Lunar Client ou Badlion Client.
 - Tu veux **toutes les versions, tous les loaders et les mods de Modrinth comme de CurseForge**, dans une petite app native avec des comptes hors-ligne : **Mistly**.
 - Tu n'utilises que **Modrinth** : la Modrinth App est excellente. Seulement des modpacks **CurseForge** : l'app CurseForge.
-- Tu es curieux d'un **autre moteur** pour le jeu lui-même : Horizon réécrit Minecraft en Rust ([playhorizon.dev](https://playhorizon.dev)).
+- Tu es curieux d'un **autre moteur** pour le jeu lui-même : Horizon réécrit Minecraft en Rust ([playhorizon.dev](https://playhorizon.dev)). Mistly sait aussi [lancer ses builds](/docs/horizon).
 
 ## Performances
 
-Mesuré sur un **Ryzen 7 7435HS, 24 Go de RAM, Windows 10**, Mistly 0.3.4 (version release), sur l'accueil, 15 secondes après le lancement. Moyenne de 3 lancements.
+Mesuré sur un **Ryzen 7 7435HS, 24 Go de RAM, Windows 10**, avec Mistly 0.3.4 (version release ; les versions suivantes n'ont pas été remesurées), sur l'accueil, 15 secondes après le lancement. Moyenne de 3 lancements.
 
 | | Mistly |
 |---|---|

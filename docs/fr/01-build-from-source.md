@@ -4,7 +4,7 @@ description = "Compiler le launcher, lancer ses tests, publier une release et s'
 section = "dev"
 +++
 
-Mistly est open source, sous licence MIT. Le code est sur [GitHub](https://github.com/Misty-MC/Misty) ; le projet Rust est dans le dossier `misty-rust`.
+Le code de Mistly est public, sous la [licence Misty](https://github.com/Misty-MC/Misty-Launcher/blob/main/LICENSE.txt) : libre de l'utiliser, de le modifier, de le partager et d'y contribuer, mais il ne peut pas être vendu. Le code est sur [GitHub](https://github.com/Misty-MC/Misty-Launcher) ; le projet Rust est dans le dossier `misty-rust`.
 
 ## Prérequis
 
@@ -56,12 +56,14 @@ cargo test -- --ignored --nocapture
 | Dossier | Rôle |
 |---|---|
 | `misty-rust/ui/` | L'interface Slint : thème, composants et un fichier par page |
+| `misty-rust/misty-ui/` | Le crate qui compile l'interface Slint, à part pour que les modifications en Rust recompilent vite |
 | `misty-rust/src/ui/` | Le code derrière chaque page |
 | `misty-rust/src/minecraft/` | Installation et lancement du jeu : versions, Java, mod loaders |
 | `misty-rust/src/services/` | La logique : réglages, comptes, profils, contenu, clients Modrinth et CurseForge, mises à jour… |
-| `misty-rust/lang/` | Traductions (`en.json`, `fr.json`, `es.json`, `it.json`, `ru.json`), intégrées à l'exe |
+| `misty-rust/lang/` | Traductions (`en.json`, `fr.json`, `es.json`, `it.json`, `pt.json`, `ru.json`), intégrées à l'exe |
+| `misty-client/` | Mistly Client, le mod Fabric en jeu (un sous-module), utilisé par les tests |
 | `installer/` | Script de release et installeur Inno Setup |
 
 ## Contribuer
 
-Les signalements de bugs et les pull requests sont les bienvenus sur [GitHub](https://github.com/Misty-MC/Misty). Pour améliorer cette documentation, utilise le lien **Modifier cette page sur GitHub** en bas de chaque page : la doc se trouve dans le dépôt [Misty-Web](https://github.com/Misty-MC/Misty-Web), dans `docs/<langue>/`.
+Les signalements de bugs et les pull requests sont les bienvenus sur [GitHub](https://github.com/Misty-MC/Misty-Launcher). Pour améliorer cette documentation, utilise le lien **Modifier cette page sur GitHub** en bas de chaque page : la doc se trouve dans le dépôt [Misty-Web](https://github.com/Misty-MC/Misty-Web), dans `docs/<langue>/`.

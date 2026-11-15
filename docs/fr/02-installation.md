@@ -4,7 +4,7 @@ description = "Installeur ou version portable : comment installer Mistly, où il
 section = "start"
 +++
 
-Mistly existe sous deux formes, disponibles sur la [page de téléchargement](/#download) et dans les [releases GitHub](https://github.com/Misty-MC/Misty/releases). Les deux se mettent à jour toutes seules.
+Mistly existe sous deux formes, disponibles sur la [page de téléchargement](/#download) et dans les [releases GitHub](https://github.com/Misty-MC/Misty-Launcher/releases). Les deux se mettent à jour toutes seules.
 
 ## Installeur (recommandé)
 
@@ -17,6 +17,9 @@ Ce que fait l'installeur :
 - il installe Mistly dans `%LOCALAPPDATA%\Programs\Misty`, **sans droits administrateur** ;
 - il ajoute un raccourci dans le menu Démarrer (et sur le bureau si tu l'as demandé) ;
 - il inscrit Mistly dans les **Applications installées** de Windows, pour une désinstallation propre.
+
+> [!NOTE]
+> `Misty.exe` et l'installeur sont signés, mais avec un certificat auto-signé pour l'instant : Windows SmartScreen peut encore afficher un avertissement la première fois.
 
 ## Version portable
 
@@ -38,7 +41,7 @@ Rien n'est installé dans Windows. Les données du jeu vont quand même dans `%L
 - **Installeur :** désinstalle Mistly depuis **Paramètres → Applications → Applications installées** dans Windows. Tes données de jeu (versions, profils, mondes) sont gardées, sauf si tu demandes leur suppression.
 - **Portable :** supprime le dossier extrait.
 
-Pour effacer aussi **toutes** les données de jeu, utilise **Tout supprimer** dans la carte Stockage des [Paramètres](/docs/settings) avant de désinstaller, ou supprime toi-même `%LOCALAPPDATA%\Misty`.
+Pour effacer aussi **toutes** les données de jeu, utilise **Tout supprimer** dans **Paramètres → Ressources** avant de désinstaller, ou supprime toi-même `%LOCALAPPDATA%\Misty`.
 
 > [!WARNING]
 > Supprimer le dossier de données supprime aussi les mondes de tous les profils. Sauvegarde d'abord les dossiers `saves` que tu veux garder.

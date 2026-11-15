@@ -6,7 +6,7 @@ section = "help"
 
 ## The version list doesn't load
 
-*Could not load versions* means Mojang's servers could not be reached. Check your Internet connection, then click **Reload the version list** next to the list.
+*Could not load versions* means Mojang's servers could not be reached. Check your Internet connection, then restart Mistly.
 
 ## A mod loader is missing
 
@@ -24,9 +24,18 @@ Mistly only offers the loaders that exist for the chosen version. NeoForge start
 ## The game doesn't start or crashes
 
 1. Check the error shown in Mistly (*Launch failed*, *Download failed*…).
-2. Open the game folder and read `logs\latest.log`, or the newest file in `crash-reports\`. See [Files and folders](/docs/files-and-folders#game-logs).
-3. If you use many mods, raise the memory in [Settings](/docs/settings).
-4. Disable the most recently added mods one by one from the profile's **Content** tab.
+2. Open the [console](/docs/console) (the **Logs** tile): it opens on its own after a crash. Filter on **Errors** to find the line that matters.
+3. For the full files, read `logs\latest.log`, or the newest file in `crash-reports\`. See [Files and folders](/docs/files-and-folders#game-logs).
+4. If you use many mods, raise the memory in [Settings](/docs/settings).
+5. Disable the most recently added mods one by one from the profile's **Content** tab.
+
+## "Invalid session" when joining a server
+
+The Microsoft session had expired. Mistly now renews it before a game starts; if it still happens, close the game and click **PLAY** again.
+
+## Downloads fail
+
+Lower **Simultaneous downloads** in **Settings → Resources**, then try again.
 
 ## Microsoft sign-in fails
 
@@ -38,13 +47,17 @@ Some files cannot be deleted while Minecraft is open. Close the game, then try a
 
 ## "Request limit reached"
 
-Mojang temporarily limits the number of requests. Mistly shows your last known skin and capes and retries by itself. See [Skin and capes](/docs/skins).
+Mojang temporarily limits the number of requests. Mistly shows your last known skin and capes and retries by itself. See [Skin and cosmetics](/docs/skins).
+
+## Get help
+
+The quickest way: in the [console](/docs/console), click **Send logs** and share the report code on the [Discord server](https://discord.gg/rdQJUgvUh3).
 
 ## Report a bug
 
-Open an issue on [GitHub](https://github.com/Misty-MC/Misty/issues) with:
+Open an issue on [GitHub](https://github.com/Misty-MC/Misty-Launcher/issues) with:
 
-- the Mistly version (Settings → About);
+- the Mistly version (Settings → Troubleshooting), or the file made by **Export debug info**;
 - the Minecraft version and the mod loader;
 - what you did, what you expected and what happened;
 - `logs\latest.log` and, after a crash, the report from `crash-reports\`.

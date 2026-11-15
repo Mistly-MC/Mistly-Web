@@ -4,20 +4,22 @@ description = "Sign in with one or several Microsoft accounts, or play with offl
 section = "play"
 +++
 
-Mistly supports two kinds of accounts. You pick the one to play with in the **Account** list of the home page.
+Mistly supports two kinds of accounts. At the [first launch](/docs/first-launch) you choose between **Premium** (Microsoft) and **Offline**; afterwards, both kinds sit in a single list, opened from your account at the bottom right of the window.
 
 ## Microsoft accounts
 
-A Microsoft account that owns **Minecraft: Java Edition** is needed to join online servers, and to change your [skin and capes](/docs/skins).
+A Microsoft account that owns **Minecraft: Java Edition** is needed to join online servers, to change your [skin and capes](/docs/skins) and to be seen by the other [Mistly Client](/docs/mistly-client) players.
 
-1. On the home page, open the **Account** list and choose **Sign in with a Microsoft account** (or use the Microsoft account card in [Settings](/docs/settings)).
+1. Open the account list and choose to add a Microsoft account (or use **Settings → Accounts**).
 2. A Microsoft sign-in window opens. Sign in as you would on the web.
 3. Once signed in, the account shows in the list with your skin's head.
 
-You can add **several Microsoft accounts** and switch between them from the home page or from the settings. **Forget this account** removes one account without touching the others.
+You can add **several Microsoft accounts** and switch between them. **Forget this account** removes one account without touching the others.
 
 > [!NOTE]
 > **Full sign-out** also forgets the account cached on this PC. Use it on a shared computer.
+
+If the launcher stays open for a long time, Mistly renews the Microsoft session before a game starts, so joining a server does not fail with *Invalid session*.
 
 ### When sign-in fails
 
@@ -31,12 +33,14 @@ You can add **several Microsoft accounts** and switch between them from the home
 
 ## Offline accounts
 
-Offline accounts are usernames you can play with without a Microsoft account. Manage them in the **Offline accounts** card of [Settings](/docs/settings): type a username and click **Add**.
-
-At the first launch, Mistly creates an offline account called *Mistly*.
+Offline accounts are usernames you can play with without a Microsoft account. Add them in **Settings → Accounts**: type a username and click **Add**. They show right away in the account list.
 
 > [!WARNING]
-> Servers that check accounts (most public servers) refuse offline accounts. Offline accounts are meant for single player and for servers that accept them.
+> Servers that check accounts (most public servers) refuse offline accounts. Offline accounts are meant for single player, LAN worlds and servers that accept them.
+
+## Several games, several accounts
+
+Each game keeps the account that was selected when you clicked **PLAY**, even if you switch accounts while it downloads. Pick an account, play, pick another one, play again: both games run side by side.
 
 ## Where accounts are stored
 

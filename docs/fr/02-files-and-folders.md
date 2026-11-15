@@ -6,15 +6,16 @@ section = "help"
 
 ## Le dossier de données
 
-Tout ce que Mistly télécharge ou crée va dans **`%LOCALAPPDATA%\Misty`**. Colle ce chemin dans la barre d'adresse de l'Explorateur Windows pour l'ouvrir, ou utilise **Ouvrir le dossier du jeu** dans la barre latérale.
+Tout ce que Mistly télécharge ou crée va dans **`%LOCALAPPDATA%\Misty`**. Colle ce chemin dans la barre d'adresse de l'Explorateur Windows pour l'ouvrir, ou utilise **Paramètres → Ressources → Dossier de Mistly**.
 
 | Fichier / dossier | Contenu |
 |---|---|
-| `data.txt` | Réglages : dernier compte et dernière version, RAM, langue, versions affichées, Rich Presence, dernier profil… |
+| `data.txt` | Réglages : dernier compte et dernière version, RAM, langue, thème, Rich Presence, dernier profil… |
 | `listpseudo.txt` | Comptes hors-ligne |
 | `msa.json` | Comptes Microsoft connectés |
 | `instances\<id>\` | Un dossier par [profil](/docs/profiles) |
 | `versions\`, `libraries\`, `assets\`, Java | L'installation de Minecraft, partagée par tous les profils |
+| `logs\misty\` | Le journal de Mistly (`launcher.log`) et un fichier de log pour chacune des 10 dernières parties |
 
 ## Le dossier d'un profil
 
@@ -38,11 +39,13 @@ Minecraft écrit ses journaux dans le dossier de jeu utilisé (celui du profil, 
 - `logs\latest.log` : le journal de la dernière partie ;
 - `crash-reports\` : un rapport par plantage.
 
+Mistly garde aussi ses propres copies dans `logs\misty\` du dossier de données. **Paramètres → Dépannage** ouvre les deux dossiers, et la [console](/docs/console) affiche les logs en direct.
+
 Joins ces fichiers quand tu [signales un problème](/docs/troubleshooting#signaler-un-bug).
 
 ## Le dossier de l'application
 
-- Installeur : `%LOCALAPPDATA%\Programs\Misty\Misty-<version>\Misty.exe`
+- Installeur : `%LOCALAPPDATA%\Programs\Misty\`, avec un dossier `Misty-<version>` par version installée et, à côté, un `Misty.exe` qui lance la plus récente. Les raccourcis pointent vers ce `Misty.exe` : ils survivent donc aux mises à jour.
 - Portable : là où tu as extrait le zip.
 
 > [!TIP]

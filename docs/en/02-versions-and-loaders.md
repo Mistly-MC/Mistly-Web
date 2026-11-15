@@ -1,18 +1,18 @@
 +++
 title = "Versions and mod loaders"
-description = "Which Minecraft versions Mistly shows, and which mod loaders it offers for each of them."
+description = "The version picker, which Minecraft versions Mistly shows, and which mod loaders it offers for each of them."
 section = "play"
 +++
 
-## Minecraft versions
+## The version picker
 
-Mistly lists the versions published by Mojang. **Releases** are always shown. The other types can be turned on in the **Shown versions** card of [Settings](/docs/settings):
+Click the version tile in the bottom bar to open the picker in the middle of the window (click it again to close it).
 
-- **Snapshots**: test versions of the next release;
-- **Betas**;
-- **Alphas and Indev**: the very first versions of the game.
+- On the left, one **poster per update** (1.21 Tricky Trials, 1.20 Trails & Tales, 26.x…), each with its pixel-art picture.
+- On the right, the chosen update with its **versions** and the **mod loaders** available for the version you select.
+- A single button says what you are about to pick, for example **Choose 1.21.4 · Fabric**. Nothing changes until you click it.
 
-If the list could not be loaded (no connection, for example), use the **Reload the version list** button next to it.
+At the top, a **search bar** finds a version quickly, and filters choose what is listed: **Releases**, **Snapshots** (test versions of the next release), **Betas**, **Alphas** (the very first versions of the game), plus [Mistly Client](/docs/mistly-client) and [Horizon](/docs/horizon), which are picked the same way.
 
 ## Mod loaders
 
@@ -23,11 +23,11 @@ A mod loader is what lets Minecraft load mods. When you pick a version, Mistly a
 | Forge | 1.7.10 and later | The historical loader, a huge mod library. |
 | NeoForge | 1.20.1 and later | Fork of Forge for recent versions. |
 | Fabric | 1.14 and later | Light and quick to update. |
-| Quilt | 1.14 and later | Fork of Fabric, also loads most Fabric mods. |
+| Quilt | 1.14 and later | Fork of Fabric; Quilt profiles also load Fabric mods. |
 | OptiFine | 1.7.2 and later | Performance and shaders. Does not install other mods. |
 | LiteLoader | 1.5.2 to 1.12.2 | For older versions. |
 
-These ranges are a first filter: a loader may still be missing for a given version if it was never released for it.
+These ranges are a first filter: a loader may still be missing for a given version if it was never released for it. For Quilt, Mistly picks the latest stable loader and skips beta builds.
 
 > [!NOTE]
 > Mods can only be installed on a profile with a mod loader (Forge, NeoForge, Fabric, Quilt or LiteLoader). Vanilla and OptiFine profiles accept resource packs, datapacks and, for OptiFine, shaders.
@@ -44,4 +44,4 @@ When the required mod is missing, Mistly offers to install it with the shader.
 
 ## What gets downloaded
 
-The first launch of a version downloads the game, its libraries and assets, and the Java version it needs. The loader is installed on top. Everything is shared between profiles, so each version is downloaded only once.
+The first launch of a version downloads the game, its libraries and assets, and the Java version it needs. The loader is installed on top. Everything is shared between profiles, so each version is downloaded only once. A **Cancel** tile stops a download in progress.

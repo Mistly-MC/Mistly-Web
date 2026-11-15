@@ -4,7 +4,7 @@ description = "Compile the launcher, run its tests, publish a release, and find 
 section = "dev"
 +++
 
-Mistly is open source under the MIT license. The code is on [GitHub](https://github.com/Misty-MC/Misty); the Rust project is in the `misty-rust` folder.
+Mistly's code is public under the [Misty License](https://github.com/Misty-MC/Misty-Launcher/blob/main/LICENSE.txt): free to use, modify, share and contribute to, but it may not be sold. The code is on [GitHub](https://github.com/Misty-MC/Misty-Launcher); the Rust project is in the `misty-rust` folder.
 
 ## Requirements
 
@@ -56,12 +56,14 @@ cargo test -- --ignored --nocapture
 | Folder | Role |
 |---|---|
 | `misty-rust/ui/` | The Slint interface: theme, widgets and one file per page |
+| `misty-rust/misty-ui/` | The crate that compiles the Slint interface, kept apart so Rust edits rebuild fast |
 | `misty-rust/src/ui/` | The code behind each page |
 | `misty-rust/src/minecraft/` | Game installation and launch: versions, Java, mod loaders |
 | `misty-rust/src/services/` | The logic: settings, accounts, profiles, content, Modrinth and CurseForge clients, updates… |
-| `misty-rust/lang/` | Translations (`en.json`, `fr.json`, `es.json`, `it.json`, `ru.json`), embedded in the exe |
+| `misty-rust/lang/` | Translations (`en.json`, `fr.json`, `es.json`, `it.json`, `pt.json`, `ru.json`), embedded in the exe |
+| `misty-client/` | Mistly Client, the in-game Fabric mod (a submodule), used by the tests |
 | `installer/` | Release script and Inno Setup installer |
 
 ## Contribute
 
-Bug reports and pull requests are welcome on [GitHub](https://github.com/Misty-MC/Misty). To improve this documentation, use the **Edit this page on GitHub** link at the bottom of each page: the docs live in the [Misty-Web](https://github.com/Misty-MC/Misty-Web) repository, in `docs/<language>/`.
+Bug reports and pull requests are welcome on [GitHub](https://github.com/Misty-MC/Misty-Launcher). To improve this documentation, use the **Edit this page on GitHub** link at the bottom of each page: the docs live in the [Misty-Web](https://github.com/Misty-MC/Misty-Web) repository, in `docs/<language>/`.

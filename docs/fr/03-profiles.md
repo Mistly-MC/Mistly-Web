@@ -4,41 +4,45 @@ description = "Un profil par façon de jouer : sa version, son mod loader, ses m
 section = "play"
 +++
 
-Un profil est une installation de Minecraft séparée, comme une instance dans d'autres launchers. Chaque profil a :
+Un profil est une installation de Minecraft à part, comme une instance dans d'autres launchers. Chaque profil a :
 
-- sa propre **version** et son propre **mod loader** ;
-- son propre **dossier de jeu** : `mods`, `resourcepacks`, `shaderpacks`, `saves` (mondes) et options.
+- sa propre **version** et son **mod loader** ;
+- son propre **dossier de jeu** : `mods`, `resourcepacks`, `shaderpacks`, `saves` (les mondes) et les options.
 
-Les versions, bibliothèques et ressources restent **partagées** entre les profils : rien n'est téléchargé deux fois.
+Les versions, les bibliothèques et les ressources restent **partagées** entre les profils : rien n'est téléchargé deux fois. Par défaut, ta **liste de serveurs et tes barres d'objets enregistrées** sont partagées aussi : un serveur ajouté une fois apparaît dans tous les profils (désactivable dans les [Paramètres](/docs/settings#comportement)).
 
 ## Créer un profil
 
-1. Ouvre **Profils, mods et modpacks** dans la barre latérale.
+1. Ouvre l'onglet **Profils**.
 2. Clique sur **Nouveau profil**.
 3. Donne-lui un nom, choisis la version et le mod loader.
 4. Clique sur **Créer le profil**.
 
-Pour partir d'un ensemble de mods tout prêt, utilise plutôt **Installer un modpack**. Voir [Modpacks](/docs/modpacks).
+Pour partir d'un ensemble de mods tout prêt, utilise plutôt **Installer un modpack** ou **Importer un modpack**. Voir [Modpacks](/docs/modpacks).
+
+## Les cartes de profil
+
+L'onglet Profils affiche tes profils en cartes, avec l'image de leur version de Minecraft, leur version, leur mod loader et une étiquette **Modpack** quand ils viennent d'un modpack. Les filtres du haut ne gardent qu'un mod loader.
+
+En bas de chaque carte : la date de la dernière partie, et **Jouer**, **Gérer** et **Supprimer**.
 
 ## Jouer avec un profil
 
-Choisis le profil dans la liste **Profil** de l'accueil, puis clique sur **Jouer**. *Jeu rapide* utilise le dossier de jeu commun, sans profil.
-
-La liste des profils indique quand chacun a été lancé pour la dernière fois (*Joué aujourd'hui*, *Joué hier*…).
+Clique sur le profil dans la colonne de gauche de la fenêtre (ou sur **Jouer** sur sa carte), puis sur **JOUER**. *Jeu rapide* utilise le dossier de jeu commun, sans profil.
 
 ## Gérer un profil
 
-Ouvre un profil depuis la liste pour :
+**Gérer** ouvre le profil :
 
 - voir et gérer son **Contenu**, ou **Découvrir** de nouveaux mods, packs et shaders. Voir [Mods, packs et shaders](/docs/mods-and-content) ;
-- le **Renommer** ou **Changer son icône** ;
-- **Ouvrir le dossier du profil** dans l'Explorateur Windows.
-
-Pour supprimer un profil, utilise le bouton de suppression dans la liste des profils.
+- cocher **Mistly Client** pour ajouter le client en jeu au profil (profils Fabric d'une version compatible). Voir [Mistly Client](/docs/mistly-client) ;
+- le **renommer** ou **changer son icône** ;
+- **Exporter le modpack** pour le partager. Voir [Modpacks](/docs/modpacks#exporter-un-profil) ;
+- **ouvrir le dossier du profil** dans l'Explorateur Windows.
 
 > [!WARNING]
-> Supprimer un profil efface définitivement ses mods, packs, mondes et options.
+> Supprimer un profil efface définitivement ses mods, ses packs, ses mondes et ses réglages.
 
 ## Où sont les profils
 
-Chaque profil est un dossier de `%LOCALAPPDATA%\Misty\instances\`. Voir [Fichiers et dossiers](/docs/files-and-folders).
+Chaque profil est un dossier dans `%LOCALAPPDATA%\Misty\instances\`. Voir [Fichiers et dossiers](/docs/files-and-folders).

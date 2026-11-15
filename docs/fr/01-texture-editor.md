@@ -7,16 +7,21 @@ section = "tools"
 > [!WARNING]
 > L'éditeur de packs de textures est **expérimental** : des bugs peuvent apparaître.
 
-Ouvre **Packs de textures** dans la barre latérale pour voir tes packs, les éditer, les exporter ou les supprimer.
+Ouvre l'onglet **Packs de textures** pour voir tes packs en cartes, avec les textures que tu as modifiées. **Éditer**, **Exporter**, **Ouvrir le dossier** et **Supprimer** sont en bas de chaque carte.
 
 ## Créer un pack
 
-1. Clique sur **Créer un pack**.
+1. Clique sur **Créer**.
 2. Donne-lui un **nom** et une **description**.
-3. Choisis la **version de Minecraft** visée. Les packs de ressources existent depuis la 1.6.1.
+3. Choisis la **version de Minecraft** visée, de la 1.0 à la plus récente.
 4. Clique sur **Créer le pack**.
 
 Les textures d'origine de cette version sont téléchargées **une seule fois**, puis réutilisées pour tous les packs de la même version.
+
+## Partir d'un pack existant
+
+- **Importer un .zip** ouvre un pack de ressources que tu as déjà, pour le modifier.
+- **Parcourir** cherche des packs de ressources sur Modrinth et CurseForge et importe celui que tu choisis dans tes packs, prêt à être modifié.
 
 ## Modifier les textures
 
@@ -57,4 +62,4 @@ Dans l'éditeur, **Changer l'icône du pack** définit l'image affichée dans la
 2. Place le zip dans le dossier `resourcepacks` d'un [profil](/docs/profiles).
 3. Dans Minecraft, active-le dans **Options → Packs de ressources**.
 
-Mistly écrit le bon `pack_format` pour la version, y compris pour les versions très anciennes et très récentes.
+Mistly écrit le bon `pack_format` pour la version, y compris pour les plus récentes. Pour Minecraft 1.0 à 1.5.2, d'avant les packs de ressources, le zip suit l'ancienne organisation des packs de textures (textures à la racine, description dans `pack.txt`).

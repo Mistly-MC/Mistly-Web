@@ -4,7 +4,7 @@ description = "Installer or portable version: how to install Mistly, where it go
 section = "start"
 +++
 
-Mistly comes in two forms, both available on the [download page](/#download) and in the [GitHub releases](https://github.com/Misty-MC/Misty/releases). Both update themselves.
+Mistly comes in two forms, both available on the [download page](/#download) and in the [GitHub releases](https://github.com/Misty-MC/Misty-Launcher/releases). Both update themselves.
 
 ## Installer (recommended)
 
@@ -17,6 +17,9 @@ What the installer does:
 - installs Mistly in `%LOCALAPPDATA%\Programs\Misty`, **without administrator rights**;
 - adds a Start menu shortcut (and a desktop one if you asked for it);
 - registers Mistly in Windows' **Installed apps**, so you can uninstall it cleanly.
+
+> [!NOTE]
+> `Misty.exe` and the installer are signed, but with a self-signed certificate for now: Windows SmartScreen may still show a warning the first time.
 
 ## Portable version
 
@@ -38,7 +41,7 @@ Nothing is installed in Windows. The game data still goes to `%LOCALAPPDATA%\Mis
 - **Installer:** uninstall Mistly from **Settings → Apps → Installed apps** in Windows. Your game data (versions, profiles, worlds) is kept unless you ask for it to be deleted.
 - **Portable:** delete the extracted folder.
 
-To erase **all** game data as well, use **Delete everything** in the Storage card of [Settings](/docs/settings) before uninstalling, or delete `%LOCALAPPDATA%\Misty` yourself.
+To erase **all** game data as well, use **Delete everything** in **Settings → Resources** before uninstalling, or delete `%LOCALAPPDATA%\Misty` yourself.
 
 > [!WARNING]
 > Deleting the data folder also deletes the worlds of every profile. Back up the `saves` folders you want to keep first.

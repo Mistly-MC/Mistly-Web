@@ -28,12 +28,12 @@ Les shaders ont besoin d'OptiFine, ou du mod Iris (Fabric, NeoForge) ou Oculus (
 
 ## Contenu
 
-L'onglet **Contenu** liste tout ce qui est installé dans le profil, avec un filtre par type et un champ de recherche. Pour chaque élément, tu peux :
+L'onglet **Contenu** liste tout ce qui est installé dans le profil, avec un champ de recherche et des filtres par type qui indiquent combien d'éléments chacun contient, par exemple *Mods (12)*. Pour chaque élément, tu peux :
 
 - l'**activer ou le désactiver** : le fichier est renommé avec l'extension `.disabled` et le jeu l'ignore ;
 - le **supprimer**.
 
-Les fichiers que tu as ajoutés à la main dans les dossiers sont aussi identifiés, grâce à leur hash sur Modrinth ou leur empreinte sur CurseForge : ils s'affichent avec leur vrai nom.
+Les fichiers que tu as ajoutés à la main dans les dossiers apparaissent tout de suite, sans rouvrir le profil. Ils sont aussi identifiés, grâce à leur hash sur Modrinth ou leur empreinte sur CurseForge : ils s'affichent avec leur vrai nom.
 
 ## CurseForge
 
