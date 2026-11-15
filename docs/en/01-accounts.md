@@ -4,7 +4,7 @@ description = "Sign in with one or several Microsoft accounts, or play with offl
 section = "play"
 +++
 
-Misty supports two kinds of accounts. You pick the one to play with in the **Account** list of the home page.
+Mistly supports two kinds of accounts. You pick the one to play with in the **Account** list of the home page.
 
 ## Microsoft accounts
 
@@ -33,7 +33,7 @@ You can add **several Microsoft accounts** and switch between them from the home
 
 Offline accounts are usernames you can play with without a Microsoft account. Manage them in the **Offline accounts** card of [Settings](/docs/settings): type a username and click **Add**.
 
-At the first launch, Misty creates an offline account called *Misty*.
+At the first launch, Mistly creates an offline account called *Mistly*.
 
 > [!WARNING]
 > Servers that check accounts (most public servers) refuse offline accounts. Offline accounts are meant for single player and for servers that accept them.

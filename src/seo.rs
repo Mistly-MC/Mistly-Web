@@ -23,7 +23,7 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
     let org = json!({
         "@type": "Organization",
         "@id": format!("{site}/#organization"),
-        "name": "Misty-MC",
+        "name": "Mistly MC",
         "alternateName": "Mistly MC",
         "url": format!("{site}/"),
         "logo": format!("{site}/assets/icone.png"),

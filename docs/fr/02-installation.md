@@ -1,22 +1,22 @@
 +++
 title = "Installation"
-description = "Installeur ou version portable : comment installer Misty, où il s'installe et comment le désinstaller."
+description = "Installeur ou version portable : comment installer Mistly, où il s'installe et comment le désinstaller."
 section = "start"
 +++
 
-Misty existe sous deux formes, disponibles sur la [page de téléchargement](/#download) et dans les [releases GitHub](https://github.com/Misty-MC/Misty/releases). Les deux se mettent à jour toutes seules.
+Mistly existe sous deux formes, disponibles sur la [page de téléchargement](/#download) et dans les [releases GitHub](https://github.com/Misty-MC/Misty/releases). Les deux se mettent à jour toutes seules.
 
 ## Installeur (recommandé)
 
 1. Télécharge `Misty-Setup-<version>.exe`.
 2. Lance-le et suis les étapes. Tu peux choisir d'ajouter un raccourci sur le bureau.
-3. Démarre Misty depuis le menu Démarrer.
+3. Démarre Mistly depuis le menu Démarrer.
 
 Ce que fait l'installeur :
 
-- il installe Misty dans `%LOCALAPPDATA%\Programs\Misty`, **sans droits administrateur** ;
+- il installe Mistly dans `%LOCALAPPDATA%\Programs\Misty`, **sans droits administrateur** ;
 - il ajoute un raccourci dans le menu Démarrer (et sur le bureau si tu l'as demandé) ;
-- il inscrit Misty dans les **Applications installées** de Windows, pour une désinstallation propre.
+- il inscrit Mistly dans les **Applications installées** de Windows, pour une désinstallation propre.
 
 ## Version portable
 
@@ -35,7 +35,7 @@ Rien n'est installé dans Windows. Les données du jeu vont quand même dans `%L
 
 ## Désinstaller
 
-- **Installeur :** désinstalle Misty depuis **Paramètres → Applications → Applications installées** dans Windows. Tes données de jeu (versions, profils, mondes) sont gardées, sauf si tu demandes leur suppression.
+- **Installeur :** désinstalle Mistly depuis **Paramètres → Applications → Applications installées** dans Windows. Tes données de jeu (versions, profils, mondes) sont gardées, sauf si tu demandes leur suppression.
 - **Portable :** supprime le dossier extrait.
 
 Pour effacer aussi **toutes** les données de jeu, utilise **Tout supprimer** dans la carte Stockage des [Paramètres](/docs/settings) avant de désinstaller, ou supprime toi-même `%LOCALAPPDATA%\Misty`.

@@ -1,12 +1,12 @@
 +++
 title = "Files and folders"
-description = "Where Misty stores the game, your profiles, your accounts and its settings."
+description = "Where Mistly stores the game, your profiles, your accounts and its settings."
 section = "help"
 +++
 
 ## The data folder
 
-Everything Misty downloads or creates goes to **`%LOCALAPPDATA%\Misty`**. Paste this path into the Windows Explorer address bar to open it, or use **Open the game folder** in the sidebar.
+Everything Mistly downloads or creates goes to **`%LOCALAPPDATA%\Misty`**. Paste this path into the Windows Explorer address bar to open it, or use **Open the game folder** in the sidebar.
 
 | File / folder | Content |
 |---|---|
@@ -27,7 +27,7 @@ Each profile in `instances\<id>\` contains:
 | `resourcepacks\` | Resource packs |
 | `shaderpacks\` | Shaders |
 | `saves\` | Worlds |
-| `misty-contenu.json` | What Misty knows about the installed content |
+| `misty-contenu.json` | What Mistly knows about the installed content |
 
 **Open the profile folder**, on the profile's page, opens it directly.
 
@@ -46,4 +46,4 @@ Attach these files when you [report a problem](/docs/troubleshooting#report-a-bu
 - Portable: wherever you extracted the zip.
 
 > [!TIP]
-> To give Misty your own icon, put an `Icon.ico` file next to `Misty.exe`.
+> To give Mistly your own icon, put an `Icon.ico` file next to `Misty.exe`.

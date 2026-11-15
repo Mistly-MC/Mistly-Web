@@ -5,6 +5,15 @@ use crate::i18n::{Lang, Tr};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use std::sync::LazyLock;
 
+/// « MISTLY » en grandes lettres de blocs (hero de l'accueil et bas du pied de page).
+pub const BANNER: &str = "\
+███╗   ███╗ ██╗ ███████╗ ████████╗ ██╗      ██╗   ██╗
+████╗ ████║ ██║ ██╔════╝ ╚══██╔══╝ ██║      ╚██╗ ██╔╝
+██╔████╔██║ ██║ ███████╗    ██║    ██║       ╚████╔╝
+██║╚██╔╝██║ ██║ ╚════██║    ██║    ██║        ╚██╔╝
+██║ ╚═╝ ██║ ██║ ███████║    ██║    ███████╗    ██║
+╚═╝     ╚═╝ ╚═╝ ╚══════╝    ╚═╝    ╚══════╝    ╚═╝";
+
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
@@ -27,9 +36,9 @@ pub struct Page<'a> {
     pub release_count: Option<usize>,
     /// `owner/repo` du launcher sur GitHub.
     pub repo: &'a str,
-    /// Bande de brume animée (SVG), réutilisée entre les sections.
+    /// Bande de brume animée (en caractères ASCII), réutilisée entre les sections.
     pub fog: &'a str,
-    /// Paysage de fond (SVG), identique sur toutes les pages.
+    /// Paysage de fond (en caractères ASCII), identique sur toutes les pages.
     pub scene: &'a str,
     /// Adresse publique du site, sans `/` final (balises canoniques, Open Graph, sitemap).
     pub site_url: &'a str,
@@ -67,7 +76,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 title { (head.title) }
                 meta name="description" content=(head.description);
-                meta name="theme-color" content="#0a0f1d";
+                meta name="theme-color" content="#070a12";
                 meta name="robots" content="index, follow, max-image-preview:large";
                 meta name="application-name" content="Mistly MC";
                 // Une URL par langue (?lang=xx) : la canonique pointe sur la langue affichée,
@@ -99,7 +108,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 @if let Some(json) = &head.jsonld {
                     script type="application/ld+json" { (PreEscaped(json)) }
                 }
-                link rel="preload" href="/assets/Silkscreen-Regular.ttf" as="font" type="font/ttf" crossorigin;
+                link rel="preload" href="/assets/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin;
                 @let v = ASSET_VERSION.as_str();
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
@@ -109,8 +118,6 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 script src=(format!("/js/site.js?v={v}")) defer {}
             }
             body class=(head.body_class) {
-                // Voile de brume qui dérive derrière tout le site.
-                div.mist aria-hidden="true" { div.m1 {} div.m2 {} div.m3 {} }
                 // Ciel et paysage : le même fond en haut de chaque page.
                 div.page-sky aria-hidden="true" { (PreEscaped(p.scene)) }
                 (nav(p))
@@ -122,7 +129,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
     }
 }
 
-/// Bande de brume pixel qui dérive, posée entre deux sections.
+/// Bande de brume en tildes qui dérive, posée entre deux sections.
 pub fn fog_divider(p: &Page) -> Markup {
     html! { div.fog-divider aria-hidden="true" { (PreEscaped(p.fog)) } }
 }
@@ -272,7 +279,7 @@ fn footer(p: &Page) -> Markup {
                     }
                 }
             }
-            div.giant aria-hidden="true" { "MISTY" }
+            pre.giant.ascii aria-hidden="true" { (BANNER) }
         }
     }
 }

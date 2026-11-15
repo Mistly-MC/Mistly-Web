@@ -24,6 +24,11 @@ hero_sub = "Все версии, все загрузчики модов, ваш�
 hero_cta_download = "Скачать лаунчер"
 hero_cta_notes = "Читать список изменений"
 hero_free = "Бесплатно"
+stat_title = "Mistly в цифрах"
+stat_loaders = "загрузчиков модов"
+stat_langs = "языков"
+stat_releases = "выпущено версий"
+stat_size = "размер установщика"
 
 card_label = "Последняя версия"
 card_whats_new = "Что нового"

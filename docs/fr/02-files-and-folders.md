@@ -1,12 +1,12 @@
 +++
 title = "Fichiers et dossiers"
-description = "Où Misty range le jeu, tes profils, tes comptes et ses réglages."
+description = "Où Mistly range le jeu, tes profils, tes comptes et ses réglages."
 section = "help"
 +++
 
 ## Le dossier de données
 
-Tout ce que Misty télécharge ou crée va dans **`%LOCALAPPDATA%\Misty`**. Colle ce chemin dans la barre d'adresse de l'Explorateur Windows pour l'ouvrir, ou utilise **Ouvrir le dossier du jeu** dans la barre latérale.
+Tout ce que Mistly télécharge ou crée va dans **`%LOCALAPPDATA%\Misty`**. Colle ce chemin dans la barre d'adresse de l'Explorateur Windows pour l'ouvrir, ou utilise **Ouvrir le dossier du jeu** dans la barre latérale.
 
 | Fichier / dossier | Contenu |
 |---|---|
@@ -27,7 +27,7 @@ Chaque profil de `instances\<id>\` contient :
 | `resourcepacks\` | Packs de ressources |
 | `shaderpacks\` | Shaders |
 | `saves\` | Mondes |
-| `misty-contenu.json` | Ce que Misty sait du contenu installé |
+| `misty-contenu.json` | Ce que Mistly sait du contenu installé |
 
 **Ouvrir le dossier du profil**, sur la page du profil, l'ouvre directement.
 
@@ -46,4 +46,4 @@ Joins ces fichiers quand tu [signales un problème](/docs/troubleshooting#signal
 - Portable : là où tu as extrait le zip.
 
 > [!TIP]
-> Pour donner ta propre icône à Misty, place un fichier `Icon.ico` à côté de `Misty.exe`.
+> Pour donner ta propre icône à Mistly, place un fichier `Icon.ico` à côté de `Misty.exe`.

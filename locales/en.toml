@@ -24,6 +24,11 @@ hero_sub = "Every version, every mod loader, your Modrinth and CurseForge mods: 
 hero_cta_download = "Download the launcher"
 hero_cta_notes = "Read the patch notes"
 hero_free = "Free"
+stat_title = "Mistly in numbers"
+stat_loaders = "mod loaders"
+stat_langs = "languages"
+stat_releases = "releases published"
+stat_size = "installer size"
 
 card_label = "Latest version"
 card_whats_new = "What's inside"

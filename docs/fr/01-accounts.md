@@ -4,7 +4,7 @@ description = "Connecte un ou plusieurs comptes Microsoft, ou joue avec des comp
 section = "play"
 +++
 
-Misty gère deux sortes de comptes. Tu choisis celui avec lequel jouer dans la liste **Compte** de l'accueil.
+Mistly gère deux sortes de comptes. Tu choisis celui avec lequel jouer dans la liste **Compte** de l'accueil.
 
 ## Comptes Microsoft
 
@@ -33,7 +33,7 @@ Tu peux ajouter **plusieurs comptes Microsoft** et passer de l'un à l'autre dep
 
 Les comptes hors-ligne sont des pseudos utilisables sans compte Microsoft. Gère-les dans la carte **Comptes hors-ligne** des [Paramètres](/docs/settings) : tape un pseudo et clique sur **Ajouter**.
 
-Au premier lancement, Misty crée un compte hors-ligne appelé *Misty*.
+Au premier lancement, Mistly crée un compte hors-ligne appelé *Mistly*.
 
 > [!WARNING]
 > Les serveurs qui vérifient les comptes (la plupart des serveurs publics) refusent les comptes hors-ligne. Ils servent pour le solo et pour les serveurs qui les acceptent.

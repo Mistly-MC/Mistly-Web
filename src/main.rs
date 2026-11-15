@@ -20,6 +20,7 @@
 //! - `TELEMETRY_TOKEN` (facultatif, 16 caractères ou plus) : ouvre la lecture de la télémétrie
 //!   (`/api/telemetry/summary`, `/api/telemetry/report/{code}`) avec `Authorization: Bearer …`
 
+mod ascii;
 mod client;
 mod discord;
 mod puzzle;
@@ -123,12 +124,12 @@ async fn main() {
         client: client::Client::new(),
         discord: Arc::new(discord::Discord::new()),
         verification: Arc::new(verify::Verification::new()),
-        scene: scene::render(&scene::SceneOptions {
+        scene: ascii::render(&ascii::SceneOptions {
             seed: 7,
-            moon_x: 0.8,
-            moon_r: 44,
+            moon_x: 0.57,
+            moon_r: 4,
         }),
-        fog_strip: scene::fog_strip(11),
+        fog_strip: ascii::fog_strip(11),
         skins: skins::Skins::new(env_or("SKIN_API", "https://mc-heads.net")),
         site_url: env_or("SITE_URL", "https://misty-launcher.online")
             .trim_end_matches('/')
@@ -219,6 +220,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))
         .await
         .expect("port déjà utilisé ?");
-    println!("Misty-site sur http://localhost:{port}");
+    println!("Mistly-site sur http://localhost:{port}");
     axum::serve(listener, app).await.expect("serveur");
 }

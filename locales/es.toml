@@ -24,6 +24,11 @@ hero_sub = "Todas las versiones, todos los mod loaders, tus mods de Modrinth y C
 hero_cta_download = "Descargar el launcher"
 hero_cta_notes = "Leer las notas de versión"
 hero_free = "Gratis"
+stat_title = "Mistly en cifras"
+stat_loaders = "mod loaders"
+stat_langs = "idiomas"
+stat_releases = "versiones publicadas"
+stat_size = "tamaño del instalador"
 
 card_label = "Última versión"
 card_whats_new = "Novedades"

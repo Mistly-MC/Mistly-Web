@@ -96,6 +96,7 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
         section.hero {
             div.wrap.hero-grid {
                 div.hero-copy {
+                    pre.banner.ascii aria-hidden="true" { (layout::BANNER) }
                     div.tags {
                         span { (icons::cube()) (tr.hero_tag_mc) }
                         span.sep { "·" }
@@ -115,8 +116,11 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
                     }
                 }
                 aside.latest {
-                    span.label { (tr.card_label) }
-                    @match latest {
+                    div.term-bar {
+                        span.label { (tr.card_label) }
+                        span.ctl aria-hidden="true" { "[-][x]" }
+                    }
+                    div.term-body { @match latest {
                         Some(r) => {
                             div.ver {
                                 strong { (r.tag_name) }
@@ -135,9 +139,32 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
                             p.muted { (tr.card_unavailable) }
                             a.more href="/patch-notes" { (tr.card_more) " →" }
                         }
-                    }
+                    } }
                 }
             }
+        }
+        (stats(p, latest))
+    }
+}
+
+/// Chiffres clés sous le hero. Les nombres qui viennent de GitHub ne s'affichent que s'ils sont connus.
+fn stats(p: &Page, latest: Option<&Release>) -> Markup {
+    let tr = p.tr;
+    let size = latest
+        .and_then(|r| r.asset(Kind::Setup))
+        .map(|a| format::size(tr, a.size));
+    html! {
+        section.stats aria-label=(tr.stat_title) {
+            div.wrap { dl.stats-in {
+                div.stat { dt { (tr.stat_loaders) } dd { (LOADERS.len()) } }
+                div.stat { dt { (tr.stat_langs) } dd { (crate::i18n::Lang::ALL.len()) } }
+                @if let Some(n) = p.release_count {
+                    div.stat { dt { (tr.stat_releases) } dd { (n) } }
+                }
+                @if let Some(s) = &size {
+                    div.stat { dt { (tr.stat_size) } dd { (s) } }
+                }
+            } }
         }
     }
 }
