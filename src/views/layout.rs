@@ -125,9 +125,40 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 div.rails aria-hidden="true" {}
                 // Traînée de caractères ASCII qui suit la souris (site.js)
                 canvas.cursor-ascii aria-hidden="true" {}
+                (telechargement(p))
                 (nav(p))
                 main #main { (main) }
                 (footer(p))
+            }
+        }
+    }
+}
+
+/// L'écran plein qui s'ouvre quand on télécharge le launcher : un nuage qui se forme en caractères
+/// ASCII, une barre de progression, puis les trois étapes pour installer (site.js l'anime).
+fn telechargement(p: &Page) -> Markup {
+    let tr = p.tr;
+    html! {
+        div.dlx #dlx role="dialog" aria-modal="true" aria-labelledby="dlx-title" hidden {
+            canvas.dlx-art aria-hidden="true" {}
+            div.dlx-panel {
+                h2 #dlx-title { (tr.dlx_title) }
+                p.dlx-sub { (tr.dlx_sub) }
+                div.dlx-bar aria-hidden="true" {
+                    span.dlx-label data-preparing=(tr.dlx_preparing) data-started=(tr.dlx_started) { (tr.dlx_preparing) }
+                    code.dlx-track {}
+                    span.dlx-pct { "0%" }
+                }
+                ol.dlx-steps {
+                    li { span.n { "01" } (tr.dlx_s1) }
+                    li { span.n { "02" } span.s2 data-setup=(tr.dlx_s2_setup) data-portable=(tr.dlx_s2_port) { (tr.dlx_s2_setup) } }
+                    li { span.n { "03" } (tr.dlx_s3) }
+                }
+                div.dlx-actions {
+                    span.dlx-retry { (tr.dlx_retry) " " a #dlx-again href="/download/setup" { (tr.dlx_retry_link) } }
+                    a.dlx-guide href="/docs/installation" { (tr.dlx_guide) (icons::arrow_right()) }
+                }
+                button.btn.dlx-close type="button" data-dlx-close { (tr.dlx_close) " " kbd { "Esc" } }
             }
         }
     }

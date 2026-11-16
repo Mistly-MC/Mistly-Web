@@ -25,6 +25,13 @@ pub fn arrow_right() -> Markup {
 pub fn tag() -> Markup {
     icon(r#"<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/>"#)
 }
+pub fn apple() -> Markup {
+    PreEscaped(r#"<svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-1.9-.9-3.2-.8-1.6 0-3.2 1-4 2.5-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8 1.5 0 1.9.8 3.2.8 1.3 0 2.2-1.2 3-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.5-1-2.5-4zM14 5.4c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg>"#.to_string())
+}
+pub fn linux() -> Markup {
+    // Tux, en silhouette
+    PreEscaped(r##"<svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c-2.3 0-3.6 1.9-3.6 4.4 0 1.5.3 2.4-.3 3.6-.8 1.5-2.6 3.3-2.6 6 0 1.4.5 2.4 1.3 3-.9.2-1.8.7-1.6 1.5.3 1 2.4.9 4 .3.6.2 1.8.3 2.8.3s2.2-.1 2.8-.3c1.6.6 3.7.7 4-.3.2-.8-.7-1.3-1.6-1.5.8-.6 1.3-1.6 1.3-3 0-2.7-1.8-4.5-2.6-6-.6-1.2-.3-2.1-.3-3.6C15.6 3.9 14.3 2 12 2z"/><ellipse cx="12" cy="15.2" rx="3" ry="4" fill="#09090b" fill-opacity=".45"/><circle cx="10.7" cy="6.4" r=".7" fill="#09090b"/><circle cx="13.3" cy="6.4" r=".7" fill="#09090b"/><path d="M10.9 8.2h2.2L12 9.4z" fill="#f2b33d"/></svg>"##.to_string())
+}
 pub fn external() -> Markup {
     icon(r#"<path d="M7 17L17 7M8 7h9v9"/>"#)
 }

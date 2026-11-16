@@ -89,6 +89,138 @@
     });
   }
 
+  // ---------- Téléchargement : écran plein avec un nuage qui se forme en caractères ASCII ----------
+  const dlx = document.getElementById("dlx");
+  if (dlx) {
+    const art = dlx.querySelector(".dlx-art");
+    const g = art.getContext("2d");
+    const track = dlx.querySelector(".dlx-track"), pct = dlx.querySelector(".dlx-pct"), label = dlx.querySelector(".dlx-label");
+    const CW = 10, CH = 18, BAR = 28;
+    // Le nuage du logo, en pixels (un pixel = deux caractères de large)
+    const CLOUD = [
+      "         #####          ",
+      "       #########        ",
+      "      ###########       ",
+      "      ############ ###  ",
+      "   ##################### ",
+      "  #######################",
+      "  #######################",
+      "   ##################### ",
+      "                         ",
+      "     ########   ####     ",
+    ];
+    const NOISE = "01#%@*+=-:.";
+    let parts = [], cols = 0, rows = 0, t0 = 0, raf = 0, frame0 = 0, started = false;
+    const layout = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      art.width = innerWidth * dpr; art.height = innerHeight * dpr;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.font = `bold 14px ${MONO}`;
+      g.textBaseline = "top";
+      cols = Math.ceil(innerWidth / CW); rows = Math.ceil(innerHeight / CH);
+      // Taille du nuage : un pixel = 2 caractères sur 1 ligne, ou 4 sur 2 sur un grand écran
+      const S = cols >= 120 && rows >= 44 ? 2 : 1;
+      const h = CLOUD.length, w = Math.max(...CLOUD.map(l => l.length)) * 2 * S;
+      const ox = Math.floor((cols - w) / 2), oy = Math.max(2, Math.floor(rows * 0.27 - (h * S) / 2));
+      parts = [];
+      CLOUD.forEach((line, r) => [...line].forEach((ch, c) => {
+        if (ch !== "#") return;
+        for (let k = 0; k < 2 * S; k++) for (let m = 0; m < S; m++) {
+          const i = parts.length;
+          parts.push({
+            tx: ox + (c * 2 * S) + k, ty: oy + r * S + m,
+            sx: Math.random() * cols, sy: -2 - Math.random() * rows * 0.6,
+            delay: Math.random() * 0.9 + (r / h) * 0.3, dur: 0.8 + Math.random() * 0.6,
+            // dessous du nuage plus sombre, barres du bas en `=`
+            final: r >= 8 ? "=" : r <= 1 ? "@" : hash(c + k, r) > 0.82 ? "%" : "#",
+            shade: r >= 8 ? 0.55 : 1 - r / (h * 1.6), seed: i,
+          });
+        }
+      }));
+    };
+    const ease = k => 1 - Math.pow(1 - k, 3);
+    const draw = now => {
+      const t = (now - t0) / 1000;
+      g.clearRect(0, 0, innerWidth, innerHeight);
+      // Brume de fond, plus légère au centre
+      g.fillStyle = "rgba(170,190,240,.10)";
+      for (let r = 0; r < rows; r += 1) for (let c = 0; c < cols; c += 2) {
+        const v = fbm(c * 0.05 - t * 0.12, r * 0.12 + t * 0.03);
+        if (v > 0.6) g.fillText(v > 0.7 ? "~" : ".", c * CW, r * CH);
+      }
+      // Les caractères tombent puis se posent à leur place dans le nuage
+      let posed = 0;
+      for (const p of parts) {
+        const k = reduce ? 1 : Math.max(0, Math.min(1, (t - p.delay) / p.dur));
+        if (k <= 0) continue;
+        const e = ease(k);
+        const x = p.sx + (p.tx - p.sx) * e, y = p.sy + (p.ty - p.sy) * e;
+        let ch, a;
+        if (k < 1) {
+          ch = NOISE[Math.floor(hash(p.seed, Math.floor(t * 20)) * NOISE.length)];
+          a = 0.35 + k * 0.5;
+        } else {
+          posed++;
+          // Une fois posé : une vague de lumière traverse le nuage
+          const wave = Math.max(0, 1 - Math.abs(p.tx / cols - ((t * 0.35) % 1.6 - 0.3)) * 6);
+          ch = hash(p.seed, Math.floor(t * 3)) > 0.985 ? "*" : p.final;
+          a = Math.min(1, 0.5 + p.shade * 0.5 + wave * 0.4);
+        }
+        g.fillStyle = `rgba(226,234,255,${a.toFixed(2)})`;
+        g.fillText(ch, x * CW, y * CH);
+      }
+      // Progression : suit la formation du nuage
+      const prog = Math.min(1, reduce ? 1 : posed / parts.length * 0.85 + Math.min(t / 2.6, 1) * 0.15);
+      const n = Math.round(prog * BAR);
+      track.textContent = "[" + "#".repeat(n) + "-".repeat(BAR - n) + "]";
+      pct.textContent = `${Math.round(prog * 100)}%`;
+      if (prog >= 1 && !dlx.classList.contains("done")) {
+        dlx.classList.add("done");
+        label.textContent = "✓ " + label.dataset.started;
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    const close = () => {
+      dlx.classList.remove("open");
+      cancelAnimationFrame(raf);
+      document.documentElement.style.overflow = "";
+      setTimeout(() => { dlx.hidden = true; }, 250);
+    };
+    const open = href => {
+      const portable = href.includes("portable");
+      const s2 = dlx.querySelector(".s2");
+      s2.textContent = portable ? s2.dataset.portable : s2.dataset.setup;
+      dlx.querySelector("#dlx-again").href = href;
+      dlx.classList.remove("done");
+      label.textContent = label.dataset.preparing;
+      dlx.hidden = false;
+      document.documentElement.style.overflow = "hidden";
+      requestAnimationFrame(() => dlx.classList.add("open"));
+      layout();
+      t0 = performance.now();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
+      dlx.querySelector("[data-dlx-close]").focus({ preventScroll: true });
+      // Le fichier part pendant l'animation ; la page reste là (réponse en pièce jointe)
+      setTimeout(() => {
+        const frame = document.createElement("iframe");
+        frame.hidden = true;
+        frame.src = href;
+        document.body.append(frame);
+        setTimeout(() => frame.remove(), 60_000);
+      }, 700);
+    };
+    document.addEventListener("click", e => {
+      const a = e.target.closest('a[href^="/download/"]');
+      if (!a || a.closest(".dlx") || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      open(a.getAttribute("href"));
+    });
+    dlx.querySelector("[data-dlx-close]").addEventListener("click", close);
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !dlx.hidden) close(); });
+    addEventListener("resize", () => { if (!dlx.hidden) layout(); });
+  }
+
   // La souris laisse une traînée de caractères ASCII qui ondulent puis s'effacent
   const trail = document.querySelector(".cursor-ascii");
   if (trail && !reduce && matchMedia("(hover: hover) and (pointer: fine)").matches) {

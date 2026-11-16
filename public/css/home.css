@@ -140,3 +140,13 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .qa details p{transition:opacity .3s ease}
 .qa details:not([open]) p{opacity:0}
 .qa details.closing p{opacity:0}
+
+/* macOS et Linux : pas encore disponibles */
+.btn.os-soon{cursor:default;color:var(--muted);background:rgba(9,9,11,.45);opacity:.85}
+.btn.os-soon:hover{background:rgba(9,9,11,.45);border-color:var(--line-2)}
+.btn.os-soon:active{transform:none}
+.btn.os-soon .ic{width:16px;height:16px}
+.btn.os-soon .badge{margin-left:2px;font-size:10.5px;padding:1px 6px}
+.dl-card.soon{cursor:default;opacity:.75}
+.dl-card.soon:hover{background:var(--bg)}
+.dl-card.soon .badge{margin-left:auto}

@@ -121,3 +121,35 @@ main,.foot{position:relative;z-index:1}
    sans jamais capter les clics */
 .cursor-ascii{position:fixed;inset:0;width:100vw;height:100vh;z-index:40;pointer-events:none;mix-blend-mode:screen}
 @media (hover:none){.cursor-ascii{display:none}}
+
+/* ---------- Écran de téléchargement : nuage ASCII, progression, étapes (site.js) ---------- */
+.dlx{position:fixed;inset:0;z-index:100;display:grid;place-items:end center;padding:0 16px clamp(28px,7vh,80px);
+  background:radial-gradient(70% 60% at 50% 32%,rgba(90,120,200,.22),transparent 70%),rgba(6,7,11,.94);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:opacity .25s ease}
+.dlx[hidden]{display:none}
+.dlx.open{opacity:1}
+.dlx-art{position:absolute;inset:0;width:100%;height:100%}
+.dlx-panel{position:relative;width:min(560px,100%);display:flex;flex-direction:column;align-items:center;text-align:center;transform:translateY(14px);transition:transform .35s ease}
+.dlx.open .dlx-panel{transform:none}
+.dlx-panel h2{font-size:clamp(24px,3vw,32px);font-weight:600;letter-spacing:-.03em}
+.dlx-sub{margin-top:6px;color:var(--muted);font-size:15px}
+.dlx-bar{display:flex;align-items:center;gap:12px;margin:22px 0 22px;font-family:var(--mono);font-size:13px;color:var(--muted);white-space:nowrap}
+.dlx-track{font-family:var(--mono);font-size:13px;color:#b8ccf4;letter-spacing:.02em}
+.dlx-pct{min-width:4ch;text-align:right;color:var(--text)}
+.dlx.done .dlx-label{color:#7ee2a8}
+.dlx-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;border:1px solid var(--line-2);background:rgba(9,9,11,.7);text-align:left}
+.dlx-steps li{display:flex;flex-direction:column;gap:6px;padding:14px 16px;font-size:13.5px;color:#d4d4d8}
+.dlx-steps li+li{border-left:1px solid var(--line-2)}
+.dlx-steps .n{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.dlx-actions{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;width:100%;margin-top:14px;font-size:13px;color:var(--muted)}
+.dlx-actions a{color:var(--text);text-decoration:underline;text-decoration-color:rgba(255,255,255,.3);text-underline-offset:3px}
+.dlx-guide{display:inline-flex;align-items:center;gap:6px;text-decoration:none!important}
+.dlx-guide .ic{width:13px;height:13px}
+.dlx-close{margin-top:20px;padding:8px 14px;font-size:13.5px}
+.dlx-close kbd{margin-left:4px}
+@media (max-width:600px){
+  .dlx-steps{grid-template-columns:minmax(0,1fr)}
+  .dlx-steps li+li{border-left:0;border-top:1px solid var(--line-2)}
+  .dlx-bar{font-size:11px}
+  .dlx-track{font-size:10px}
+}

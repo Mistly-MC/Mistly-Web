@@ -78,7 +78,8 @@ fn hero(p: &Page) -> Markup {
                 h1 { (tr.hero_title_1) " " span.soft { (tr.hero_title_2) } }
                 div.actions {
                     a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
-                    a.btn href="/patch-notes" { (tr.nav_patch_notes) (icons::arrow_right()) }
+                    span.btn.os-soon aria-disabled="true" title=(tr.os_macos_p) { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
+                    span.btn.os-soon aria-disabled="true" title=(tr.os_linux_p) { (icons::linux()) "Linux" span.badge { (tr.os_soon) } }
                 }
             }
             // Le launcher, dans un cadre posé sur le paysage
@@ -277,7 +278,7 @@ fn download(p: &Page, latest: Option<&Release>) -> Markup {
             div.col {
                 (titre(&tr.dl_label, None))
                 p.blk-lead { (tr.dl_text) }
-                div.cells.c4.dl {
+                div.cells.c3.dl {
                     a.dl-card.main href="/download/setup" {
                         span.top { (icons::download()) (tr.inst_t) span.pill { (tr.recommended) } }
                         span.txt { (tr.inst_p) }
@@ -287,6 +288,14 @@ fn download(p: &Page, latest: Option<&Release>) -> Markup {
                         span.top { (icons::archive()) (tr.port_t) }
                         span.txt { (tr.port_p) }
                         @if let Some(m) = meta(Kind::Portable) { span.m { (m) " · .zip" } }
+                    }
+                    div.dl-card.soon aria-disabled="true" {
+                        span.top { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
+                        span.txt { (tr.os_macos_p) }
+                    }
+                    div.dl-card.soon aria-disabled="true" {
+                        span.top { (icons::linux()) "Linux" span.badge { (tr.os_soon) } }
+                        span.txt { (tr.os_linux_p) }
                     }
                     a.dl-card href="/patch-notes" {
                         span.top { (icons::notes()) (tr.notes_t) }

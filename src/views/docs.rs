@@ -36,9 +36,14 @@ pub fn index(p: &Page, set: &DocSet) -> Markup {
                                 @for d in pages {
                                     li data-search=(search_text(d)) data-slug=(d.slug) {
                                         a href=(format!("/docs/{}", d.slug)) {
-                                            strong { (d.title) }
-                                            span.desc { (d.description) }
-                                            span.go { (tr.docs_read) (icons::arrow_right()) }
+                                            // Comme les cartes de la boutique : un bruit ASCII qui ondule derrière
+                                            pre.ascii-noise aria-hidden="true" {}
+                                            span.card-body {
+                                                span.ico { (icone(*s)) }
+                                                strong { (d.title) }
+                                                span.desc { (d.description) }
+                                                span.go { (tr.docs_read) (icons::arrow_right()) }
+                                            }
                                         }
                                     }
                                 }
@@ -128,6 +133,17 @@ pub fn page(p: &Page, set: &DocSet, idx: usize) -> Markup {
         },
         main,
     )
+}
+
+/// L'icône d'une section de la doc.
+fn icone(s: Section) -> Markup {
+    match s {
+        Section::Start => icons::download(),
+        Section::Play => icons::grid(),
+        Section::Tools => icons::layers(),
+        Section::Help => icons::alert(),
+        Section::Dev => icons::github(),
+    }
 }
 
 /// Texte cherché par la recherche de la doc : titre, description et intertitres de la page.
