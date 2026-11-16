@@ -781,7 +781,7 @@ pub async fn domaine_principal(
             .iter()
             .any(|p| chemin.starts_with(p));
     if let Some(h) = hote {
-        let ancien = h == format!("www.{principal}") || h.ends_with("misty-launcher.online");
+        let ancien = h != principal && (h == format!("www.{principal}") || h.ends_with("misty-launcher.online"));
         if ancien && page && !principal.is_empty() {
             let cible = format!("{}{}", state.site_url, req.uri().path_and_query().map_or("/", |p| p.as_str()));
             let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
