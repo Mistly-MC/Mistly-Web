@@ -6,7 +6,7 @@ updated = "2026-11-10"
 
 ## Publisher
 
-The **misty-launcher.online** website and the Mistly launcher are published by the Mistly team, on a non-professional and non-commercial basis. The source code is public, under the MIT License, in the [Misty-MC](https://github.com/Misty-MC) GitHub organization.
+The **mistly.cc** website and the Mistly launcher are published by the Mistly team, on a non-professional and non-commercial basis. The source code is public, under the MIT License, in the [Misty-MC](https://github.com/Misty-MC) GitHub organization.
 
 ## Contact
 

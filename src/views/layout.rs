@@ -16,6 +16,12 @@ pub const BANNER: &str = "\
 ██║ ╚═╝ ██║ ██║ ███████║    ██║    ███████╗    ██║
 ╚═╝     ╚═╝ ╚═╝ ╚══════╝    ╚═╝    ╚══════╝    ╚═╝";
 
+/// Codes de vérification des outils pour webmasters : Google, Bing, Yandex.
+static VERIFS: LazyLock<(Option<String>, Option<String>, Option<String>)> = LazyLock::new(|| {
+    let lire = |k: &str| std::env::var(k).ok().map(|v| v.trim().to_string()).filter(|v| !v.is_empty());
+    (lire("GOOGLE_SITE_VERIFICATION"), lire("BING_SITE_VERIFICATION"), lire("YANDEX_VERIFICATION"))
+});
+
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
@@ -76,9 +82,19 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 title { (head.title) }
                 meta name="description" content=(head.description);
-                meta name="theme-color" content="#070a12";
-                meta name="robots" content="index, follow, max-image-preview:large";
-                meta name="application-name" content="Mistly MC";
+                meta name="keywords" content=(crate::seo::KEYWORDS);
+                meta name="author" content="Mistly";
+                meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)";
+                meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)";
+                meta name="color-scheme" content="dark light";
+                meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+                meta name="application-name" content="Mistly Launcher";
+                meta name="apple-mobile-web-app-title" content="Mistly";
+                // Codes de vérification des outils pour webmasters (Google, Bing, Yandex), s'ils sont réglés
+                @if let Some(c) = &VERIFS.0 { meta name="google-site-verification" content=(c); }
+                @if let Some(c) = &VERIFS.1 { meta name="msvalidate.01" content=(c); }
+                @if let Some(c) = &VERIFS.2 { meta name="yandex-verification" content=(c); }
+                link rel="manifest" href=(format!("/site.webmanifest?lang={}", p.lang.code()));
                 // Une URL par langue (?lang=xx) : la canonique pointe sur la langue affichée,
                 // et les variantes hreflang annoncent les autres à Google.
                 @let base = format!("{}{}", p.site_url, p.path);
@@ -89,15 +105,17 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 }
                 link rel="alternate" hreflang="x-default" href=(base);
                 // Aperçus de liens (Discord, réseaux sociaux…)
-                @let image = format!("{}/assets/screens/en/home.png?v={}", p.site_url, ASSET_VERSION.as_str());
+                @let image = format!("{}/assets/og/{}.png?v={}", p.site_url, p.lang.code(), ASSET_VERSION.as_str());
                 meta property="og:type" content="website";
-                meta property="og:site_name" content="Mistly MC";
+                meta property="og:site_name" content="Mistly Launcher";
                 meta property="og:title" content=(head.title);
                 meta property="og:description" content=(head.description);
                 meta property="og:url" content=(canonical);
                 meta property="og:image" content=(image);
-                meta property="og:image:width" content="1180";
-                meta property="og:image:height" content="720";
+                meta property="og:image:width" content="1200";
+                meta property="og:image:height" content="630";
+                meta property="og:image:type" content="image/png";
+                meta property="og:image:alt" content=(format!("Mistly Launcher – {}{}", tr.hero_title_1, tr.hero_title_2));
                 meta property="og:locale" content=(tr.og_locale);
                 meta name="twitter:card" content="summary_large_image";
                 meta name="twitter:title" content=(head.title);
@@ -113,7 +131,8 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
                 @for css in head.css { link rel="stylesheet" href=(format!("/css/{css}.css?v={v}")); }
-                script { (PreEscaped("document.documentElement.classList.add('js')")) }
+                // Le thème choisi (clair ou sombre) est posé avant l'affichage, sans clignotement
+                script { (PreEscaped("document.documentElement.classList.add('js');try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}")) }
                 @for js in head.scripts { script src=(format!("{js}?v={v}")) defer {} }
                 script src=(format!("/js/site.js?v={v}")) defer {}
             }
@@ -185,6 +204,9 @@ fn nav(p: &Page) -> Markup {
                 div.nav-right {
                     a.gh.dc href=(DISCORD_URL) target="_blank" rel="noopener" aria-label="Discord" title="Discord" { (icons::discord()) }
                     a.gh href=(p.github_url()) target="_blank" rel="noopener" aria-label="GitHub" { (icons::github()) span { "GitHub" } }
+                    button.theme-toggle type="button" data-theme-toggle aria-label=(tr.nav_theme) title=(tr.nav_theme) {
+                        span.moon { (icons::moon()) } span.sun { (icons::sun()) }
+                    }
                     (lang_menu(p))
                     a.btn.play.sm href="/#download" { (icons::download()) span { (tr.nav_download) } }
                     (mobile_menu(p))

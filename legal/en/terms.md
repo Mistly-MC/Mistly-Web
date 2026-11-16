@@ -4,7 +4,7 @@ description = "The rules for using the website, the Mistly launcher, Mistly Clie
 updated = "2026-11-10"
 +++
 
-By using the misty-launcher.online website, the Mistly launcher or Mistly Client, you accept the terms below.
+By using the mistly.cc website, the Mistly launcher or Mistly Client, you accept the terms below.
 
 ## Free and open-source software
 

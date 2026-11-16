@@ -743,3 +743,53 @@ pub async fn activity_log(Json(b): Json<ActivityLog>) -> StatusCode {
     eprintln!("Activité (navigateur) : {detail}");
     StatusCode::NO_CONTENT
 }
+
+/// `/site.webmanifest`
+pub async fn manifest(Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    let (lang, _) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let mut res = ([(header::CONTENT_TYPE, "application/manifest+json")], crate::seo::manifest(lang.tr())).into_response();
+    res.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("public, max-age=86400"));
+    res
+}
+
+/// `/indexnow.txt` : la clé IndexNow (`INDEXNOW_KEY`), pour prouver que les annonces viennent du site.
+pub async fn indexnow_cle() -> Response {
+    match std::env::var("INDEXNOW_KEY").ok().filter(|k| (8..=128).contains(&k.len())) {
+        Some(k) => ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], k).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
+/// Anciennes adresses (misty-launcher.online, www.) : les pages redirigent pour de bon vers le
+/// domaine principal, pour que les moteurs de recherche n'en gardent qu'une. L'API, les
+/// téléchargements et le captcha restent servis sur toutes les adresses (le launcher les appelle).
+pub async fn domaine_principal(
+    State(state): State<Arc<AppState>>,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    let hote = req
+        .headers()
+        .get("x-forwarded-host")
+        .or_else(|| req.headers().get(header::HOST))
+        .and_then(|v| v.to_str().ok())
+        .map(|h| h.split(':').next().unwrap_or(h).to_ascii_lowercase());
+    let principal = state.site_url.split("://").nth(1).unwrap_or("").trim_end_matches('/').to_ascii_lowercase();
+    let chemin = req.uri().path();
+    let page = req.method() == axum::http::Method::GET
+        && !["/api/", "/download/", "/verify", "/activity", "/skin/", "/cape/", "/player/", "/admin", "/status.json", "/indexnow"]
+            .iter()
+            .any(|p| chemin.starts_with(p));
+    if let Some(h) = hote {
+        let ancien = h == format!("www.{principal}") || h.ends_with("misty-launcher.online");
+        if ancien && page && !principal.is_empty() {
+            let cible = format!("{}{}", state.site_url, req.uri().path_and_query().map_or("/", |p| p.as_str()));
+            let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
+            if let Ok(v) = HeaderValue::from_str(&cible) {
+                res.headers_mut().insert(header::LOCATION, v);
+            }
+            return res;
+        }
+    }
+    next.run(req).await
+}

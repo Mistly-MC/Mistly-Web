@@ -65,4 +65,4 @@ The RAM given to Minecraft, with a slider. Mistly shows how much memory your PC 
 
 When you allow it, Mistly sends: its version, your Windows version, the amount of RAM, the games started, and crashes with their last log lines (username, folder names and tokens are removed). It never sends your account, password or email.
 
-Separately, while it is open, Mistly sends an anonymous signal every minute so the players online can be counted: a random id drawn at each start, and whether a game is running. The total is public at [misty-launcher.online/api/online](https://misty-launcher.online/api/online). The full details are in the [privacy policy](/privacy).
+Separately, while it is open, Mistly sends an anonymous signal every minute so the players online can be counted: a random id drawn at each start, and whether a game is running. The total is public at [mistly.cc/api/online](https://mistly.cc/api/online). The full details are in the [privacy policy](/privacy).

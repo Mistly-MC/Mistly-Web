@@ -4,7 +4,7 @@ description = "Les règles d'utilisation du site, du launcher Mistly, de Mistly 
 updated = "2026-11-10"
 +++
 
-En utilisant le site misty-launcher.online, le launcher Mistly ou Mistly Client, vous acceptez les conditions ci-dessous.
+En utilisant le site mistly.cc, le launcher Mistly ou Mistly Client, vous acceptez les conditions ci-dessous.
 
 ## Un logiciel libre et gratuit
 

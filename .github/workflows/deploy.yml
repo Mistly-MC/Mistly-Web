@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 30
     environment:
       name: production
-      url: https://misty-launcher.online
+      url: https://mistly.cc
     steps:
       - name: Lancer le déploiement et attendre la fin
         env:

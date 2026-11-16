@@ -5,11 +5,11 @@
 /* ---------- Accueil de la doc ---------- */
 .docs-hero{position:relative;margin-top:-69px;padding-top:69px}
 .docs-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(60px,9vw,120px) 20px clamp(120px,15vw,210px)}
-.docs-head .label{font-family:var(--mono);color:#c8d3ee}
-.docs-head h1{margin:14px 0 12px;font-size:clamp(34px,5vw,58px);font-weight:600;letter-spacing:-.04em;line-height:1.04;max-width:760px;text-shadow:0 4px 30px rgba(5,8,18,.7)}
-.docs-head h1 .soft{color:#a9b9dc}
-.docs-head .sub{color:#c3cbe0;font-size:16px;max-width:560px;text-shadow:0 2px 14px rgba(5,8,18,.9)}
-.docs-head .docs-search{width:min(520px,100%);margin-top:28px;background:rgba(9,9,11,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.docs-head .label{font-family:var(--mono);color:var(--soft)}
+.docs-head h1{margin:14px 0 12px;font-size:clamp(34px,5vw,58px);font-weight:600;letter-spacing:-.04em;line-height:1.04;max-width:760px;text-shadow:0 4px 30px rgb(var(--bg-rgb) / .7)}
+.docs-head h1 .soft{color:var(--soft)}
+.docs-head .sub{color:var(--text-2);font-size:16px;max-width:560px;text-shadow:0 2px 14px rgb(var(--bg-rgb) / .9)}
+.docs-head .docs-search{width:min(520px,100%);margin-top:28px;background:rgb(var(--bg-rgb) / .6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 
 .docs-map>.untranslated{width:min(var(--col),calc(100% - 32px));margin:0 auto 18px}
 .blk-title .idx{margin-right:12px;font-family:var(--mono);font-size:13px;font-weight:400;letter-spacing:0;color:var(--dim);vertical-align:middle}
@@ -17,10 +17,10 @@
 .doc-cards li{transition:background .15s}
 .doc-cards li a{position:relative;display:block;height:100%;overflow:hidden;min-height:190px}
 .doc-cards li:hover{background:var(--bg-2)}
-.doc-cards .ascii-noise{color:rgba(184,204,244,.1);transition:color .3s}
-.doc-cards li:hover .ascii-noise{color:rgba(184,204,244,.2)}
+.doc-cards .ascii-noise{color:rgb(var(--ascii-rgb) / .1);transition:color .3s}
+.doc-cards li:hover .ascii-noise{color:rgb(var(--ascii-rgb) / .2)}
 .doc-cards .card-body{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;height:100%;padding:22px}
-.doc-cards .ico{display:grid;place-items:center;width:34px;height:34px;margin-bottom:12px;border-radius:10px;border:1px solid var(--line-2);background:rgba(9,9,11,.85);color:var(--text)}
+.doc-cards .ico{display:grid;place-items:center;width:34px;height:34px;margin-bottom:12px;border-radius:10px;border:1px solid var(--line-2);background:rgb(var(--bg-rgb) / .85);color:var(--text)}
 .doc-cards .ico .ic{width:16px;height:16px}
 .doc-cards strong{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .doc-cards .desc{font-size:13.5px;color:var(--muted);flex:1;max-width:300px}
@@ -33,7 +33,7 @@
 
 /* ---------- Recherche ---------- */
 .docs-search{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:text;background:var(--bg-2);border:1px solid var(--line-2);transition:border-color .15s}
-.docs-search:focus-within{border-color:rgba(255,255,255,.35)}
+.docs-search:focus-within{border-color:rgb(var(--fg-rgb) / .35)}
 .docs-search .ic{width:16px;height:16px;color:var(--dim)}
 .docs-search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:14.5px}
 .docs-search input::placeholder{color:var(--dim)}
@@ -51,8 +51,8 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;bor
 .docs-nav{display:flex;flex-direction:column;gap:20px}
 .nav-sec .small{display:block;margin:0 0 6px 10px;font-family:var(--mono);font-weight:500}
 .nav-sec a{display:block;font-size:13.5px;color:var(--muted);padding:5px 10px;border-radius:7px;transition:color .15s,background .15s}
-.nav-sec a:hover{color:var(--text);background:rgba(255,255,255,.03)}
-.nav-sec a[aria-current]{color:var(--text);background:rgba(255,255,255,.07)}
+.nav-sec a:hover{color:var(--text);background:rgb(var(--fg-rgb) / .03)}
+.nav-sec a[aria-current]{color:var(--text);background:rgb(var(--fg-rgb) / .07)}
 
 .doc{min-width:0;padding:30px clamp(20px,3.5vw,46px) 40px}
 .doc>*{max-width:760px}
@@ -63,14 +63,14 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;bor
 .untranslated{display:flex;align-items:center;gap:10px;margin:18px 0 0;padding:10px 14px;border-radius:10px;font-size:14px;color:#ffd99a;background:rgba(255,190,90,.06);border:1px solid rgba(255,190,90,.28)}
 
 /* Contenu Markdown */
-.md-doc{font-size:15.5px;line-height:1.7;color:#cfd3dc}
+.md-doc{font-size:15.5px;line-height:1.7;color:var(--text-2)}
 .md-doc>*+*{margin-top:16px}
 .md-doc h2{font-size:22px;font-weight:600;letter-spacing:-.025em;color:var(--text);margin-top:46px;padding-top:22px;border-top:1px solid var(--line)}
 .md-doc h3{font-size:17px;font-weight:600;color:var(--text);margin-top:30px}
 .md-doc h2,.md-doc h3{position:relative;scroll-margin-top:84px}
 .md-doc .anchor{margin-left:10px;color:var(--dim);opacity:0;font-weight:400;transition:opacity .15s}
 .md-doc h2:hover .anchor,.md-doc h3:hover .anchor,.md-doc .anchor:focus{opacity:1}
-.md-doc a:not(.anchor){color:var(--text);text-decoration:underline;text-decoration-color:rgba(255,255,255,.3);text-underline-offset:3px;transition:text-decoration-color .15s}
+.md-doc a:not(.anchor){color:var(--text);text-decoration:underline;text-decoration-color:rgb(var(--fg-rgb) / .3);text-underline-offset:3px;transition:text-decoration-color .15s}
 .md-doc a:not(.anchor):hover{text-decoration-color:var(--text)}
 .md-doc strong{color:var(--text);font-weight:600}
 .md-doc ul,.md-doc ol{padding-left:22px}
@@ -80,19 +80,19 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;bor
 .md-doc ol{list-style:decimal}
 .md-doc ol>li::marker{color:var(--dim);font-family:var(--mono);font-size:13px}
 .md-doc li+li{margin-top:6px}
-.md-doc code{font-family:var(--mono);font-size:.86em;background:rgba(255,255,255,.06);border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:#e4e4e7}
+.md-doc code{font-family:var(--mono);font-size:.86em;background:rgb(var(--fg-rgb) / .06);border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:var(--text-2)}
 .md-doc pre{position:relative;background:var(--bg-2);border:1px solid var(--line-2);border-radius:10px;padding:16px 18px;overflow:auto}
-.md-doc pre code{background:none;border:0;padding:0;color:#e4e4e7;font-size:13px;line-height:1.65}
+.md-doc pre code{background:none;border:0;padding:0;color:var(--text-2);font-size:13px;line-height:1.65}
 .md-doc .table-wrap{overflow-x:auto;border:1px solid var(--line-2);border-radius:10px;-webkit-overflow-scrolling:touch}
 .md-doc table{width:100%;border-collapse:collapse;font-size:14px}
-.md-doc th{white-space:nowrap;text-align:left;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:rgba(255,255,255,.02)}
+.md-doc th{white-space:nowrap;text-align:left;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);background:rgb(var(--fg-rgb) / .02)}
 .md-doc th,.md-doc td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
 .md-doc tr:last-child td{border-bottom:0}
 .md-doc td:first-child{color:var(--text);min-width:150px}
-.md-doc tbody tr:hover{background:rgba(255,255,255,.02)}
+.md-doc tbody tr:hover{background:rgb(var(--fg-rgb) / .02)}
 
 /* Encadrés (> [!NOTE], > [!TIP], > [!WARNING]…) : un trait de couleur à gauche */
-.md-doc blockquote{--c:#8eaaf0;position:relative;padding:12px 16px 12px 44px;border-radius:0 10px 10px 0;background:color-mix(in srgb,var(--c) 7%,transparent);border-left:2px solid var(--c);color:#d4d8e2}
+.md-doc blockquote{--c:#8eaaf0;position:relative;padding:12px 16px 12px 44px;border-radius:0 10px 10px 0;background:color-mix(in srgb,var(--c) 7%,transparent);border-left:2px solid var(--c);color:var(--text-2)}
 .md-doc blockquote::before{content:"i";position:absolute;left:14px;top:13px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:700 11px var(--mono);border:1px solid var(--c);color:var(--c)}
 .md-doc blockquote>*+*{margin-top:8px}
 .md-doc .markdown-alert-tip{--c:#7ee2a8}

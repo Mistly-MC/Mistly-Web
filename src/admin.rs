@@ -684,7 +684,8 @@ mod tests {
         assert!(a.session_valide(&s));
         // signature modifiée, date repoussée ou session d'un autre mot de passe : refusées
         let (fin, sig) = s.split_once('.').unwrap();
-        assert!(!a.session_valide(&format!("{fin}.{}0", &sig[..sig.len() - 1])));
+        let autre = if sig.ends_with('0') { '1' } else { '0' };
+        assert!(!a.session_valide(&format!("{fin}.{}{autre}", &sig[..sig.len() - 1])));
         assert!(!a.session_valide(&format!("{}.{sig}", fin.parse::<u64>().unwrap() + 100)));
         assert!(!Admin::avec(Some("un-autre-mot-de-passe".into())).session_valide(&s));
         assert!(!a.session_valide("1.abc"));
@@ -710,9 +711,9 @@ mod tests {
     #[test]
     fn origine_et_cookie() {
         let mut h = HeaderMap::new();
-        h.insert(header::HOST, "misty-launcher.online".parse().unwrap());
+        h.insert(header::HOST, "mistly.cc".parse().unwrap());
         assert!(meme_origine(&h));
-        h.insert(header::ORIGIN, "https://misty-launcher.online".parse().unwrap());
+        h.insert(header::ORIGIN, "https://mistly.cc".parse().unwrap());
         assert!(meme_origine(&h));
         h.insert(header::ORIGIN, "https://evil.example".parse().unwrap());
         assert!(!meme_origine(&h));

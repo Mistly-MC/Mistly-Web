@@ -5,13 +5,23 @@ use crate::github::Release;
 use crate::i18n::{Lang, Tr};
 use serde_json::json;
 
-/// Noms sous lesquels on cherche le launcher.
-const ALTERNATE_NAMES: [&str; 4] = [
+/// Noms sous lesquels on cherche le launcher (y compris l'ancien nom, Misty).
+pub const ALTERNATE_NAMES: [&str; 9] = [
+    "Mistly Launcher",
     "Mistly MC",
     "MistlyMC",
-    "Mistly Launcher",
+    "Mistly Minecraft",
     "Mistly Minecraft Launcher",
+    "Mist Launcher",
+    "Misty Launcher",
+    "Misty MC",
+    "Mistly Client",
 ];
+
+/// Mots-clés de la balise `keywords` (Bing, Yandex, Baidu, Naver la lisent encore ; Google l'ignore).
+pub const KEYWORDS: &str = "Mistly, Mistly Launcher, Mistly Minecraft, Mistly MC, Mist Launcher, Misty Launcher, \
+    Minecraft launcher, launcher Minecraft, Minecraft Java launcher, free Minecraft launcher, Minecraft launcher Windows, \
+    Fabric launcher, Forge launcher, NeoForge, Quilt, OptiFine, Modrinth, CurseForge, modpacks, Minecraft mods, Mistly Client";
 
 /// Sérialise du JSON-LD pour l'insérer dans une balise <script> sans risque de la refermer.
 fn to_script(value: serde_json::Value) -> String {
@@ -23,8 +33,8 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
     let org = json!({
         "@type": "Organization",
         "@id": format!("{site}/#organization"),
-        "name": "Mistly MC",
-        "alternateName": "Mistly MC",
+        "name": "Mistly",
+        "alternateName": ["Mistly MC", "Misty MC"],
         "url": format!("{site}/"),
         "logo": format!("{site}/assets/icone.png"),
         "sameAs": ["https://github.com/Misty-MC", format!("https://github.com/{repo}")],
@@ -32,25 +42,36 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
     let website = json!({
         "@type": "WebSite",
         "@id": format!("{site}/#website"),
-        "name": "Mistly MC",
-        "alternateName": ["Mistly", "Mistly Launcher"],
+        "name": "Mistly Launcher",
+        "alternateName": ["Mistly", "Mistly MC", "Mistly Minecraft Launcher", "Mist Launcher"],
         "url": format!("{site}/"),
         "inLanguage": Lang::ALL.iter().map(|l| l.code()).collect::<Vec<_>>(),
         "publisher": { "@id": format!("{site}/#organization") },
+        // Recherche dans la doc depuis les résultats de recherche
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": { "@type": "EntryPoint", "urlTemplate": format!("{site}/docs?q={{search_term_string}}") },
+            "query-input": "required name=search_term_string",
+        },
     });
     let mut app = json!({
         "@type": "SoftwareApplication",
-        "name": "Mistly",
+        "@id": format!("{site}/#software"),
+        "name": "Mistly Launcher",
         "alternateName": ALTERNATE_NAMES,
         "description": tr.description,
         "url": format!("{site}/"),
-        "image": format!("{site}/assets/screens/en/home.png"),
-        "screenshot": format!("{site}/assets/screens/en/home.png"),
+        "image": format!("{site}/assets/og/en.png"),
+        "screenshot": [format!("{site}/assets/screens/en/home.png"), format!("{site}/assets/screens/en/versions.png"), format!("{site}/assets/screens/en/skin.png")],
         "applicationCategory": "GameApplication",
         "applicationSubCategory": "Minecraft launcher",
+        "genre": "Minecraft launcher",
+        "keywords": KEYWORDS,
         "operatingSystem": "Windows 10, Windows 11",
         "downloadUrl": format!("{site}/download/setup"),
-        "license": "https://opensource.org/licenses/MIT",
+        "installUrl": format!("{site}/download/setup"),
+        "featureList": [tr.c1_t.clone(), tr.c2_t.clone(), tr.c3_t.clone(), tr.c4_t.clone(), tr.c5_t.clone(), tr.c6_t.clone(), tr.f2_t.clone(), tr.f3_t.clone()],
+        "license": format!("https://github.com/{repo}/blob/main/LICENSE.txt"),
         "isAccessibleForFree": true,
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
         "publisher": { "@id": format!("{site}/#organization") },
@@ -63,7 +84,13 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
             app["dateModified"] = json!(date);
         }
     }
-    to_script(json!({ "@context": "https://schema.org", "@graph": [org, website, app] }))
+    // FAQ de la page : peut s'afficher en questions dépliables dans les résultats
+    let questions: Vec<serde_json::Value> = [(&tr.q1, &tr.a1), (&tr.q2, &tr.a2), (&tr.q3, &tr.a3), (&tr.q4, &tr.a4), (&tr.q5, &tr.a5)]
+        .iter()
+        .map(|(q, a)| json!({ "@type": "Question", "name": q, "acceptedAnswer": { "@type": "Answer", "text": a } }))
+        .collect();
+    let faq = json!({ "@type": "FAQPage", "@id": format!("{site}/#faq"), "mainEntity": questions });
+    to_script(json!({ "@context": "https://schema.org", "@graph": [org, website, app, faq] }))
 }
 
 /// JSON-LD d'une page de documentation : article technique + fil d'Ariane.
@@ -95,7 +122,7 @@ pub fn doc_jsonld(site: &str, tr: &Tr, page: &docs::DocPage, lang: Lang) -> Stri
 
 pub fn robots_txt(site: &str) -> String {
     format!(
-        "User-agent: *\nAllow: /\nDisallow: /download/\nDisallow: /api/\nDisallow: /verify\nDisallow: /activity\n\nSitemap: {site}/sitemap.xml\n"
+        "User-agent: *\nAllow: /\nDisallow: /download/\nDisallow: /api/\nDisallow: /verify\nDisallow: /activity\nDisallow: /admin\n\nSitemap: {site}/sitemap.xml\n"
     )
 }
 
@@ -178,5 +205,43 @@ mod tests {
         let v: serde_json::Value = serde_json::from_str(&s).unwrap();
         assert!(v.to_string().contains("Mistly MC"));
         assert!(!s.contains("</"));
+    }
+}
+
+/// Manifeste web : nom, icône et couleurs quand le site est ajouté à l'écran d'accueil.
+pub fn manifest(tr: &Tr) -> String {
+    json!({
+        "name": "Mistly Launcher",
+        "short_name": "Mistly",
+        "description": tr.description,
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#09090b",
+        "theme_color": "#09090b",
+        "icons": [{ "src": "/assets/icone.png", "sizes": "256x256", "type": "image/png" }],
+    })
+    .to_string()
+}
+
+/// IndexNow (Bing, Yandex, Seznam, Naver…) : annonce toutes les pages du sitemap au démarrage, pour
+/// qu'elles soient explorées sans attendre. Seulement avec `INDEXNOW_KEY` (la clé est servie sur
+/// `/indexnow.txt`).
+pub async fn indexnow(site: String, cle: String, http: reqwest::Client) {
+    if site.contains("localhost") || site.contains("127.0.0.1") {
+        return;
+    }
+    tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+    let xml = sitemap_xml(&site);
+    let urls: Vec<String> = xml
+        .split("<loc>")
+        .skip(1)
+        .filter_map(|p| p.split("</loc>").next())
+        .map(|u| u.replace("&amp;", "&"))
+        .collect();
+    let hote = site.trim_start_matches("https://").trim_start_matches("http://").trim_end_matches('/').to_string();
+    let corps = json!({ "host": hote, "key": cle, "keyLocation": format!("{site}/indexnow.txt"), "urlList": urls });
+    match http.post("https://api.indexnow.org/indexnow").json(&corps).send().await {
+        Ok(r) => eprintln!("IndexNow : {} page(s) annoncée(s), réponse {}", urls.len(), r.status()),
+        Err(e) => eprintln!("IndexNow injoignable : {e}"),
     }
 }

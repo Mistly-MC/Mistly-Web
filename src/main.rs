@@ -5,8 +5,11 @@
 //! - `GITHUB_TOKEN` (facultatif) : évite la limite de l'API GitHub
 //! - `MISTY_REPO` (`Misty-MC/Mistly-Launcher` par défaut) : dépôt dont on affiche les releases
 //! - `CLIENT_REPO` (`Misty-MC/Mistly-Client` par défaut) : dépôt des releases de Mistly Client
+//! - `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION`, `YANDEX_VERIFICATION` (facultatifs) :
+//!   codes de vérification de la Search Console de Google, des Webmaster Tools de Bing et de Yandex
+//! - `INDEXNOW_KEY` (facultatif, 8 à 128 caractères) : annonce les pages à Bing, Yandex… (IndexNow)
 //! - `MISTY_PUBLIC_DIR` (`public` par défaut) : fichiers statiques (CSS, JS, images, polices)
-//! - `SITE_URL` (`https://misty-launcher.online` par défaut) : adresse publique, pour le référencement
+//! - `SITE_URL` (`https://mistly.cc` par défaut) : adresse publique, pour le référencement
 //! - `SKIN_API` (`https://mc-heads.net` par défaut) : service qui fournit les skins (boutique)
 //! - `GITHUB_API` (`https://api.github.com` par défaut) : utile pour tester avec une fausse API
 //! - `GITHUB_WEB` (`https://github.com` par défaut) : flux Atom et fichiers des releases
@@ -146,7 +149,7 @@ async fn main() {
             moon_x: 0.7,
             moon_r: 44,
         }),
-        site_url: env_or("SITE_URL", "https://misty-launcher.online")
+        site_url: env_or("SITE_URL", "https://mistly.cc")
             .trim_end_matches('/')
             .to_string(),
     });
@@ -154,6 +157,9 @@ async fn main() {
     // Tâches de fond : releases GitHub (les pages ne lisent que le cache) et page de statut
     tokio::spawn(state.github.clone().rafraichir_en_boucle());
     tokio::spawn(state.client_releases.clone().rafraichir_en_boucle());
+    if let Some(cle) = std::env::var("INDEXNOW_KEY").ok().filter(|k| (8..=128).contains(&k.len())) {
+        tokio::spawn(seo::indexnow(state.site_url.clone(), cle, state.github.http().clone()));
+    }
     tokio::spawn(state.registre.clone().ecrire_en_boucle());
     tokio::spawn(state.status.clone().verifier_en_boucle());
     tokio::spawn(state.telemetrie.clone().menage_en_boucle());
@@ -181,6 +187,8 @@ async fn main() {
         .route("/cape/{name}", get(routes::cape))
         .route("/player/{name}", get(routes::player))
         .route("/robots.txt", get(routes::robots))
+        .route("/site.webmanifest", get(routes::manifest))
+        .route("/indexnow.txt", get(routes::indexnow_cle))
         .route("/sitemap.xml", get(routes::sitemap))
         .route("/docs", get(routes::docs_index))
         .route("/docs/search.json", get(routes::docs_search_index))
@@ -237,6 +245,7 @@ async fn main() {
         .route("/api/telemetry/summary", get(telemetrie::resume))
         .route("/api/telemetry/report/{code}", get(telemetrie::lire_rapport))
         .fallback_service(static_files)
+        .layer(axum::middleware::from_fn_with_state(state.clone(), routes::domaine_principal))
         // les téléchargements (zip, exe) sont déjà compressés : sans recompression, leur taille
         // reste annoncée (barre de progression du navigateur et de la mise à jour du launcher)
         .layer(CompressionLayer::new().compress_when(

@@ -32,6 +32,12 @@ pub fn linux() -> Markup {
     // Tux, en silhouette
     PreEscaped(r##"<svg class="ic" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c-2.3 0-3.6 1.9-3.6 4.4 0 1.5.3 2.4-.3 3.6-.8 1.5-2.6 3.3-2.6 6 0 1.4.5 2.4 1.3 3-.9.2-1.8.7-1.6 1.5.3 1 2.4.9 4 .3.6.2 1.8.3 2.8.3s2.2-.1 2.8-.3c1.6.6 3.7.7 4-.3.2-.8-.7-1.3-1.6-1.5.8-.6 1.3-1.6 1.3-3 0-2.7-1.8-4.5-2.6-6-.6-1.2-.3-2.1-.3-3.6C15.6 3.9 14.3 2 12 2z"/><ellipse cx="12" cy="15.2" rx="3" ry="4" fill="#09090b" fill-opacity=".45"/><circle cx="10.7" cy="6.4" r=".7" fill="#09090b"/><circle cx="13.3" cy="6.4" r=".7" fill="#09090b"/><path d="M10.9 8.2h2.2L12 9.4z" fill="#f2b33d"/></svg>"##.to_string())
 }
+pub fn sun() -> Markup {
+    icon(r#"<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>"#)
+}
+pub fn moon() -> Markup {
+    icon(r#"<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>"#)
+}
 pub fn external() -> Markup {
     icon(r#"<path d="M7 17L17 7M8 7h9v9"/>"#)
 }
@@ -151,8 +157,8 @@ pub fn flag(code: &str) -> Markup {
         "zh" => ("0 0 30 20", r##"<path fill="#ee1c25" d="M0 0h30v20H0z"/><path fill="#ffde00" d="M5 2l1.18 3.62H10L6.91 7.86 8.09 11.5 5 9.26 1.91 11.5 3.09 7.86 0 5.62h3.82z"/><circle cx="10" cy="2" r=".9" fill="#ffde00"/><circle cx="12" cy="4" r=".9" fill="#ffde00"/><circle cx="12" cy="7" r=".9" fill="#ffde00"/><circle cx="10" cy="9" r=".9" fill="#ffde00"/>"##),
         // Japon : disque rouge sur fond blanc
         "ja" => ("0 0 30 20", r##"<path fill="#fff" d="M0 0h30v20H0z"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>"##),
-        // Royaume-Uni pour l'anglais
-        _ => ("0 0 60 30", r##"<path fill="#012169" d="M0 0h60v30H0z"/><path stroke="#fff" stroke-width="6" d="M0 0l60 30M60 0L0 30"/><path stroke="#c8102e" stroke-width="2" d="M0 0l60 30M60 0L0 30"/><path stroke="#fff" stroke-width="10" d="M30 0v30M0 15h60"/><path stroke="#c8102e" stroke-width="6" d="M30 0v30M0 15h60"/>"##),
+        // États-Unis pour l'anglais : 13 bandes, canton bleu et étoiles simplifiées
+        _ => ("0 0 38 20", r##"<path fill="#b22234" d="M0 0h38v20H0z"/><path stroke="#fff" stroke-width="1.54" d="M0 2.31h38M0 5.38h38M0 8.46h38M0 11.54h38M0 14.62h38M0 17.69h38"/><path fill="#3c3b6e" d="M0 0h15.2v10.77H0z"/><g fill="#fff"><circle cx="1.9" cy="1.6" r=".55"/><circle cx="5.07" cy="1.6" r=".55"/><circle cx="8.23" cy="1.6" r=".55"/><circle cx="11.4" cy="1.6" r=".55"/><circle cx="3.48" cy="3.7" r=".55"/><circle cx="6.65" cy="3.7" r=".55"/><circle cx="9.82" cy="3.7" r=".55"/><circle cx="12.98" cy="3.7" r=".55"/><circle cx="1.9" cy="5.8" r=".55"/><circle cx="5.07" cy="5.8" r=".55"/><circle cx="8.23" cy="5.8" r=".55"/><circle cx="11.4" cy="5.8" r=".55"/><circle cx="3.48" cy="7.9" r=".55"/><circle cx="6.65" cy="7.9" r=".55"/><circle cx="9.82" cy="7.9" r=".55"/><circle cx="12.98" cy="7.9" r=".55"/><circle cx="1.9" cy="9.6" r=".55"/><circle cx="5.07" cy="9.6" r=".55"/><circle cx="8.23" cy="9.6" r=".55"/><circle cx="11.4" cy="9.6" r=".55"/></g>"##),
     };
     PreEscaped(format!(
         r#"<svg class="flag" viewBox="{view}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">{shapes}</svg>"#

@@ -225,7 +225,7 @@ impl Status {
 
     fn avec_fichier(fichier: PathBuf) -> Self {
         let http = crate::http()
-            .user_agent("misty-site-status (https://misty-launcher.online/status)")
+            .user_agent("misty-site-status (https://mistly.cc/status)")
             .connect_timeout(Duration::from_secs(4))
             .timeout(DELAI)
             .redirect(reqwest::redirect::Policy::none())

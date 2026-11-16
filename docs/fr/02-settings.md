@@ -65,4 +65,4 @@ La RAM donnée à Minecraft, avec un curseur. Mistly indique la mémoire de ton 
 
 Quand tu l'autorises, Mistly envoie : sa version, ta version de Windows, la quantité de RAM, les parties lancées, et les plantages avec leurs dernières lignes de log (le pseudo, les noms de dossiers et les jetons sont retirés). Jamais ton compte, ton mot de passe ou ton e-mail.
 
-À part cela, tant qu'il est ouvert, Mistly envoie un signal anonyme chaque minute pour compter les joueurs en ligne : un identifiant tiré au hasard à chaque démarrage, et le fait qu'une partie tourne ou non. Le total est public sur [misty-launcher.online/api/online](https://misty-launcher.online/api/online). Tous les détails sont dans la [politique de confidentialité](/privacy).
+À part cela, tant qu'il est ouvert, Mistly envoie un signal anonyme chaque minute pour compter les joueurs en ligne : un identifiant tiré au hasard à chaque démarrage, et le fait qu'une partie tourne ou non. Le total est public sur [mistly.cc/api/online](https://mistly.cc/api/online). Tous les détails sont dans la [politique de confidentialité](/privacy).

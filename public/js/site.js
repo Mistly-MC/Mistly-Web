@@ -26,6 +26,8 @@
   };
   const fbm = (x, y) => noise(x, y) * 0.55 + noise(x * 2.1, y * 2.1) * 0.3 + noise(x * 4.3, y * 4.3) * 0.15;
   const RAMP = " .,-~:;=+*";
+  // Couleur des caractères ASCII selon le thème (clairs sur la nuit, bleu foncé sur le thème clair)
+  const asciiRGB = () => getComputedStyle(document.documentElement).getPropertyValue("--ascii-rgb").trim() || "206 218 245";
   // Anime `draw(t)` à environ `fps` images par seconde, seulement quand l'élément est visible et
   // l'onglet ouvert ; une seule image si les animations sont coupées.
   const animate = (el, draw, fps = 12) => {
@@ -60,6 +62,7 @@
       rows = Math.ceil(canvas.clientHeight / LINE) + 1;
     };
     const draw = t => {
+      const tint = asciiRGB();
       g.clearRect(0, 0, canvas.width, canvas.height);
       const buckets = Array.from({ length: 8 }, () => []);
       for (let r = 0; r < rows; r++) {
@@ -76,7 +79,7 @@
       }
       buckets.forEach((list, i) => {
         if (!list.length) return;
-        g.fillStyle = `rgba(214,226,255,${(0.08 + i * 0.07).toFixed(2)})`;
+        g.fillStyle = `rgb(${tint} / ${(0.08 + i * 0.07).toFixed(2)})`;
         for (let k = 0; k < list.length; k += 3) g.fillText(list[k + 2], list[k] * cw, list[k + 1] * LINE);
       });
     };
@@ -252,6 +255,7 @@
     const frame = now => {
       if (now - last < 33) { requestAnimationFrame(frame); return; }
       last = now;
+      const tint = asciiRGB();
       // Le long du trajet depuis la dernière image, pour une traînée continue
       const steps = Math.min(12, Math.ceil(Math.hypot(mx - px, my - py) / 12));
       for (let i = 1; i <= steps; i++) warm(px + (mx - px) * i / steps, py + (my - py) * i / steps, 0.22);
@@ -268,7 +272,7 @@
         const v = h * (0.55 + 0.45 * fbm(c * 0.35 + t * 1.6, r * 0.5 - t));
         const ch = CHARS[Math.min(CHARS.length - 1, Math.floor(v * CHARS.length))];
         if (ch === " ") continue;
-        g.fillStyle = `rgba(200,216,255,${Math.min(0.85, v * 0.95).toFixed(3)})`;
+        g.fillStyle = `rgb(${tint} / ${Math.min(0.85, v * 0.95).toFixed(3)})`;
         g.fillText(ch, c * CELL_W, r * CELL_H);
       }
       if (alive || mx !== px) requestAnimationFrame(frame);
@@ -316,6 +320,15 @@
       pre.textContent = out;
     }, 10);
   });
+
+  // Thème clair / sombre : le choix est gardé ; sans choix, on suit le système
+  document.querySelectorAll("[data-theme-toggle]").forEach(b => b.addEventListener("click", () => {
+    const root = document.documentElement;
+    const actuel = root.dataset.theme || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+    const suivant = actuel === "light" ? "dark" : "light";
+    root.dataset.theme = suivant;
+    try { localStorage.setItem("theme", suivant); } catch {}
+  }));
 
   // Menus déroulants (langue, menu mobile) : fermeture au clic à côté ou avec Échap
   const menus = [...document.querySelectorAll("details.langdd, details.burger")];
@@ -724,6 +737,9 @@
       if (!fullText) loadIndex().then(filter);
     });
     input.addEventListener("focus", () => { loadIndex(); }, { once: true });
+    // `/docs?q=…` (recherche lancée depuis les résultats de Google) : on filtre tout de suite
+    const q = new URLSearchParams(location.search).get("q");
+    if (q && input.closest(".docs-hero")) { input.value = q; filter(); loadIndex().then(filter); }
     input.addEventListener("keydown", e => {
       if (e.key === "Enter") {
         const first = scope.querySelector("li[data-search]:not([hidden]) a");

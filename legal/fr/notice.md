@@ -6,7 +6,7 @@ updated = "2026-11-10"
 
 ## Éditeur
 
-Le site **misty-launcher.online** et le launcher Mistly sont édités par l'équipe Mistly, à titre non professionnel et sans but commercial. Le code source est public, sous licence MIT, dans l'organisation GitHub [Misty-MC](https://github.com/Misty-MC).
+Le site **mistly.cc** et le launcher Mistly sont édités par l'équipe Mistly, à titre non professionnel et sans but commercial. Le code source est public, sous licence MIT, dans l'organisation GitHub [Misty-MC](https://github.com/Misty-MC).
 
 ## Contact
 

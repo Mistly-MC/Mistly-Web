@@ -4,14 +4,14 @@
 :root{--st-up:#5fe08f;--st-slow:#ffc45c;--st-down:#ff6e6e;--st-none:#3a3d48}
 .st-hero{padding-bottom:0}
 .st-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(40px,6vw,80px) 20px clamp(90px,12vw,170px)}
-.st-head .label{font-family:var(--mono);color:#c8d3ee}
-.st-head h1{margin:14px 0 10px;font-size:clamp(34px,5vw,58px);font-weight:600;letter-spacing:-.04em;line-height:1.04;text-shadow:0 4px 30px rgba(5,8,18,.7)}
-.st-head h1 .soft{color:#a9b9dc}
-.st-head .sub{color:#c3cbe0;font-size:16px;max-width:560px;text-shadow:0 2px 14px rgba(5,8,18,.9)}
+.st-head .label{font-family:var(--mono);color:var(--soft)}
+.st-head h1{margin:14px 0 10px;font-size:clamp(34px,5vw,58px);font-weight:600;letter-spacing:-.04em;line-height:1.04;text-shadow:0 4px 30px rgb(var(--bg-rgb) / .7)}
+.st-head h1 .soft{color:var(--soft)}
+.st-head .sub{color:var(--text-2);font-size:16px;max-width:560px;text-shadow:0 2px 14px rgb(var(--bg-rgb) / .9)}
 
 /* Le résumé : une petite fenêtre de terminal, avec un cadre en tirets ASCII */
-.term{position:relative;width:min(640px,100%);margin-top:30px;padding:18px 22px;text-align:left;font-family:var(--mono);font-size:13.5px;line-height:1.8;color:#d4d4d8;
-  background:rgba(9,9,11,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px dashed rgba(255,255,255,.22)}
+.term{position:relative;width:min(640px,100%);margin-top:30px;padding:18px 22px;text-align:left;font-family:var(--mono);font-size:13.5px;line-height:1.8;color:var(--text-2);
+  background:rgb(var(--bg-rgb) / .78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px dashed rgb(var(--fg-rgb) / .22)}
 .term::before{content:"+";position:absolute;top:-11px;left:-5px;color:var(--dim)}
 .term::after{content:"+";position:absolute;bottom:-12px;right:-5px;color:var(--dim)}
 .term-line.cmd{color:var(--dim)}
@@ -45,7 +45,7 @@
 .bar-line .k{flex:none;width:3ch;color:var(--dim)}
 .bar{font-family:var(--mono);font-size:12px;letter-spacing:.06em;white-space:pre;overflow:hidden}
 .bar span{cursor:default}
-.bar span:hover{background:rgba(255,255,255,.12)}
+.bar span:hover{background:rgb(var(--fg-rgb) / .12)}
 .bar span.none{color:var(--st-none)}
 .bar.days{opacity:.85}
 .st-right{display:flex;align-items:center;gap:16px;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
@@ -53,12 +53,12 @@
 .st-ms{min-width:7ch;text-align:right;color:var(--dim)}
 
 /* Incidents : un journal */
-.st-log{border-top:1px solid var(--line);padding:16px 22px;font-family:var(--mono);font-size:13px;line-height:1.9;color:#d4d4d8;background:rgba(255,255,255,.012)}
+.st-log{border-top:1px solid var(--line);padding:16px 22px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--text-2);background:rgb(var(--fg-rgb) / .012)}
 .log-line{overflow-wrap:anywhere}
 .log-line .when{color:var(--dim)}
 .log-line strong{font-family:var(--sans);font-weight:600;color:var(--text)}
 .st-how{padding:16px 22px 26px;font-size:13px;color:var(--dim);max-width:760px}
-.st-how a{color:var(--text);text-decoration:underline;text-decoration-color:rgba(255,255,255,.3);text-underline-offset:3px}
+.st-how a{color:var(--text);text-decoration:underline;text-decoration-color:rgb(var(--fg-rgb) / .3);text-underline-offset:3px}
 
 @media (max-width:900px){
   .st-row{grid-template-columns:minmax(0,1fr) auto}
@@ -70,3 +70,7 @@
   .st-ms{display:none}
   .term{padding:14px 16px;font-size:12px}
 }
+
+/* Thème clair : des couleurs d'état plus sombres, lisibles sur fond pâle */
+:root[data-theme="light"]{--st-up:#178a4a;--st-slow:#b26a00;--st-down:#d23c3c;--st-none:#c3c7d2}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--st-up:#178a4a;--st-slow:#b26a00;--st-down:#d23c3c;--st-none:#c3c7d2}}

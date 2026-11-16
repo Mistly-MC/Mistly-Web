@@ -165,7 +165,7 @@ impl Verification {
             eprintln!("Vérification Discord : il faut VERIFY_SECRET et DISCORD_TOKEN (un seul est défini)");
         }
         let http = crate::http()
-            .user_agent("DiscordBot (https://misty-launcher.online, 1.0) misty-site")
+            .user_agent("DiscordBot (https://mistly.cc, 1.0) misty-site")
             .timeout(Duration::from_secs(10))
             .build()
             .expect("client HTTP");
