@@ -12,7 +12,7 @@ const LOADERS: [&str; 6] = ["Forge", "NeoForge", "Fabric", "Quilt", "OptiFine", 
 pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
     let tr = p.tr;
     let main = html! {
-        (hero(p, latest))
+        (hero(p))
         (chiffres(p, latest, downloads))
         (rayures())
         (galerie(p))
@@ -38,6 +38,7 @@ pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
         (download(p, latest))
         (rayures())
         (faq(p))
+        (mises_a_jour(latest))
         (appel(p))
     };
     layout::render(
@@ -66,18 +67,11 @@ fn rayures() -> Markup {
     html! { div.col.hatch aria-hidden="true" {} }
 }
 
-fn hero(p: &Page, latest: Option<&Release>) -> Markup {
+fn hero(p: &Page) -> Markup {
     let tr = p.tr;
     html! {
         section.hero {
             div.col.hero-in {
-                @if let Some(r) = latest {
-                    a.hero-pill href=(format!("/patch-notes#{}", r.tag_name)) {
-                        span.dot aria-hidden="true" {}
-                        (tr.hero_out.replace("{v}", &r.tag_name))
-                        (icons::arrow_right())
-                    }
-                }
                 div.hero-logo {
                     img src="/assets/icone.png" alt="" width="84" height="84";
                     span { "MISTLY" }
@@ -96,6 +90,54 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
             }
         }
     }
+}
+
+/// Bandeau qui fait défiler les nouveautés de la dernière version (vers ses notes de version).
+fn mises_a_jour(latest: Option<&Release>) -> Markup {
+    let Some(r) = latest else { return html! {} };
+    let points: Vec<String> = r.notes().lines().filter_map(puce).take(14).collect();
+    if points.is_empty() {
+        return html! {};
+    }
+    let lien = format!("/patch-notes#{}", r.tag_name);
+    // Le contenu est écrit deux fois : l'animation le décale d'une moitié et boucle sans raccord
+    let suite = |cache: bool| html! {
+        div.ticker-run aria-hidden=[cache.then_some("true")] {
+            @for pt in &points {
+                a.tick href=(lien) tabindex=[cache.then_some("-1")] { span.v { (r.tag_name) } (pt) }
+                span.sep aria-hidden="true" { "✦" }
+            }
+        }
+    };
+    html! {
+        section.blk.ticker aria-label=(r.tag_name) {
+            div.ticker-track { (suite(false)) (suite(true)) }
+        }
+    }
+}
+
+/// Une ligne de liste Markdown en texte simple : « - **Nouveau** : [x](…) » → « Nouveau : x ».
+fn puce(ligne: &str) -> Option<String> {
+    let l = ligne.trim_start();
+    let t = l.strip_prefix("- ").or_else(|| l.strip_prefix("* "))?;
+    let mut out = String::new();
+    let mut chars = t.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '*' | '`' => {}
+            '[' => {
+                let texte: String = chars.by_ref().take_while(|c| *c != ']').collect();
+                out.push_str(&texte);
+                if chars.peek() == Some(&'(') {
+                    chars.by_ref().take_while(|c| *c != ')').for_each(drop);
+                }
+            }
+            _ => out.push(c),
+        }
+    }
+    let out = out.trim().to_string();
+    let court: String = out.chars().take(120).collect();
+    (court.len() > 3).then(|| if court.len() < out.len() { format!("{court}…") } else { court })
 }
 
 /// Dernier appel à télécharger, sur un fond de caractères ASCII qui ondulent.

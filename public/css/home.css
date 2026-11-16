@@ -1,7 +1,7 @@
 /* Page d'accueil. */
 
 /* ---------- Hero : peu de texte, le paysage du launcher bien visible ---------- */
-.hero{position:relative;isolation:isolate;margin-top:-61px;padding:calc(61px + clamp(40px,7vh,90px)) 0 0}
+.hero{position:relative;isolation:isolate;margin-top:-69px;padding:calc(69px + clamp(40px,7vh,90px)) 0 0}
 .home .hero{min-height:min(100vh,940px)}
 .hero-in{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 20px}
 .hero-pill{display:inline-flex;align-items:center;gap:9px;padding:5px 12px 5px 10px;border-radius:999px;font-family:var(--mono);font-size:12.5px;color:#d4dcf0;
@@ -135,3 +135,20 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .hero:not(:has(.hero-in)) .sub{font-size:17px;color:var(--muted);max-width:640px}
 .hero:not(:has(.hero-in)) .sub{margin-top:0}
 .hero:not(:has(.hero-in)) .actions{justify-content:flex-start}
+
+/* ---------- Bandeau des nouveautés qui défile ---------- */
+.ticker{overflow:hidden;border-bottom:0}
+.ticker-track{display:flex;width:max-content;animation:ticker 70s linear infinite;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.ticker-run{display:flex;align-items:center;flex:none}
+.tick{display:inline-flex;align-items:center;gap:10px;padding:16px 22px;font-size:14px;color:var(--muted);white-space:nowrap;transition:color .15s}
+.tick:hover{color:var(--text)}
+.tick .v{font-family:var(--mono);font-size:11.5px;padding:1px 7px;border-radius:6px;border:1px solid var(--line-2);color:#b8ccf4}
+.ticker .sep{color:var(--dim);font-size:11px}
+@keyframes ticker{to{transform:translateX(-50%)}}
+
+/* FAQ : la réponse glisse à l'ouverture (site.js anime la hauteur) */
+.qa details p{transition:opacity .3s ease}
+.qa details:not([open]) p{opacity:0}
+.qa details.closing p{opacity:0}

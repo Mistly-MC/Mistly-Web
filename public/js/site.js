@@ -112,9 +112,9 @@
         const ch = base[r][c];
         if (ch === " ") return;
         const d = Math.abs(c / width - wave - r * 0.01);
-        const flick = ch === "█" && hash(c + Math.floor(t * 6) * 131, r) > 0.97;
-        s.textContent = flick ? "▓" : ch;
-        s.style.opacity = (0.16 + Math.max(0, 0.6 - d * 4)).toFixed(2);
+        const flick = ch === "#" && hash(c + Math.floor(t * 6) * 131, r) > 0.97;
+        s.textContent = flick ? "%" : ch;
+        s.style.opacity = (ch === ":" ? 0.18 : 0.42 + Math.max(0, 0.58 - d * 3)).toFixed(2);
       }));
     }, 15);
   }
@@ -169,6 +169,31 @@
       local(document);
     }, 60_000);
   }
+
+  // Accordéons (FAQ, patch notes) : la hauteur glisse à l'ouverture et à la fermeture
+  document.querySelectorAll(".qa details, details.rel").forEach(d => {
+    const summary = d.querySelector("summary");
+    if (!summary || reduce || !d.animate) return;
+    let anim = null;
+    const glisser = (de, a, fin) => {
+      anim?.cancel();
+      d.style.overflow = "hidden";
+      anim = d.animate({ height: [`${de}px`, `${a}px`] }, { duration: 320, easing: "cubic-bezier(.25,.8,.25,1)" });
+      anim.onfinish = () => { anim = null; d.style.overflow = ""; fin?.(); };
+    };
+    summary.addEventListener("click", e => {
+      e.preventDefault();
+      const depart = d.offsetHeight;
+      if (d.open && !d.classList.contains("closing")) {
+        d.classList.add("closing");
+        glisser(depart, summary.offsetHeight, () => { d.open = false; d.classList.remove("closing"); });
+      } else {
+        d.classList.remove("closing");
+        d.open = true;
+        glisser(depart, d.scrollHeight);
+      }
+    });
+  });
 
   // Patch notes : ouvrir la version visée par l'ancre (ex. /patch-notes#v0.3.1)
   const openFromHash = () => {

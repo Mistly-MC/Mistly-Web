@@ -22,6 +22,9 @@ pub fn notes() -> Markup {
 pub fn arrow_right() -> Markup {
     icon(r#"<path d="M5 12h14M13 6l6 6-6 6"/>"#)
 }
+pub fn tag() -> Markup {
+    icon(r#"<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/>"#)
+}
 pub fn external() -> Markup {
     icon(r#"<path d="M7 17L17 7M8 7h9v9"/>"#)
 }

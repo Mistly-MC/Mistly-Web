@@ -114,8 +114,6 @@ pub fn sitemap_xml(site: &str) -> String {
         "/patch-notes".into(),
         "/shop".into(),
         "/status".into(),
-        "/tools".into(),
-        "/tools/seed".into(),
     ];
     paths.extend(crate::legal::Kind::ALL.iter().map(|k| k.path().to_string()));
     paths.extend(

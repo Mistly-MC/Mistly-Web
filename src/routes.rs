@@ -162,18 +162,11 @@ pub async fn terms(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery
     legal_page(&state, q, &headers, crate::legal::Kind::Terms).await
 }
 
-pub async fn tools_index(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
-    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
-    let count = state.github.releases().await.map(|l| l.len());
-    let p = page(&state, lang, "/tools", count);
-    html_response(StatusCode::OK, crate::views::tools::index(&p), lang, remember)
-}
-
-pub async fn tools_seed(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
-    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
-    let count = state.github.releases().await.map(|l| l.len());
-    let p = page(&state, lang, "/tools/seed", count);
-    html_response(StatusCode::OK, crate::views::tools::seed(&p), lang, remember)
+/// `/tools` et `/tools/…` : les outils ont été retirés, redirection permanente vers l'accueil.
+pub async fn outils_retires() -> Response {
+    let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
+    res.headers_mut().insert(header::LOCATION, HeaderValue::from_static("/"));
+    res
 }
 
 const PLAYER_COOKIE: &str = "misty-player";

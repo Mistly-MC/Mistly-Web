@@ -32,6 +32,8 @@ enum Category {
     Headwear,
     Bodywear,
     Auras,
+    /// Styles du pseudo au-dessus de la tête
+    Tags,
     Pets,
     Emotes,
     Bundles,
@@ -56,6 +58,7 @@ impl Category {
             Category::Headwear => "headwear",
             Category::Bodywear => "bodywear",
             Category::Auras => "auras",
+            Category::Tags => "tags",
             Category::Pets => "pets",
             Category::Emotes => "emotes",
             Category::Bundles => "bundles",
@@ -69,6 +72,7 @@ impl Category {
             Category::Headwear => (&tr.shop_cat_hats, &tr.shop_cat_hats_p),
             Category::Bodywear => (&tr.shop_cat_bodywear, &tr.shop_cat_bodywear_p),
             Category::Auras => (&tr.shop_cat_effects, &tr.shop_cat_effects_p),
+            Category::Tags => (&tr.shop_cat_tags, &tr.shop_cat_tags_p),
             Category::Pets => (&tr.shop_cat_pets, &tr.shop_cat_pets_p),
             Category::Emotes => (&tr.shop_cat_emotes, &tr.shop_cat_emotes_p),
             Category::Bundles => (&tr.shop_cat_bundles, &tr.shop_cat_bundles_p),
@@ -82,6 +86,7 @@ impl Category {
             Category::Headwear => icons::crown(),
             Category::Bodywear => icons::shirt(),
             Category::Auras => icons::sparkles(),
+            Category::Tags => icons::tag(),
             Category::Pets => icons::paw(),
             Category::Emotes => icons::smile(),
             Category::Bundles => icons::package(),
@@ -207,7 +212,7 @@ impl Article {
 /// La collection Mistly, puis les catégories qui arrivent bientôt.
 fn collection(p: &Page) -> Markup {
     let tr = p.tr;
-    let bientot = [Category::Headwear, Category::Wings, Category::Bodywear, Category::Auras, Category::Pets, Category::Emotes];
+    let bientot = [Category::Headwear, Category::Wings, Category::Tags, Category::Auras, Category::Pets, Category::Emotes];
     html! {
         section.blk {
             div.col {
@@ -236,14 +241,24 @@ fn collection(p: &Page) -> Markup {
                 div.cells.c3 {
                     @for c in bientot {
                         @let (titre, texte) = c.text(tr);
-                        div.soon-card.reveal {
+                        // Chapeaux et ailes ont déjà un article à essayer : la carte ouvre l'essayage
+                        @let essai = match c { Category::Headwear => Some("cloudly"), Category::Wings => Some("elytra"), _ => None };
+                        @let corps = html! {
                             pre.ascii-noise aria-hidden="true" {}
-                            div.soon-body {
+                            span.soon-body {
                                 span.ico { (c.icon()) }
                                 strong { (titre) }
-                                p { (texte) }
-                                span.badge { (tr.shop_badge) }
+                                span.desc { (texte) }
+                                span.soon-foot {
+                                    span.badge { (tr.shop_badge) }
+                                    @if essai.is_some() { span.try-it { (tr.shop_try_on) (icons::arrow_right()) } }
+                                }
                             }
+                        };
+                        @if let Some(t) = essai {
+                            button.soon-card.clickable.reveal type="button" data-try=(t) { (corps) }
+                        } @else {
+                            div.soon-card.reveal { (corps) }
                         }
                     }
                 }

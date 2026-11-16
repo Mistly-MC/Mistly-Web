@@ -39,7 +39,6 @@ mod legal;
 mod markdown;
 mod routes;
 mod scene;
-mod seedmap;
 mod seo;
 mod skins;
 mod status;
@@ -177,8 +176,9 @@ async fn main() {
         .route("/docs/search.json", get(routes::docs_search_index))
         .route("/docs/{slug}", get(routes::docs_page))
         .route("/status", get(routes::status_page))
-        .route("/tools", get(routes::tools_index))
-        .route("/tools/seed", get(routes::tools_seed))
+        // Les outils ont été retirés du site : les anciens liens mènent à l'accueil
+        .route("/tools", get(routes::outils_retires))
+        .route("/tools/{*reste}", get(routes::outils_retires))
         .route("/legal", get(routes::legal_notice))
         .route("/privacy", get(routes::privacy))
         .route("/terms", get(routes::terms))
