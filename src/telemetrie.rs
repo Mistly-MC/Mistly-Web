@@ -176,7 +176,7 @@ fn code_rapport() -> String {
     code
 }
 
-fn code_valide(code: &str) -> bool {
+pub(crate) fn code_valide(code: &str) -> bool {
     code.len() == 10
         && code.starts_with("MR-")
         && code[3..].bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit())
@@ -324,7 +324,7 @@ pub async fn resume(State(state): State<Arc<AppState>>, entetes: HeaderMap) -> R
     }
 }
 
-fn compter(dossier: &std::path::Path, jours: i64) -> Value {
+pub(crate) fn compter(dossier: &std::path::Path, jours: i64) -> Value {
     use std::collections::{BTreeMap, HashSet};
     let aujourd_hui = OffsetDateTime::now_utc().date();
     let mut par_jour: BTreeMap<String, Value> = BTreeMap::new();

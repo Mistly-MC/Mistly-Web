@@ -70,6 +70,11 @@ impl Presence {
         self.sessions.lock().unwrap().remove(session);
     }
 
+    /// Record de launchers ouverts depuis le démarrage du site, et quand.
+    pub fn record(&self) -> (usize, Option<time::OffsetDateTime>) {
+        *self.record.lock().unwrap()
+    }
+
     /// (launchers ouverts, dont en partie)
     pub fn compte(&self) -> (usize, usize) {
         let mut s = self.sessions.lock().unwrap();

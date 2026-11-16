@@ -11,7 +11,10 @@
 //! - `GITHUB_WEB` (`https://github.com` par défaut) : flux Atom et fichiers des releases
 //! - `MISTY_CACHE_DIR` (dossier temporaire par défaut) : caches, statut, copie des versions, télémétrie
 //! - `EARLY_BEFORE` (AAAA-MM-JJ, facultatif) : la cape early player de Mistly Client est réservée aux
-//!   comptes connectés avant cette date ; sans elle, tous les comptes y ont droit
+//!   comptes connectés avant cette date ; sans elle, tous les comptes y ont droit (une date réglée
+//!   depuis le tableau de bord passe avant)
+//! - `ADMIN_PASSWORD` (facultatif, 12 caractères ou plus) : ouvre le tableau de bord de l'équipe
+//!   (`/admin`) : joueurs, cosmétiques donnés ou retirés, bannissements, rapports de logs
 //! - `VERIFY_SECRET` et `DISCORD_TOKEN` (facultatifs) : captcha `/verify` de Mistly Bot (même secret
 //!   que le bot, et le token du bot pour donner le rôle) ; `DISCORD_CLIENT_SECRET` en plus pour le
 //!   captcha dans Discord (Activité, page `/activity`)
@@ -20,6 +23,7 @@
 //! - `TELEMETRY_TOKEN` (facultatif, 16 caractères ou plus) : ouvre la lecture de la télémétrie
 //!   (`/api/telemetry/summary`, `/api/telemetry/report/{code}`) avec `Authorization: Bearer …`
 
+mod admin;
 mod client;
 mod discord;
 mod puzzle;
@@ -29,6 +33,7 @@ mod format;
 mod github;
 mod miroir;
 mod presence;
+mod registre;
 mod i18n;
 mod legal;
 mod markdown;
@@ -69,6 +74,10 @@ pub struct AppState {
     pub presence: presence::Presence,
     /// Joueurs en jeu avec Mistly Client, et leurs cosmétiques Mistly (/api/client/…).
     pub client: client::Client,
+    /// Registre des joueurs : cosmétiques donnés ou retirés, bannissements, notes (joueurs.json).
+    pub registre: Arc<registre::Registre>,
+    /// Tableau de bord de l'équipe (/admin).
+    pub admin: admin::Admin,
     /// Salon Discord de l'équipe (rapports, résumé du jour).
     pub discord: Arc<discord::Discord>,
     /// Captcha de vérification des serveurs Discord qui utilisent Mistly Bot.
@@ -121,6 +130,8 @@ async fn main() {
         telemetrie: Arc::new(telemetrie::Telemetrie::new()),
         presence: presence::Presence::new(),
         client: client::Client::new(),
+        registre: Arc::new(registre::Registre::new()),
+        admin: admin::Admin::new(),
         discord: Arc::new(discord::Discord::new()),
         verification: Arc::new(verify::Verification::new()),
         scene: scene::render(&scene::SceneOptions {
@@ -137,6 +148,7 @@ async fn main() {
 
     // Tâches de fond : releases GitHub (les pages ne lisent que le cache) et page de statut
     tokio::spawn(state.github.clone().rafraichir_en_boucle());
+    tokio::spawn(state.registre.clone().ecrire_en_boucle());
     tokio::spawn(state.status.clone().verifier_en_boucle());
     tokio::spawn(state.telemetrie.clone().menage_en_boucle());
     tokio::spawn(state.discord.clone().resume_en_boucle(state.telemetrie.dossier()));
@@ -193,6 +205,20 @@ async fn main() {
         .route("/api/client/presence", post(client::presence).layer(DefaultBodyLimit::max(1024)))
         .route("/api/client/players", post(client::joueurs).layer(DefaultBodyLimit::max(8 * 1024)))
         .route("/api/client/early/{uuid}", get(client::early))
+        .route("/api/client/cosmetics/{uuid}", get(client::cosmetiques))
+        // tableau de bord de l'équipe (ADMIN_PASSWORD)
+        .route("/admin", get(admin::accueil))
+        .route("/admin/login", get(admin::page_connexion).post(admin::connexion).layer(DefaultBodyLimit::max(4 * 1024)))
+        .route("/admin/logout", post(admin::deconnexion))
+        .route("/admin/online.json", get(admin::en_ligne_json))
+        .route("/admin/players", get(admin::joueurs))
+        .route("/admin/players/add", post(admin::ajouter).layer(DefaultBodyLimit::max(4 * 1024)))
+        .route("/admin/players/{uuid}", get(admin::fiche).post(admin::agir).layer(DefaultBodyLimit::max(16 * 1024)))
+        .route("/admin/cosmetics", get(admin::cosmetiques).post(admin::changer_regle).layer(DefaultBodyLimit::max(4 * 1024)))
+        .route("/admin/reports", get(admin::rapports))
+        .route("/admin/log", get(admin::journal))
+        .route("/admin/database", get(admin::base).post(admin::enregistrer_base).layer(DefaultBodyLimit::max(64 * 1024 * 1024)))
+        .route("/admin/database.json", get(admin::base_json))
         .route(
             "/api/telemetry",
             post(telemetrie::evenement).layer(DefaultBodyLimit::max(32 * 1024)),

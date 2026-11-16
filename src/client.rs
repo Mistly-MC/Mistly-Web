@@ -12,11 +12,12 @@
 //!   lesquels sont en ligne avec Mistly, et que portent-ils.
 //! - `GET /api/client/early/{uuid}` : ce compte a-t-il droit à la cape early player ?
 //!
-//! Cape early player : réservée aux comptes connectés à Mistly Client avant la date `EARLY_BEFORE`
-//! (AAAA-MM-JJ ; sans elle, tous les comptes y ont droit). Pour le savoir, le site garde l'UUID et
-//! la date de première connexion de chaque compte (`premiers-joueurs.json` dans `MISTY_CACHE_DIR`).
-//! Le reste est en mémoire : les listes de joueurs demandées ne sont pas gardées, aucune adresse
-//! IP n'est conservée (elle ne sert qu'à limiter le débit, une minute).
+//! - `GET /api/client/cosmetics/{uuid}` : les cosmétiques que ce compte peut porter.
+//!
+//! Qui peut porter quoi (cape early player réservée aux premiers joueurs, cosmétiques donnés ou
+//! retirés, comptes bannis) se décide dans le registre des joueurs (`registre.rs`), modifiable
+//! depuis le tableau de bord. Le reste est en mémoire : les listes de joueurs demandées ne sont pas
+//! gardées, aucune adresse IP n'est conservée (elle ne sert qu'à limiter le débit, une minute).
 
 use axum::Json;
 use axum::extract::State;
@@ -25,11 +26,11 @@ use axum::response::{IntoResponse, Response};
 use rand::Rng;
 use serde_json::{Map, Value, json};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 
 use crate::AppState;
+use crate::registre::{CATALOGUE, Place, Registre};
 
 /// Un joueur compte comme en ligne tant que son dernier signe date de moins de 3 minutes.
 const EN_LIGNE: Duration = Duration::from_secs(180);
@@ -44,11 +45,7 @@ const MAX_LOGIN_PAR_MINUTE: u32 = 12;
 const MAX_UUIDS: usize = 100;
 /// Au-delà, les jetons inactifs sont oubliés, puis les nouvelles connexions refusées (protection mémoire).
 const MAX_JETONS: usize = 200_000;
-/// Cosmétiques Mistly portés dans le dos (les mêmes identifiants que le launcher et le mod).
-const COSMETIQUES: &[&str] = &["misty_cape", "misty_elytra", EARLY_CAPE];
-/// Chapeaux Mistly.
-const CHAPEAUX: &[&str] = &["cloudly"];
-/// La cape des premiers joueurs : seulement pour les comptes vus avant `EARLY_BEFORE`.
+/// La cape des premiers joueurs.
 const EARLY_CAPE: &str = "early_cape";
 
 struct Jeton {
@@ -59,8 +56,19 @@ struct Jeton {
 
 struct Joueur {
     vu: Instant,
+    /// Début de la session en cours (premier signe de vie)
+    depuis: Instant,
     cosmetique: &'static str,
     chapeau: &'static str,
+}
+
+/// Un joueur en ligne, pour le tableau de bord.
+pub struct EnLigne {
+    pub uuid: String,
+    pub cosmetique: &'static str,
+    pub chapeau: &'static str,
+    /// Secondes depuis le début de la session
+    pub depuis: u64,
 }
 
 pub struct Client {
@@ -72,12 +80,6 @@ pub struct Client {
     joueurs: Mutex<HashMap<String, Joueur>>,
     /// (adresse, sorte de requête) → (début de la minute, compte), seulement pour limiter le débit
     debits: Mutex<HashMap<(String, bool), (Instant, u32)>>,
-    /// UUID → première connexion (secondes Unix), gardé sur disque (cape early player)
-    premiers: Mutex<HashMap<String, u64>>,
-    /// Fichier des premières connexions (None : rien n'est gardé, pour les tests)
-    fichier_premiers: Option<PathBuf>,
-    /// Les comptes vus avant cette date ont la cape early player (None : tous)
-    early_avant: Option<u64>,
 }
 
 impl Client {
@@ -87,34 +89,6 @@ impl Client {
             jetons: Mutex::default(),
             joueurs: Mutex::default(),
             debits: Mutex::default(),
-            premiers: Mutex::new(fichier_premiers().and_then(|f| std::fs::read(f).ok()).and_then(|o| serde_json::from_slice(&o).ok()).unwrap_or_default()),
-            fichier_premiers: fichier_premiers(),
-            early_avant: std::env::var("EARLY_BEFORE").ok().and_then(|d| date_unix(&d)),
-        }
-    }
-
-    /// Note la première connexion de ce compte (une seule fois) et l'écrit sur disque.
-    fn vu_la_premiere_fois(&self, uuid: &str) {
-        let mut premiers = self.premiers.lock().unwrap();
-        if premiers.contains_key(uuid) || premiers.len() >= MAX_JETONS * 10 {
-            return;
-        }
-        premiers.insert(uuid.to_string(), maintenant());
-        if let Some(f) = &self.fichier_premiers {
-            let temporaire = f.with_extension("tmp");
-            if let Ok(texte) = serde_json::to_vec(&*premiers) {
-                if std::fs::write(&temporaire, texte).is_ok() {
-                    let _ = std::fs::rename(&temporaire, f);
-                }
-            }
-        }
-    }
-
-    /// Ce compte a-t-il droit à la cape early player ? (vu avant `EARLY_BEFORE`, ou pas de date)
-    fn early(&self, uuid: &str) -> bool {
-        match self.early_avant {
-            None => true,
-            Some(limite) => self.premiers.lock().unwrap().get(uuid).is_some_and(|&vu| vu < limite),
         }
     }
 
@@ -157,14 +131,48 @@ impl Client {
         Some(j.uuid.clone())
     }
 
-    fn signe(&self, uuid: String, cosmetique: &'static str, chapeau: &'static str) {
-        // la cape early player seulement pour ceux qui y ont droit
-        let cosmetique = if cosmetique == EARLY_CAPE && !self.early(&uuid) { "" } else { cosmetique };
+    /// Signe de vie : seuls les cosmétiques que ce compte a le droit de porter sont relayés.
+    fn signe(&self, registre: &Registre, uuid: String, cosmetique: &'static str, chapeau: &'static str) {
+        let cosmetique = if registre.peut_porter(&uuid, cosmetique) { cosmetique } else { "" };
+        let chapeau = if registre.peut_porter(&uuid, chapeau) { chapeau } else { "" };
+        registre.vu(&uuid);
         let mut joueurs = self.joueurs.lock().unwrap();
         if joueurs.len() > MAX_JETONS {
             joueurs.retain(|_, j| j.vu.elapsed() < EN_LIGNE);
         }
-        joueurs.insert(uuid, Joueur { vu: Instant::now(), cosmetique, chapeau });
+        let depuis = joueurs.get(&uuid).filter(|j| j.vu.elapsed() < EN_LIGNE).map_or_else(Instant::now, |j| j.depuis);
+        joueurs.insert(uuid, Joueur { vu: Instant::now(), depuis, cosmetique, chapeau });
+    }
+
+    /// Déconnecte ce compte du réseau Mistly : son jeton ne sert plus et il n'est plus en ligne.
+    /// Le jeu se reconnecte tout seul, sauf si le compte est banni.
+    pub fn expulser(&self, uuid: &str) {
+        self.jetons.lock().unwrap().retain(|_, j| j.uuid != uuid);
+        self.quitte(uuid);
+    }
+
+    /// Le cosmétique porté par un joueur en ligne ne lui est plus permis : on l'enlève tout de suite.
+    pub fn reverifier(&self, registre: &Registre, uuid: &str) {
+        if let Some(j) = self.joueurs.lock().unwrap().get_mut(uuid) {
+            if !registre.peut_porter(uuid, j.cosmetique) {
+                j.cosmetique = "";
+            }
+            if !registre.peut_porter(uuid, j.chapeau) {
+                j.chapeau = "";
+            }
+        }
+    }
+
+    /// Les joueurs en ligne avec Mistly Client, les plus récemment arrivés d'abord.
+    pub fn liste_en_ligne(&self) -> Vec<EnLigne> {
+        let joueurs = self.joueurs.lock().unwrap();
+        let mut liste: Vec<EnLigne> = joueurs
+            .iter()
+            .filter(|(_, j)| j.vu.elapsed() < EN_LIGNE)
+            .map(|(u, j)| EnLigne { uuid: u.clone(), cosmetique: j.cosmetique, chapeau: j.chapeau, depuis: j.depuis.elapsed().as_secs() })
+            .collect();
+        liste.sort_by_key(|j| j.depuis);
+        liste
     }
 
     fn quitte(&self, uuid: &str) {
@@ -185,40 +193,26 @@ impl Client {
 }
 
 /// UUID écrit avec ou sans tirets → 32 chiffres hexadécimaux en minuscules.
-fn uuid_normalise(texte: &str) -> Option<String> {
+pub fn uuid_normalise(texte: &str) -> Option<String> {
     let hex: String = texte.chars().filter(|c| *c != '-').collect::<String>().to_ascii_lowercase();
     (hex.len() == 32 && hex.bytes().all(|b| b.is_ascii_hexdigit())).then_some(hex)
 }
 
-fn avec_tirets(hex: &str) -> String {
+pub fn avec_tirets(hex: &str) -> String {
     format!("{}-{}-{}-{}-{}", &hex[..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..])
 }
 
+/// Un identifiant de cosmétique du catalogue, porté à cette place (sinon : rien).
+fn connu(texte: Option<&str>, place: Place) -> &'static str {
+    CATALOGUE.iter().find(|c| c.place == place && Some(c.id) == texte).map_or("", |c| c.id)
+}
+
 fn cosmetique_connu(texte: Option<&str>) -> &'static str {
-    COSMETIQUES.iter().copied().find(|c| Some(*c) == texte).unwrap_or("")
+    connu(texte, Place::Dos)
 }
 
 fn chapeau_connu(texte: Option<&str>) -> &'static str {
-    CHAPEAUX.iter().copied().find(|c| Some(*c) == texte).unwrap_or("")
-}
-
-fn maintenant() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
-}
-
-/// `premiers-joueurs.json` dans `MISTY_CACHE_DIR` (sans ce dossier : rien n'est gardé).
-fn fichier_premiers() -> Option<PathBuf> {
-    if cfg!(test) {
-        return None;
-    }
-    std::env::var_os("MISTY_CACHE_DIR").map(|d| PathBuf::from(d).join("premiers-joueurs.json"))
-}
-
-/// "2027-01-01" → secondes Unix à minuit UTC.
-fn date_unix(texte: &str) -> Option<u64> {
-    let format = time::macros::format_description!("[year]-[month]-[day]");
-    let date = time::Date::parse(texte.trim(), &format).ok()?;
-    u64::try_from(date.midnight().assume_utc().unix_timestamp()).ok()
+    connu(texte, Place::Tete)
 }
 
 fn erreur(code: StatusCode, message: &str) -> Response {
@@ -251,9 +245,18 @@ pub async fn login(State(state): State<Arc<AppState>>, entetes: HeaderMap, Json(
     let Some(uuid) = profil["id"].as_str().and_then(uuid_normalise) else {
         return erreur(StatusCode::BAD_GATEWAY, "bad mojang answer");
     };
-    c.vu_la_premiere_fois(&uuid);
+    let nom = profil["name"].as_str().unwrap_or(nom);
+    if !state.registre.connexion(&uuid, nom) {
+        return erreur(StatusCode::FORBIDDEN, "banned");
+    }
     match c.ouvrir(&uuid) {
-        Some(jeton) => Json(json!({ "token": jeton, "uuid": avec_tirets(&uuid), "early": c.early(&uuid) })).into_response(),
+        Some(jeton) => Json(json!({
+            "token": jeton,
+            "uuid": avec_tirets(&uuid),
+            "early": state.registre.peut_porter(&uuid, EARLY_CAPE),
+            "cosmetics": state.registre.permis(&uuid),
+        }))
+        .into_response(),
         None => StatusCode::SERVICE_UNAVAILABLE.into_response(),
     }
 }
@@ -271,7 +274,7 @@ pub async fn presence(State(state): State<Arc<AppState>>, entetes: HeaderMap, Js
     if corps["bye"].as_bool() == Some(true) {
         c.quitte(&uuid);
     } else {
-        c.signe(uuid, cosmetique_connu(corps["cosmetic"].as_str()), chapeau_connu(corps["hat"].as_str()));
+        c.signe(&state.registre, uuid, cosmetique_connu(corps["cosmetic"].as_str()), chapeau_connu(corps["hat"].as_str()));
     }
     StatusCode::NO_CONTENT.into_response()
 }
@@ -303,7 +306,19 @@ pub async fn early(State(state): State<Arc<AppState>>, entetes: HeaderMap, axum:
     let Some(uuid) = uuid_normalise(&uuid) else {
         return erreur(StatusCode::BAD_REQUEST, "bad request");
     };
-    Json(json!({ "early": c.early(&uuid) })).into_response()
+    Json(json!({ "early": state.registre.peut_porter(&uuid, EARLY_CAPE) })).into_response()
+}
+
+/// `GET /api/client/cosmetics/{uuid}` → `{ "cosmetics": ["misty_cape", …] }` : ce que ce compte
+/// peut porter (le launcher peut griser le reste).
+pub async fn cosmetiques(State(state): State<Arc<AppState>>, entetes: HeaderMap, axum::extract::Path(uuid): axum::extract::Path<String>) -> Response {
+    if !state.client.autorise(&crate::presence::adresse(&entetes), false) {
+        return StatusCode::TOO_MANY_REQUESTS.into_response();
+    }
+    let Some(uuid) = uuid_normalise(&uuid) else {
+        return erreur(StatusCode::BAD_REQUEST, "bad request");
+    };
+    Json(json!({ "cosmetics": state.registre.permis(&uuid) })).into_response()
 }
 
 #[cfg(test)]
@@ -334,9 +349,14 @@ mod tests {
         assert_eq!(cosmetique_connu(None), "");
     }
 
+    fn registre() -> Registre {
+        Registre::avec(crate::registre::Base::default(), None, None)
+    }
+
     #[test]
     fn jeton_puis_presence() {
         let c = Client::new();
+        let r = registre();
         let jeton = c.ouvrir(ALEX).unwrap();
         assert_eq!(jeton.len(), 64);
         assert_eq!(c.compte(&entetes(&jeton)).as_deref(), Some(ALEX));
@@ -345,11 +365,12 @@ mod tests {
 
         // pas encore de signe de vie : pas en ligne
         assert!(c.en_ligne(&[ALEX.to_string()]).is_empty());
-        c.signe(ALEX.to_string(), "misty_cape", "cloudly");
+        c.signe(&r, ALEX.to_string(), "misty_cape", "cloudly");
         let en_ligne = c.en_ligne(&[ALEX.to_string(), "0".repeat(32)]);
         assert_eq!(en_ligne.len(), 1);
         assert_eq!(en_ligne["ec561538-f3fd-461d-aff5-086b22154bce"]["cosmetic"], "misty_cape");
         assert_eq!(en_ligne["ec561538-f3fd-461d-aff5-086b22154bce"]["hat"], "cloudly");
+        assert_eq!(c.liste_en_ligne().len(), 1);
 
         c.quitte(ALEX);
         assert!(c.en_ligne(&[ALEX.to_string()]).is_empty());
@@ -363,23 +384,37 @@ mod tests {
     }
 
     #[test]
-    fn cape_early_seulement_avant_la_date() {
-        let mut c = Client::new();
-        // sans date : tout le monde
-        assert!(c.early(ALEX));
-        c.early_avant = date_unix("2026-01-01");
-        assert_eq!(date_unix("1970-01-02"), Some(86_400));
-        // pas encore vu : non ; vu maintenant (après la date) : non plus
-        assert!(!c.early(ALEX));
-        c.vu_la_premiere_fois(ALEX);
-        assert!(!c.early(ALEX));
-        c.signe(ALEX.to_string(), EARLY_CAPE, "");
+    fn seuls_les_cosmetiques_permis_passent() {
+        let c = Client::new();
+        let r = Registre::avec(crate::registre::Base::default(), None, crate::registre::date_unix("2026-01-01"));
+        // cape early : pas vu avant la date, elle ne passe pas
+        c.signe(&r, ALEX.to_string(), EARLY_CAPE, "");
         assert_eq!(c.en_ligne(&[ALEX.to_string()])["ec561538-f3fd-461d-aff5-086b22154bce"]["cosmetic"], "");
-        // vu avant la date : oui, et la cape passe
-        c.premiers.lock().unwrap().insert(ALEX.to_string(), 1_000);
-        assert!(c.early(ALEX));
-        c.signe(ALEX.to_string(), EARLY_CAPE, "");
+        // donnée depuis le tableau de bord : elle passe
+        r.modifier("test", |b| {
+            b.players.entry(ALEX.into()).or_default().granted.insert(EARLY_CAPE.into());
+        });
+        c.signe(&r, ALEX.to_string(), EARLY_CAPE, "cloudly");
         assert_eq!(c.en_ligne(&[ALEX.to_string()])["ec561538-f3fd-461d-aff5-086b22154bce"]["cosmetic"], EARLY_CAPE);
+        // retirée pendant qu'il joue : enlevée tout de suite
+        r.modifier("test", |b| {
+            let f = b.players.get_mut(ALEX).unwrap();
+            f.granted.clear();
+            f.revoked.insert("cloudly".into());
+        });
+        c.reverifier(&r, ALEX);
+        let j = &c.en_ligne(&[ALEX.to_string()])["ec561538-f3fd-461d-aff5-086b22154bce"];
+        assert_eq!((j["cosmetic"].as_str(), j["hat"].as_str()), (Some(""), Some("")));
+    }
+
+    #[test]
+    fn expulser_oublie_le_jeton() {
+        let c = Client::new();
+        let jeton = c.ouvrir(ALEX).unwrap();
+        c.signe(&registre(), ALEX.to_string(), "misty_cape", "");
+        c.expulser(ALEX);
+        assert_eq!(c.compte(&entetes(&jeton)), None);
+        assert!(c.liste_en_ligne().is_empty());
     }
 
     #[test]
