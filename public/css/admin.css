@@ -6,7 +6,7 @@ body.admin:not(:has(.side)){grid-template-columns:1fr}
 
 /* ---------- Barre latérale ---------- */
 .side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:22px;padding:20px 14px;border-right:1px solid var(--line);background:rgba(7,10,20,.72)}
-.side .brand{display:flex;align-items:center;gap:10px;padding:0 8px;font-family:var(--pix);font-size:17px;font-weight:700}
+.side .brand{display:flex;align-items:center;gap:10px;padding:0 8px;font-family:var(--pixel);font-size:17px;font-weight:700}
 .side .brand img{image-rendering:pixelated}
 .side .brand em{font-family:var(--mono);font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;background:var(--accent-strong);color:#fff}
 .side nav{display:flex;flex-direction:column;gap:2px}
@@ -189,7 +189,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .login-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .login-head img{image-rendering:pixelated}
 .login-head div{display:flex;flex-direction:column}
-.login-head strong{font-family:var(--pix);font-size:18px}
+.login-head strong{font-family:var(--pixel);font-size:18px}
 .login-head span{font-size:13px;color:var(--muted)}
 .login label{font-size:13px;color:var(--muted)}
 .login .btn{margin-top:6px}

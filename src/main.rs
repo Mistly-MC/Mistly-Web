@@ -60,14 +60,12 @@ pub struct AppState {
     pub github: Arc<github::GitHub>,
     /// Page de statut : vérifications des services, faites en arrière-plan.
     pub status: Arc<status::Status>,
-    /// Paysage de fond, le même sur toutes les pages.
+    /// Paysage de fond (le même que dans le launcher), le même sur toutes les pages.
     pub scene: String,
     /// Adresse publique du site, sans `/` final.
     pub site_url: String,
     /// Relais des skins pour l'aperçu 3D de la boutique.
     pub skins: skins::Skins,
-    /// Bande de brume pixel, insérée entre les sections.
-    pub fog_strip: String,
     /// Télémétrie du launcher et rapports de logs.
     pub telemetrie: Arc<telemetrie::Telemetrie>,
     /// Launchers ouverts en ce moment (/api/online).
@@ -134,13 +132,12 @@ async fn main() {
         admin: admin::Admin::new(),
         discord: Arc::new(discord::Discord::new()),
         verification: Arc::new(verify::Verification::new()),
+        skins: skins::Skins::new(env_or("SKIN_API", "https://mc-heads.net")),
         scene: scene::render(&scene::SceneOptions {
             seed: 7,
-            moon_x: 0.8,
+            moon_x: 0.7,
             moon_r: 44,
         }),
-        fog_strip: scene::fog_strip(11),
-        skins: skins::Skins::new(env_or("SKIN_API", "https://mc-heads.net")),
         site_url: env_or("SITE_URL", "https://misty-launcher.online")
             .trim_end_matches('/')
             .to_string(),

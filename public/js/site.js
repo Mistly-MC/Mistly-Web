@@ -2,13 +2,144 @@
 // sans ce script, le site reste entièrement utilisable.
 (() => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const HEADER_OFFSET = 84; // même valeur que scroll-padding-top dans base.css
+  const HEADER_OFFSET = 80; // même valeur que scroll-padding-top dans base.css
 
   // Barre de navigation opaque dès qu'on a défilé
   const nav = document.querySelector(".nav");
   const onScroll = () => nav && nav.classList.toggle("scrolled", scrollY > 8);
   addEventListener("scroll", onScroll, { passive: true });
   onScroll();
+
+  // ---------- ASCII qui bouge ----------
+  const MONO = '"Geist Mono", ui-monospace, Menlo, Consolas, monospace';
+  // Bruit de valeur 2D lissé, puis fractal (3 octaves)
+  const hash = (x, y) => {
+    let h = (x * 374761393 + y * 668265263) ^ 0x5bd1e995;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+  };
+  const smooth = t => t * t * (3 - 2 * t);
+  const noise = (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = smooth(x - xi), yf = smooth(y - yi);
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+    return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
+  };
+  const fbm = (x, y) => noise(x, y) * 0.55 + noise(x * 2.1, y * 2.1) * 0.3 + noise(x * 4.3, y * 4.3) * 0.15;
+  const RAMP = " .,-~:;=+*";
+  // Anime `draw(t)` à environ `fps` images par seconde, seulement quand l'élément est visible et
+  // l'onglet ouvert ; une seule image si les animations sont coupées.
+  const animate = (el, draw, fps = 12) => {
+    let visible = true, last = 0;
+    if ("IntersectionObserver" in window) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(el);
+    draw(performance.now() / 1000);
+    if (reduce) return;
+    const loop = now => {
+      requestAnimationFrame(loop);
+      if (!visible || document.hidden || now - last < 1000 / fps) return;
+      last = now;
+      draw(now / 1000);
+    };
+    requestAnimationFrame(loop);
+  };
+
+  // Brume en caractères qui dérive par-dessus le paysage du haut de page
+  const canvas = document.querySelector(".ascii-bg");
+  if (canvas && canvas.getContext) {
+    const g = canvas.getContext("2d");
+    const SIZE = 12, LINE = 14, font = `${SIZE}px ${MONO}`;
+    let cols = 0, rows = 0, cw = 7;
+    const layout = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      canvas.width = Math.round(canvas.clientWidth * dpr);
+      canvas.height = Math.round(canvas.clientHeight * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.font = font;
+      g.textBaseline = "top";
+      cw = g.measureText("M").width || 7;
+      cols = Math.ceil(canvas.clientWidth / cw) + 1;
+      rows = Math.ceil(canvas.clientHeight / LINE) + 1;
+    };
+    const draw = t => {
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      const buckets = Array.from({ length: 8 }, () => []);
+      for (let r = 0; r < rows; r++) {
+        const y = r / rows;
+        // Deux bancs de brume : un au-dessus des montagnes, un plus épais au pied
+        const band = 0.55 * Math.exp(-(((y - 0.5) / 0.1) ** 2)) + Math.exp(-(((y - 0.8) / 0.13) ** 2));
+        if (band < 0.05) continue;
+        for (let c = 0; c < cols; c++) {
+          const f = (fbm(c * 0.04 - t * 0.06 * (0.6 + y), r * 0.13 + t * 0.015) - 0.42) * 2.2 * band;
+          if (f < 0.1) continue;
+          const k = Math.min(RAMP.length - 1, Math.floor(f * RAMP.length));
+          buckets[Math.min(7, Math.floor(f * 8))].push(c, r, RAMP[k]);
+        }
+      }
+      buckets.forEach((list, i) => {
+        if (!list.length) return;
+        g.fillStyle = `rgba(214,226,255,${(0.08 + i * 0.07).toFixed(2)})`;
+        for (let k = 0; k < list.length; k += 3) g.fillText(list[k + 2], list[k] * cw, list[k + 1] * LINE);
+      });
+    };
+    let resizeTimer;
+    addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { layout(); draw(performance.now() / 1000); }, 150); });
+    (document.fonts ? document.fonts.load(font).catch(() => {}) : Promise.resolve()).then(() => {
+      layout();
+      animate(canvas, draw, 14);
+      canvas.classList.add("on");
+    });
+  }
+
+  // Le nom en lettres de blocs du pied de page : une vague de lumière et quelques blocs qui scintillent
+  const name = document.querySelector(".ascii-name");
+  if (name) {
+    const base = name.textContent.split("\n");
+    const width = Math.max(...base.map(l => l.length));
+    name.textContent = "";
+    const spans = base.map(line => {
+      const row = document.createElement("span");
+      row.className = "row";
+      name.append(row, "\n");
+      return [...line].map(ch => {
+        const s = document.createElement("span");
+        s.textContent = ch;
+        row.append(s);
+        return s;
+      });
+    });
+    animate(name, t => {
+      const wave = ((t * 0.25) % 1.6) - 0.3;   // position de la vague, de gauche à droite
+      spans.forEach((row, r) => row.forEach((s, c) => {
+        const ch = base[r][c];
+        if (ch === " ") return;
+        const d = Math.abs(c / width - wave - r * 0.01);
+        const flick = ch === "█" && hash(c + Math.floor(t * 6) * 131, r) > 0.97;
+        s.textContent = flick ? "▓" : ch;
+        s.style.opacity = (0.16 + Math.max(0, 0.6 - d * 4)).toFixed(2);
+      }));
+    }, 15);
+  }
+
+  // Cartes « bientôt » de la boutique : un bruit de caractères qui ondule
+  document.querySelectorAll(".ascii-noise").forEach((pre, i) => {
+    let cols = 0, rows = 0;
+    const size = () => {
+      cols = Math.ceil(pre.clientWidth / 7.2);
+      rows = Math.ceil(pre.clientHeight / 13);
+    };
+    size();
+    addEventListener("resize", size);
+    animate(pre, t => {
+      let out = "";
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const v = fbm(c * 0.09 + i * 7 + t * 0.35, r * 0.18 - t * 0.2);
+          out += v > 0.62 ? "#" : v > 0.55 ? "+" : v > 0.48 ? ":" : v > 0.42 ? "." : " ";
+        }
+        out += "\n";
+      }
+      pre.textContent = out;
+    }, 10);
+  });
 
   // Menus déroulants (langue, menu mobile) : fermeture au clic à côté ou avec Échap
   const menus = [...document.querySelectorAll("details.langdd, details.burger")];
@@ -108,14 +239,15 @@
     animButtons.forEach(b => b.addEventListener("click", () => setAnim(b.dataset.anim)));
 
     // Cape et élytres : la vraie cape du joueur (Mojang) ou la texture Mistly
-    const mistyTexture = () => {
+    // Texture de cape et d'élytres. `pal` : couleur du haut et écart jusqu'au bas ; `emblem` : nuage ou étoile.
+    const capeTexture = (pal = [[26, 40, 77], [70, 105, 160]], emblem = "cloud") => {
       const c = document.createElement("canvas");
       c.width = 64; c.height = 32;
       const g = c.getContext("2d");
       const shade = (x, y, h, x0) => {
         const t = y / h, d = ((x + y) % 2) * 6 - 3 + (((x - x0) * 7 + y * 3) % 5) - 2;
-        const r = Math.round(26 + 70 * t + d), gg = Math.round(40 + 105 * t + d), b = Math.round(77 + 160 * t + d);
-        return `rgb(${r},${gg},${b})`;
+        const [[r0, g0, b0], [dr, dg, db]] = pal;
+        return `rgb(${Math.round(r0 + dr * t + d)},${Math.round(g0 + dg * t + d)},${Math.round(b0 + db * t + d)})`;
       };
       const fill = (x0, y0, w, h) => {
         for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) { g.fillStyle = shade(x, y - y0, h, x0); g.fillRect(x, y, 1, 1); }
@@ -130,8 +262,14 @@
       };
       // Cape (patron 64×32) : face extérieure (1,1) en dégradé avec un nuage ; face intérieure (12,1)
       // et tranches en bleu nuit uni, pour qu'elle se lise comme une étoffe fine et non comme un bloc.
+      const star = (ox, oy) => {
+        const rows = ["...#...", "...#...", ".#####.", "#######", ".#####.", "..#.#..", ".#...#."];
+        rows.forEach((row, y) => [...row].forEach((ch, x) => {
+          if (ch === "#") { g.fillStyle = y === 3 ? "#fff6dc" : "#ffe3a3"; g.fillRect(ox + x, oy + y, 1, 1); }
+        }));
+      };
       fill(1, 1, 10, 16);
-      cloud(2, 5);
+      if (emblem === "star") star(2, 5); else cloud(2, 5);
       g.fillStyle = "#121b33"; g.fillRect(12, 1, 10, 16);            // intérieur
       g.fillStyle = "#1c2a4d";
       g.fillRect(1, 0, 10, 1); g.fillRect(11, 0, 10, 1);              // dessus, dessous
@@ -156,7 +294,8 @@
       }
       return c;
     };
-    const misty = mistyTexture();
+    const misty = capeTexture();
+    const early = capeTexture([[58, 22, 48], [190, 120, 30]], "star");   // aube : prune vers or
     let ownCape = null;                       // URL de la cape du joueur, s'il en a une
     const back = { mode: "none", source: "own" };
     const capeBtn = stage.querySelector('[data-toggle="cape"]');
@@ -164,14 +303,15 @@
     const equipButtons = [...document.querySelectorAll(".equip")];
     const setBack = (mode, source) => {
       back.mode = mode; back.source = source;
-      const texture = mode === "none" ? null : (source === "own" && ownCape ? ownCape : misty);
+      const texture = mode === "none" ? null : (source === "own" && ownCape ? ownCape : source === "early" ? early : misty);
       viewer.loadCape(texture, texture ? { backEquipment: mode } : undefined);
       capeBtn?.setAttribute("aria-pressed", String(mode === "cape" && source === "own" && !!ownCape));
       elytraBtn?.setAttribute("aria-pressed", String(mode === "elytra"));
       equipButtons.forEach(b => {
-        const on = source === "misty" && b.dataset.back === mode;
+        const on = source === (b.dataset.src || "misty") && b.dataset.back === mode;
         b.setAttribute("aria-pressed", String(on));
-        b.textContent = on ? b.dataset.unequip : b.dataset.equip;
+        // Les boutons de la vitrine gardent leur vignette et leur nom ; ceux du studio disent Équiper / Retirer
+        if (!b.querySelector(".thumb")) b.textContent = on ? b.dataset.unequip : b.dataset.equip;
         b.closest(".item")?.classList.toggle("equipped", on);
         // Avertissement : ce cosmétique ne s'affiche pas encore en jeu
         const warn = b.closest(".cat-panel")?.querySelector(".equip-warn");
@@ -183,16 +323,37 @@
       if (back.mode === "elytra") setBack(ownCape ? "cape" : "none", "own");
       else setBack("elytra", ownCape && back.source === "own" ? "own" : "misty");
     });
+    const featName = document.getElementById("feat-name"), featText = document.getElementById("feat-text");
     equipButtons.forEach(b => b.addEventListener("click", () => {
-      const on = back.mode === b.dataset.back && back.source === "misty";
-      setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : "misty");
+      const src = b.dataset.src || "misty";
+      const on = back.mode === b.dataset.back && back.source === src;
+      setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
+      // Vitrine : le nom et la description de l'article choisi
+      if (!on && featName && b.dataset.name) {
+        featName.textContent = b.dataset.name;
+        featText.textContent = b.dataset.text;
+        const badge = document.getElementById("feat-badge");
+        badge.textContent = b.dataset.badge;
+        badge.className = "badge " + (b.dataset.early ? "early" : "free");
+      }
     }));
     // Vignettes des articles Mistly, dessinées depuis la texture
     document.querySelectorAll("canvas.thumb").forEach(c => {
       const g = c.getContext("2d");
       g.imageSmoothingEnabled = false;
       if (c.dataset.thumb === "cape") g.drawImage(misty, 1, 1, 10, 16, 0, 0, c.width, c.height);
-      else {
+      else if (c.dataset.thumb === "early") g.drawImage(early, 1, 1, 10, 16, 0, 0, c.width, c.height);
+      else if (c.dataset.thumb === "cloudly") {
+        // Cloudly : un petit nuage en pixels, centré
+        const rows = ["...####...", "..######..", ".########.", "##########", "##########", ".########."];
+        const px = Math.floor(c.width / 12);
+        const ox = (c.width - 10 * px) / 2, oy = (c.height - 6 * px) / 2;
+        rows.forEach((row, y) => [...row].forEach((ch, x) => {
+          if (ch !== "#") return;
+          g.fillStyle = y >= 4 ? "#b9cdf5" : "#f2f6ff";
+          g.fillRect(ox + x * px, oy + y * px, px, px);
+        }));
+      } else {
         // Élytres : une aile et son reflet
         const w = c.width / 2;
         g.drawImage(misty, 34, 2, 9, 20, 0, 0, w, c.height);
@@ -250,7 +411,8 @@
       if (capeBtn) capeBtn.disabled = !ownCape;
       // Comme NameMC : la vraie cape est portée d'office. Lors d'un rafraîchissement, on garde
       // un cosmétique Mistly équipé.
-      if (fresh && back.source === "misty") setBack(back.mode, "misty");
+      if (fresh && back.source !== "own") setBack(back.mode, back.source);
+      else if (!studio && !name) setBack("cape", "misty");   // vitrine : l'article à la une, porté par Steve
       else setBack(ownCape ? "cape" : "none", "own");
       if (studio && info) {
         document.getElementById("pname").textContent = info.name;

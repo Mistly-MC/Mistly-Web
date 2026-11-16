@@ -52,6 +52,9 @@ pub struct Asset {
     pub size: u64,
     pub browser_download_url: String,
     pub content_type: Option<String>,
+    /// Téléchargements comptés par GitHub (absent du flux Atom de secours)
+    #[serde(default)]
+    pub download_count: u64,
 }
 
 /// Les deux fichiers publiés à chaque version.
@@ -335,7 +338,7 @@ impl GitHub {
                         .unwrap_or(0),
                     _ => 0,
                 };
-                assets.push(Asset { name: nom, size, browser_download_url: url, content_type: None });
+                assets.push(Asset { name: nom, size, browser_download_url: url, content_type: None, download_count: 0 });
             }
         }
         Ok(assets)
@@ -442,6 +445,15 @@ fn noms_assets(html: &str, repo: &str, tag: &str) -> Vec<String> {
 }
 
 /// La version mise en avant : la plus récente stable, sinon la plus récente tout court.
+/// Téléchargements de l'installeur et de la version portable, toutes versions confondues.
+pub fn total_downloads(list: &[Release]) -> u64 {
+    list.iter()
+        .flat_map(|r| &r.assets)
+        .filter(|a| Kind::Setup.matches(&a.name) || Kind::Portable.matches(&a.name))
+        .map(|a| a.download_count)
+        .sum()
+}
+
 pub fn latest(list: &[Release]) -> Option<&Release> {
     list.iter().find(|r| !r.prerelease).or_else(|| list.first())
 }

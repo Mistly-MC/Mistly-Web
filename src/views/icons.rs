@@ -99,14 +99,8 @@ pub fn user() -> Markup {
 pub fn refresh() -> Markup {
     icon(r#"<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>"#)
 }
-pub fn cube() -> Markup {
-    icon(r#"<path d="M12 2l9 5v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>"#)
-}
 pub fn layers() -> Markup {
     icon(r#"<path d="M12 2l10 5-10 5L2 7z"/><path d="M2 12l10 5 10-5M2 17l10 5 10-5"/>"#)
-}
-pub fn brush() -> Markup {
-    icon(r#"<path d="M18 2l4 4-11 11-4-4z"/><path d="M7 13l-3 3a3 3 0 0 0 4 4l3-3"/>"#)
 }
 pub fn package() -> Markup {
     icon(

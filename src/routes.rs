@@ -57,7 +57,6 @@ fn page<'a>(state: &'a AppState, lang: Lang, path: &'a str, count: Option<usize>
         path,
         release_count: count,
         repo: state.github.repo(),
-        fog: &state.fog_strip,
         scene: &state.scene,
         site_url: &state.site_url,
     }
@@ -81,7 +80,8 @@ pub async fn index(
     let releases = state.github.releases().await;
     let latest = releases.as_deref().and_then(|l| github::latest(l));
     let p = page(&state, lang, "/", releases.as_ref().map(|l| l.len()));
-    html_response(StatusCode::OK, home::render(&p, latest), lang, remember)
+    let downloads = releases.as_deref().map_or(0, |l| github::total_downloads(l));
+    html_response(StatusCode::OK, home::render(&p, latest, downloads), lang, remember)
 }
 
 pub async fn patch_notes(

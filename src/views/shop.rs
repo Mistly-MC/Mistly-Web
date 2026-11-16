@@ -1,6 +1,7 @@
 //! Boutique de cosmétiques.
 //!
-//! - Sans pseudo : formulaire, avec Steve en 3D à côté (aperçu en direct pendant la saisie).
+//! - Sans pseudo : la vitrine. L'article à la une en 3D (sur Steve, ou sur le pseudo saisi), la
+//!   collection Mistly à essayer d'un clic, et les catégories qui arrivent bientôt.
 //! - Avec un pseudo : le studio. À gauche, le skin du joueur en 3D (vues face / profil / dos,
 //!   animations, sa vraie cape, élytres) ; à droite, sa fiche et les catégories de
 //!   cosmétiques, toutes « bientôt disponibles », avec la cape et les élytres Mistly à essayer.
@@ -94,17 +95,36 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
         ShopView::Form { value, invalid } => {
             let preview = valid_username(value).then_some(value);
             html! {
-                section.hero.pn-hero.shop-hero {
-                    div.wrap.shop-grid {
-                        div.pn-copy {
-                            div.tags { span { (icons::bag()) (tr.shop_label) } }
-                            h1 { (tr.shop_h1_1) br; span.accent { (tr.shop_h1_2) } }
-                            p.sub { (tr.shop_sub) }
-                            (form(p, value, invalid))
+                section.shop-top {
+                    div.col {
+                        div.vitrine {
+                            (stage(p, preview.unwrap_or("MHF_Steve"), preview, false))
+                            div.featured {
+                                span.label { (tr.shop_featured) }
+                                h1 #feat-name { (tr.shop_item_cape) }
+                                p #feat-text { (tr.shop_cape_p) }
+                                div.badges { span.badge.free #feat-badge { (tr.shop_free_client) } }
+                                div.pick role="group" aria-label=(tr.shop_collection) {
+                                    @for a in ARTICLES.iter().filter(|a| a.back.is_some()) {
+                                        button.equip type="button" data-back=(a.back.unwrap_or_default()) data-src=(a.src)
+                                            data-name=(a.nom(tr)) data-text=(a.texte(tr)) aria-pressed="false"
+                                            data-badge=(if a.early { &tr.shop_early_badge } else { &tr.shop_free_client }) data-early=[a.early.then_some("1")]
+                                            data-equip=(tr.shop_equip) data-unequip=(tr.shop_unequip) {
+                                            canvas.thumb data-thumb=(a.thumb) width="30" height="48" aria-hidden="true" {}
+                                            span { (a.nom(tr)) }
+                                        }
+                                    }
+                                }
+                                div.try {
+                                    strong { (tr.shop_try) }
+                                    p { (tr.shop_try_p) }
+                                    (form(p, value, invalid))
+                                }
+                            }
                         }
-                        (stage(p, preview.unwrap_or("MHF_Steve"), preview, false))
                     }
                 }
+                (collection(p))
             }
         }
         ShopView::Studio { player } => html! {
@@ -135,6 +155,88 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
         },
         main,
     )
+}
+
+/// Un article de la collection Mistly.
+struct Article {
+    /// Vignette dessinée par site.js
+    thumb: &'static str,
+    /// Porté dans le dos (`cape` ou `elytra`) ; aucun pour un chapeau
+    back: Option<&'static str>,
+    /// Texture utilisée dans l'aperçu 3D (`misty` ou `early`)
+    src: &'static str,
+    early: bool,
+}
+
+const ARTICLES: [Article; 4] = [
+    Article { thumb: "cape", back: Some("cape"), src: "misty", early: false },
+    Article { thumb: "elytra", back: Some("elytra"), src: "misty", early: false },
+    Article { thumb: "early", back: Some("cape"), src: "early", early: true },
+    Article { thumb: "cloudly", back: None, src: "", early: false },
+];
+
+impl Article {
+    fn nom<'a>(&self, tr: &'a Tr) -> &'a str {
+        match self.thumb {
+            "cape" => &tr.shop_item_cape,
+            "elytra" => &tr.shop_item_elytra,
+            "early" => &tr.shop_early_t,
+            _ => &tr.shop_cloudly_t,
+        }
+    }
+    fn texte<'a>(&self, tr: &'a Tr) -> &'a str {
+        match self.thumb {
+            "cape" => &tr.shop_cape_p,
+            "elytra" => &tr.shop_elytra_p,
+            "early" => &tr.shop_early_p,
+            _ => &tr.shop_cloudly_p,
+        }
+    }
+}
+
+/// La collection Mistly, puis les catégories qui arrivent bientôt.
+fn collection(p: &Page) -> Markup {
+    let tr = p.tr;
+    let bientot = [Category::Headwear, Category::Wings, Category::Bodywear, Category::Auras, Category::Pets, Category::Emotes];
+    html! {
+        section.blk {
+            div.col {
+                h2.blk-title { (tr.shop_collection) sup { "(" (ARTICLES.len()) ")" } }
+                div.cells.c4 {
+                    @for a in &ARTICLES {
+                        div.item-card.reveal {
+                            div.item-art { canvas.thumb data-thumb=(a.thumb) width="60" height="96" aria-hidden="true" {} }
+                            div.item-body {
+                                strong { (a.nom(tr)) }
+                                p { (a.texte(tr)) }
+                                @if a.early { span.badge.early { (tr.shop_early_badge) } } @else { span.badge.free { (tr.shop_available) } }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        div.col.hatch aria-hidden="true" {}
+        section.blk {
+            div.col {
+                h2.blk-title { (tr.shop_coming_t) sup { "(" (bientot.len()) ")" } }
+                div.cells.c3 {
+                    @for c in bientot {
+                        @let (titre, texte) = c.text(tr);
+                        div.soon-card.reveal {
+                            pre.ascii-noise aria-hidden="true" {}
+                            div.soon-body {
+                                span.ico { (c.icon()) }
+                                strong { (titre) }
+                                p { (texte) }
+                                span.badge { (tr.shop_badge) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Aperçu 3D (skinview3d) : vues, animations, cape et élytres.

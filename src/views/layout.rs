@@ -5,6 +5,15 @@ use crate::i18n::{Lang, Tr};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use std::sync::LazyLock;
 
+/// « MISTLY » en lettres de blocs ASCII, en bas de chaque page (les caractères scintillent : site.js).
+pub const BANNER: &str = "\
+███╗   ███╗ ██╗ ███████╗ ████████╗ ██╗      ██╗   ██╗
+████╗ ████║ ██║ ██╔════╝ ╚══██╔══╝ ██║      ╚██╗ ██╔╝
+██╔████╔██║ ██║ ███████╗    ██║    ██║       ╚████╔╝
+██║╚██╔╝██║ ██║ ╚════██║    ██║    ██║        ╚██╔╝
+██║ ╚═╝ ██║ ██║ ███████║    ██║    ███████╗    ██║
+╚═╝     ╚═╝ ╚═╝ ╚══════╝    ╚═╝    ╚══════╝    ╚═╝";
+
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
@@ -27,9 +36,7 @@ pub struct Page<'a> {
     pub release_count: Option<usize>,
     /// `owner/repo` du launcher sur GitHub.
     pub repo: &'a str,
-    /// Bande de brume animée (SVG), réutilisée entre les sections.
-    pub fog: &'a str,
-    /// Paysage de fond (SVG), identique sur toutes les pages.
+    /// Paysage de fond (SVG en pixel art, le même que dans le launcher).
     pub scene: &'a str,
     /// Adresse publique du site, sans `/` final (balises canoniques, Open Graph, sitemap).
     pub site_url: &'a str,
@@ -99,7 +106,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 @if let Some(json) = &head.jsonld {
                     script type="application/ld+json" { (PreEscaped(json)) }
                 }
-                link rel="preload" href="/assets/Inter-latin.woff2" as="font" type="font/woff2" crossorigin;
+                link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
                 @let v = ASSET_VERSION.as_str();
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
@@ -109,20 +116,17 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 script src=(format!("/js/site.js?v={v}")) defer {}
             }
             body class=(head.body_class) {
-                // Ciel et paysage : le même fond en haut de chaque page.
-                div.page-sky aria-hidden="true" { (PreEscaped(p.scene)) }
+                // Le paysage du launcher (pixel art), et par-dessus une brume en caractères ASCII qui
+                // dérive (dessinée par site.js).
+                div.page-sky aria-hidden="true" { (PreEscaped(p.scene)) canvas.ascii-bg {} }
+                // Les deux traits verticaux qui bordent la colonne du site
+                div.rails aria-hidden="true" {}
                 (nav(p))
                 main #main { (main) }
-                (fog_divider(p))
                 (footer(p))
             }
         }
     }
-}
-
-/// Bande de brume pixel qui dérive, posée entre deux sections.
-pub fn fog_divider(p: &Page) -> Markup {
-    html! { div.fog-divider aria-hidden="true" { (PreEscaped(p.fog)) } }
 }
 
 fn nav(p: &Page) -> Markup {
@@ -130,7 +134,7 @@ fn nav(p: &Page) -> Markup {
     let on_notes = p.path.starts_with("/patch-notes");
     html! {
         header.nav #top {
-            div.wrap.nav-in {
+            div.col.nav-in {
                 a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
                 nav.links aria-label="Navigation" {
                     a href="/#features" { (tr.nav_features) }
@@ -204,7 +208,7 @@ fn footer(p: &Page) -> Markup {
     let tr = p.tr;
     html! {
         footer.foot {
-            div.wrap {
+            div.col {
                 div.ftop {
                     div {
                         a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
@@ -270,7 +274,7 @@ fn footer(p: &Page) -> Markup {
                     }
                 }
             }
-            div.giant aria-hidden="true" { "MISTLY" }
+            pre.ascii-name aria-hidden="true" { (BANNER) }
         }
     }
 }

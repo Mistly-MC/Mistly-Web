@@ -72,20 +72,6 @@ pub fn render(src: &str) -> String {
     out
 }
 
-/// Les premiers points d'une liste à puces, en texte brut (pour l'aperçu de la page d'accueil).
-pub fn highlights(src: &str, max: usize) -> Vec<String> {
-    src.lines()
-        .filter_map(|l| {
-            let l = l.trim_start();
-            l.strip_prefix("- ")
-                .or_else(|| l.strip_prefix("* "))
-                .or_else(|| l.strip_prefix("+ "))
-        })
-        .map(|l| l.replace("**", "").replace('`', "").trim().to_string())
-        .filter(|l| !l.is_empty())
-        .take(max)
-        .collect()
-}
 
 /// Une entrée du sommaire « Sur cette page ».
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -235,15 +221,6 @@ mod tests {
     fn headings_are_shifted() {
         assert!(render("# Titre").contains("<h3>"));
         assert!(render("## Titre").contains("<h4>"));
-    }
-
-    #[test]
-    fn highlights_take_bullets() {
-        let h = highlights(
-            "## New\n- **Faster** start\n- `.mrpack` import\n\ntext\n* third\n- fourth",
-            3,
-        );
-        assert_eq!(h, vec!["Faster start", ".mrpack import", "third"]);
     }
 
     #[test]

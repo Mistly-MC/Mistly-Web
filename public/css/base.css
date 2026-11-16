@@ -1,94 +1,108 @@
 /* Base : polices, couleurs, reset, boutons et utilitaires partagés par toutes les pages.
-   Texte en sans-serif, nom et étiquettes en pixel (Silkscreen), et chasse fixe (JetBrains Mono)
-   pour tout ce qui ressemble à un terminal. Formes plates : angles droits, traits d'un pixel. */
-/* Inter (graisse variable), découpée par alphabet : le navigateur ne charge que ce qu'il affiche. */
-@font-face{font-family:Inter;src:url(/assets/Inter-latin.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:Inter;src:url(/assets/Inter-latin-ext.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:Inter;src:url(/assets/Inter-cyrillic.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+   Design épuré : une colonne bordée de deux traits fins, des sections séparées par des lignes et des
+   bandes hachurées, des cellules qui partagent leurs bordures. En haut, le paysage du launcher
+   (pixel art) avec une brume ASCII qui dérive (site.js). */
+/* Geist et Geist Mono (graisse variable), découpées par alphabet : le navigateur ne charge que ce qu'il affiche. */
+@font-face{font-family:"Geist";src:url(/assets/Geist-latin.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Geist";src:url(/assets/Geist-latin-ext.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Geist";src:url(/assets/Geist-cyrillic.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Geist Mono";src:url(/assets/GeistMono-latin.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Geist Mono";src:url(/assets/GeistMono-latin-ext.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Geist Mono";src:url(/assets/GeistMono-cyrillic.woff2) format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 @font-face{font-family:Silkscreen;src:url(/assets/Silkscreen-Regular.ttf);font-weight:400;font-display:swap}
 @font-face{font-family:Silkscreen;src:url(/assets/Silkscreen-Bold.ttf);font-weight:700;font-display:swap}
-@font-face{font-family:"JetBrains Mono";src:url(/assets/JetBrainsMono-Regular.woff2) format("woff2");font-weight:400;font-display:swap}
-@font-face{font-family:"JetBrains Mono";src:url(/assets/JetBrainsMono-Bold.woff2) format("woff2");font-weight:700;font-display:swap}
 
 :root{
-  --bg:#070a14;--bg-2:#0a0e1a;--panel:#0d1220;--panel-2:#131b30;
-  --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.17);
-  --text:#eef3ff;--muted:#a3b0cb;--dim:#6f7c99;
-  --accent:#9cc0ff;--accent-2:#cfe0ff;--accent-strong:#6f9cff;
-  --green:#7aa8ff;--green-d:#3d63c4;
-  --r:0;
-  --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --pix:Silkscreen,ui-monospace,monospace;
-  --mono:"JetBrains Mono",ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
+  --bg:#09090b;--bg-2:#0c0c0f;--panel:#111114;--panel-2:#17171b;
+  --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.15);
+  --text:#fafafa;--muted:#a1a1aa;--dim:#71717a;
+  /* Largeur de la colonne du site, bordée par les deux traits verticaux */
+  --col:1080px;
+  /* Bleu brume : seulement en touches (liens, puces, états) */
+  --accent:#b8ccf4;--accent-2:#dde7fb;--accent-strong:#8eaaf0;
+  --green:#8eaaf0;--green-d:#5b77c4;
+  --r:14px;
+  --sans:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  /* Les petites étiquettes sont en Geist ; la police pixel ne sert plus qu'au nom MISTLY */
+  --pix:var(--sans);
+  --pixel:Silkscreen,ui-monospace,monospace;
+  --mono:"Geist Mono",ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
   color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:84px;scrollbar-width:thin;scrollbar-color:#3c5486 var(--bg)}
+html{scroll-behavior:smooth;scroll-padding-top:80px;scrollbar-width:thin;scrollbar-color:#2c2c33 var(--bg)}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-h1,h2{letter-spacing:-.025em}
+h1,h2,h3{letter-spacing:-.025em}
 img,svg{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 ul,ol{list-style:none}
 button{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+::selection{background:rgba(184,204,244,.3);color:#fff}
 
-::selection{background:rgba(156,192,255,.32);color:#fff}
-
-/* Scrollbar plate */
 ::-webkit-scrollbar{width:12px;height:12px}
 ::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:#2b3c61;border:3px solid var(--bg)}
-::-webkit-scrollbar-thumb:hover{background:var(--accent-strong)}
+::-webkit-scrollbar-thumb{background:#26262c;border:3px solid var(--bg);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a42}
 ::-webkit-scrollbar-corner{background:var(--bg)}
 
-.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+.wrap{max-width:var(--col);margin:0 auto;padding:0 clamp(16px,3vw,28px)}
+
+/* ---------- La colonne et sa grille de lignes ---------- */
+body{position:relative}
+.col{width:min(var(--col),calc(100% - 32px));margin:0 auto}
+/* Les deux traits verticaux, sur toute la hauteur de la page */
+.rails{position:absolute;top:0;bottom:0;left:50%;width:min(var(--col),calc(100% - 32px));transform:translateX(-50%);border-left:1px solid var(--line);border-right:1px solid var(--line);pointer-events:none;z-index:2}
+/* Une section : un trait sur toute la largeur de l'écran au-dessus */
+.blk{position:relative;border-top:1px solid var(--line)}
+.blk-title{padding:30px 22px 20px;font-size:clamp(24px,2.6vw,30px);font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.blk-title sup{margin-left:4px;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:0;color:var(--dim);vertical-align:super}
+.blk-lead{padding:0 22px 22px;margin-top:-8px;color:var(--muted);font-size:15px;max-width:640px}
+/* Bande hachurée entre deux sections */
+.hatch{height:44px;border-top:1px solid var(--line);background:repeating-linear-gradient(-45deg,transparent 0 7px,rgba(255,255,255,.055) 7px 8px)}
+/* Cellules qui partagent leurs bordures : la grille montre la couleur des lignes entre elles */
+.cells{display:grid;gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.cells>*{background:var(--bg);min-width:0}
+.cells.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cells.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cells.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cell{padding:22px}
+.cell .ico{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;margin-bottom:16px;color:var(--text);border:1px solid var(--line-2);background:rgba(255,255,255,.03)}
+.cell .ico .ic{width:16px;height:16px}
+.cell h3{font-size:15px;font-weight:600;letter-spacing:-.01em;margin-bottom:4px}
+.cell p{font-size:14px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;padding:2px 8px;border-radius:6px;border:1px solid var(--line-2);color:var(--muted);white-space:nowrap}
+.badge .ic{width:12px;height:12px}
+@media (max-width:900px){.cells.c3,.cells.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.cells.c2,.cells.c3,.cells.c4{grid-template-columns:minmax(0,1fr)}}
 .ic{width:18px;height:18px;flex:none}
 
-/* Petite étiquette pixel au-dessus des titres */
-.label{display:inline-block;font-family:var(--pix);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.small{font-family:var(--pix);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+/* Petite étiquette au-dessus des titres */
+.label{display:inline-block;font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.small{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .muted{color:var(--muted)}
 .accent{color:var(--accent)}
-.pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:5px 11px;background:var(--panel);border:1px solid var(--line)}
-.sw{width:9px;height:9px;background:var(--c)}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line-2)}
+.sw{width:8px;height:8px;border-radius:50%;background:var(--c)}
 
-/* Boutons plats : un aplat pour l'action principale, un simple cadre pour le reste */
+/* Boutons en pilule : blanc pour l'action principale, sombre pour le reste */
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:14.5px;line-height:1.2;
-  padding:12px 18px;border:1px solid var(--line-2);cursor:pointer;white-space:nowrap;
-  background:rgba(7,10,20,.6);color:var(--text);transition:background .12s,color .12s,border-color .12s;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:500;font-size:14.5px;line-height:1.2;
+  padding:11px 18px;border-radius:10px;border:1px solid var(--line-2);cursor:pointer;white-space:nowrap;
+  background:rgba(255,255,255,.04);color:var(--text);transition:background .15s,border-color .15s,transform .15s,box-shadow .15s;
 }
-.btn:hover{border-color:var(--accent);color:var(--accent)}
-.btn.play{background:var(--accent);border-color:var(--accent);color:#0a1633}
-.btn.play:hover{background:var(--accent-2);border-color:var(--accent-2);color:#0a1633}
+.btn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.24)}
+.btn.play{background:#fafafa;border-color:#fafafa;color:#09090b}
+.btn.play:hover{background:#fff;border-color:#fff}
 .btn:active{transform:translateY(1px)}
-.btn.sm{padding:7px 12px;font-size:13.5px}
-.btn.sm .ic{width:16px;height:16px}
+.btn.ghost{background:none}
+.btn.sm{padding:7px 14px;font-size:13.5px}
+.btn.sm .ic{width:15px;height:15px}
+.btn.lg{padding:15px 26px;font-size:15.5px}
 
 /* Apparition au défilement (activée par site.js) */
-.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.js .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
 .js .reveal.in{opacity:1;transform:none}
-
-/* Paysage pixel art */
-.scene .twinkle{animation:twinkle 4s ease-in-out infinite alternate}
-.scene .fog{animation:drift 28s ease-in-out infinite alternate}
-.scene .fog1{animation-duration:36s;animation-delay:-8s}
-.scene .fog2{animation-duration:22s;animation-delay:-4s}
-@keyframes twinkle{from{opacity:.25}to{opacity:1}}
-@keyframes drift{from{transform:translateX(-90px)}to{transform:translateX(90px)}}
-
-/* Lune qui flotte et halo qui respire */
-.scene .moon{animation:moon-float 9s ease-in-out infinite}
-.scene .moon-glow{transform-box:fill-box;transform-origin:center;animation:moon-glow 6s ease-in-out infinite alternate}
-@keyframes moon-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-@keyframes moon-glow{from{opacity:.6;transform:scale(.9)}to{opacity:1;transform:scale(1.1)}}
-
-/* Nappes de brume pixel qui traversent les paysages et les bandes de brume */
-.puff{animation:puff 100s linear infinite}
-@keyframes puff{from{transform:translateX(-2000px)}to{transform:translateX(2000px)}}
-.fog-divider{position:relative;z-index:1;height:clamp(100px,13vw,170px);margin:clamp(-70px,-5vw,-30px) 0;pointer-events:none;
-  -webkit-mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent)}
-.fogstrip{width:100%;height:100%}
 
 main,.foot{position:relative;z-index:1}
 

@@ -4,76 +4,40 @@ use super::icons;
 use super::layout::{self, Head, Page};
 use crate::format;
 use crate::github::{Kind, Release};
-use crate::markdown;
-use maud::{Markup, PreEscaped, html};
+use maud::{Markup, html};
 
 /// Mod loaders proposés par le launcher.
 const LOADERS: [&str; 6] = ["Forge", "NeoForge", "Fabric", "Quilt", "OptiFine", "LiteLoader"];
 
-pub fn render(p: &Page, latest: Option<&Release>) -> Markup {
+pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
     let tr = p.tr;
     let main = html! {
         (hero(p, latest))
-        (preview(p))
-        (layout::fog_divider(p))
-
-        section.sec #features {
-            div.wrap {
-                div.head.reveal {
-                    span.label { (tr.feat_label) }
-                    h2 { (tr.feat_title) }
-                    p { (tr.feat_text) }
-                }
-                div.cards {
-                    (card(icons::bolt(), &tr.c1_t, &tr.c1_p))
-                    (card(icons::grid(), &tr.c2_t, &tr.c2_p))
-                    (card(icons::user(), &tr.c3_t, &tr.c3_p))
-                    (card(icons::refresh(), &tr.c4_t, &tr.c4_p))
-                    (card(icons::globe(), &tr.c5_t, &tr.c5_p))
-                    (card(icons::layers(), &tr.c6_t, &tr.c6_p))
+        (chiffres(p, latest, downloads))
+        (rayures())
+        (galerie(p))
+        (rayures())
+        section.blk #features {
+            div.col {
+                (titre(&tr.feat_label, Some(6)))
+                div.cells.c3 {
+                    (cellule(icons::bolt(), &tr.c1_t, &tr.c1_p))
+                    (cellule(icons::grid(), &tr.c2_t, &tr.c2_p))
+                    (cellule(icons::user(), &tr.c3_t, &tr.c3_p))
+                    (cellule(icons::refresh(), &tr.c4_t, &tr.c4_p))
+                    (cellule(icons::globe(), &tr.c5_t, &tr.c5_p))
+                    (cellule(icons::layers(), &tr.c6_t, &tr.c6_p))
                 }
             }
         }
-
-        section.sec #loaders {
-            div.wrap.loaders {
-                div.reveal {
-                    span.label { (tr.load_label) }
-                    div.big { (LOADERS.len()) }
-                    p.big-cap { (tr.load_caption) }
-                    h2 { (tr.load_title) }
-                    p.lead { (tr.load_text) }
-                    div.sources {
-                        span.small { (tr.load_sources) }
-                        span.pill { i.sw style="--c:#1bd96a" {} "Modrinth" }
-                        span.pill { i.sw style="--c:#f16436" {} "CurseForge" }
-                    }
-                }
-                ol.rows.reveal {
-                    @for (i, name) in LOADERS.iter().enumerate() {
-                        li {
-                            span.n { (format!("{:02}", i + 1)) }
-                            span.name { (name) }
-                            span.ok { (icons::check()) (tr.load_item) }
-                        }
-                    }
-                }
-            }
-        }
-
+        (rayures())
+        (pile(p))
+        (rayures())
         (horizon(p))
+        (rayures())
         (download(p, latest))
+        (rayures())
         (faq(p))
-
-        section.cta {
-            div.wrap {
-                div.cta-in.reveal {
-                    h2 { (tr.cta_title) }
-                    p { (tr.cta_text) }
-                    a.btn.play href="/download/setup" { (icons::download()) (tr.hero_cta_download) }
-                }
-            }
-        }
     };
     layout::render(
         p,
@@ -89,149 +53,167 @@ pub fn render(p: &Page, latest: Option<&Release>) -> Markup {
     )
 }
 
+/// Titre de section, avec un compteur en exposant (« Fonctionnalités ⁶ »).
+fn titre(texte: &str, compte: Option<usize>) -> Markup {
+    html! {
+        h2.blk-title { (texte) @if let Some(n) = compte { sup { "(" (n) ")" } } }
+    }
+}
+
+/// Bande hachurée entre deux sections.
+fn rayures() -> Markup {
+    html! { div.col.hatch aria-hidden="true" {} }
+}
+
 fn hero(p: &Page, latest: Option<&Release>) -> Markup {
     let tr = p.tr;
-    let setup = latest.and_then(|r| r.asset(Kind::Setup));
     html! {
         section.hero {
-            div.hero-moon aria-hidden="true" { (PreEscaped(moon())) }
-            div.wrap.hero-grid {
-                div.hero-copy {
-                    // Pastille de version : mène aux notes de la dernière version.
-                    @if let Some(r) = latest {
-                        a.hero-pill href=(format!("/patch-notes#{}", r.tag_name)) {
-                            span.dot aria-hidden="true" {}
-                            strong { (r.tag_name) }
-                            span { (tr.card_whats_new) }
-                            (icons::arrow_right())
-                        }
-                    }
-                    h1 { (tr.hero_title_1) br; span.accent { (tr.hero_title_2) } }
-                    p.sub { (tr.hero_sub) }
-                    // Boîte de téléchargement : des onglets d'information, puis le fichier et son bouton.
-                    div.getbox {
-                        div.getbox-tabs {
-                            span { (icons::windows()) "Windows 10 / 11" }
-                            @if let Some(r) = latest { span { (r.tag_name) } }
-                            @if let Some(a) = setup { span { (format::size(tr, a.size)) } }
-                            span { (tr.hero_free) }
-                        }
-                        a.getbox-row href="/download/setup" {
-                            span.file {
-                                span.prompt aria-hidden="true" { ">" }
-                                @match setup { Some(a) => (a.name), None => (tr.inst_t) }
-                            }
-                            span.go { (icons::download()) (tr.nav_download) }
-                        }
-                    }
-                    div.tags {
-                        span { (icons::cube()) (tr.hero_tag_mc) }
-                        span.sep { "·" }
-                        span { (icons::rust()) (tr.hero_tag_rust) }
-                        span.sep { "·" }
-                        a href="/patch-notes" { (icons::notes()) (tr.hero_cta_notes) }
+            div.col.hero-in {
+                @if let Some(r) = latest {
+                    a.hero-pill href=(format!("/patch-notes#{}", r.tag_name)) {
+                        span.dot aria-hidden="true" {}
+                        (tr.hero_out.replace("{v}", &r.tag_name))
+                        (icons::arrow_right())
                     }
                 }
-                aside.latest {
-                    div.term-bar {
-                        span.dots aria-hidden="true" { i {} i {} i {} }
-                        span.term-title { "mistly" }
-                    }
-                    div.term-tabs {
-                        span.on { "MISTLY" }
-                        span { (tr.card_label) }
-                    }
-                    div.term-body { @match latest {
-                        Some(r) => {
-                            p.cmd aria-hidden="true" { span.prompt { "$" } " mistly --version" }
-                            div.ver {
-                                strong { (r.tag_name) }
-                                span { (format::date(tr, r.published_at.as_deref())) }
-                            }
-                            @let points = markdown::highlights(r.notes(), 3);
-                            @if points.is_empty() {
-                                p.muted { (tr.card_no_notes) }
-                            } @else {
-                                span.small { (tr.card_whats_new) }
-                                ul { @for pt in &points { li { (pt) } } }
-                            }
-                            p.cmd.last aria-hidden="true" { span.prompt { "$" } " " i.cursor {} }
-                        }
-                        None => {
-                            p.muted { (tr.card_unavailable) }
-                        }
-                    } }
-                    a.term-foot href="/patch-notes" { span { (tr.card_more) } (icons::arrow_right()) }
+                div.hero-logo {
+                    img src="/assets/icone.png" alt="" width="84" height="84";
+                    span { "MISTLY" }
+                }
+                h1 { (tr.hero_title_1) " " span.soft { (tr.hero_title_2) } }
+                div.actions {
+                    a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
+                    a.btn href="/patch-notes" { (tr.nav_patch_notes) (icons::arrow_right()) }
                 }
             }
         }
-        (stats(p, latest))
     }
 }
 
-/// La lune du hero, en pixels : un disque de 13 cases de large avec quelques cratères.
-/// Elle est dessinée ici plutôt que dans le paysage pour pouvoir la placer où l'on veut.
-fn moon() -> String {
-    const R: i32 = 6;
-    let (mut disc, mut craters) = (String::new(), String::new());
-    for y in -R..=R {
-        for x in -R..=R {
-            if x * x + y * y > R * R + 2 {
-                continue;
+/// Chiffres clés, en tableau (téléchargements, versions, mod loaders, langues, taille).
+fn chiffres(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
+    let tr = p.tr;
+    let taille = latest.and_then(|r| r.asset(Kind::Setup)).map(|a| format::size(tr, a.size));
+    let mut lignes: Vec<(&str, String)> = Vec::new();
+    if downloads > 0 {
+        lignes.push((&tr.stat_downloads, milliers(p, downloads)));
+    }
+    if let Some(r) = latest {
+        lignes.push((&tr.card_label, r.tag_name.clone()));
+    }
+    if let Some(n) = p.release_count {
+        lignes.push((&tr.stat_releases, n.to_string()));
+    }
+    lignes.push((&tr.stat_loaders, LOADERS.len().to_string()));
+    lignes.push((&tr.stat_langs, crate::i18n::Lang::ALL.len().to_string()));
+    if let Some(t) = taille {
+        lignes.push((&tr.stat_size, t));
+    }
+    html! {
+        section.blk.numbers {
+            div.col {
+                p.caption { (tr.stat_title) }
+                dl.kv {
+                    @for (k, v) in &lignes {
+                        div { dt { (majuscule(k)) } dd { (v) } }
+                    }
+                }
             }
-            let crater = [(-3, -2), (-2, -2), (-3, -1), (2, 2), (3, 2), (1, -4), (-1, 3)].contains(&(x, y));
-            let path = if crater { &mut craters } else { &mut disc };
-            path.push_str(&format!("M{} {}h1v1h-1z", x + R, y + R));
-        }
-    }
-    let size = 2 * R + 1;
-    format!(
-        r##"<svg viewBox="0 0 {size} {size}" shape-rendering="crispEdges" focusable="false"><path d="{disc}" fill="#eef4ff"/><path d="{craters}" fill="#c1d2f3"/></svg>"##
-    )
-}
-
-/// Chiffres clés sous le hero. Les nombres qui viennent de GitHub ne s'affichent que s'ils sont connus.
-fn stats(p: &Page, latest: Option<&Release>) -> Markup {
-    let tr = p.tr;
-    let size = latest
-        .and_then(|r| r.asset(Kind::Setup))
-        .map(|a| format::size(tr, a.size));
-    html! {
-        section.stats aria-label=(tr.stat_title) {
-            div.wrap { dl.stats-in {
-                div.stat { dt { (tr.stat_loaders) } dd { (LOADERS.len()) } }
-                div.stat { dt { (tr.stat_langs) } dd { (crate::i18n::Lang::ALL.len()) } }
-                @if let Some(n) = p.release_count {
-                    div.stat { dt { (tr.stat_releases) } dd { (n) } }
-                }
-                @if let Some(s) = &size {
-                    div.stat { dt { (tr.stat_size) } dd { (s) } }
-                }
-            } }
         }
     }
 }
 
-fn preview(p: &Page) -> Markup {
+fn majuscule(t: &str) -> String {
+    let mut c = t.chars();
+    c.next().map(|f| f.to_uppercase().chain(c).collect()).unwrap_or_default()
+}
+
+/// 2267 → « 2 267 » en français, « 2,267 » en anglais.
+fn milliers(p: &Page, n: u64) -> String {
+    let sep = match p.lang.code() {
+        "en" => ",",
+        "es" | "it" => ".",
+        _ => "\u{202f}",
+    };
+    let chiffres = n.to_string();
+    let mut out = String::new();
+    for (i, c) in chiffres.chars().enumerate() {
+        if i > 0 && (chiffres.len() - i) % 3 == 0 {
+            out.push_str(sep);
+        }
+        out.push(c);
+    }
+    out
+}
+
+/// Captures du launcher, chacune dans un cadre avec sa légende.
+fn galerie(p: &Page) -> Markup {
     let tr = p.tr;
-    let shot = |name: &str| format!("/assets/screens/{}/{name}.png", p.lang.screens_dir());
+    let images = [
+        ("home", &tr.gal_home_t, &tr.gal_home_p),
+        ("versions", &tr.gal_versions_t, &tr.gal_versions_p),
+        ("profiles", &tr.gal_profiles_t, &tr.gal_profiles_p),
+        ("skin", &tr.gal_skin_t, &tr.gal_skin_p),
+        ("textures", &tr.gal_textures_t, &tr.gal_textures_p),
+        ("settings", &tr.gal_settings_t, &tr.gal_settings_p),
+    ];
     html! {
-        section.sec #preview {
-            div.wrap {
-                div.head.reveal {
-                    span.label { (tr.prev_label) }
-                    h2 { (tr.prev_title) }
-                    p { (tr.prev_text) }
+        section.blk #preview {
+            div.col {
+                (titre(&tr.prev_label, Some(images.len())))
+                div.cells.c2 {
+                    @for (i, (img, t, d)) in images.iter().enumerate() {
+                        figure.shot.reveal {
+                            div.frame {
+                                img src=(format!("/assets/screens/{}/{img}.png", p.lang.screens_dir())) alt=(t) width="1180" height="720"
+                                    loading=(if i < 2 { "eager" } else { "lazy" });
+                            }
+                            figcaption { strong { (t) } span { (d) } }
+                        }
+                    }
                 }
-                div.gallery.reveal {
-                    figure.big { img src=(shot("home")) alt=(tr.alt_home) width="1180" height="720" loading="lazy"; }
-                    figure { img src=(shot("versions")) alt=(tr.alt_versions) width="1180" height="720" loading="lazy"; }
-                    figure { img src=(shot("skin")) alt=(tr.alt_skin) width="1180" height="720" loading="lazy"; }
-                }
-                div.trio.reveal {
-                    div { h3 { (icons::package()) (tr.f1_t) } p { (tr.f1_p) } }
-                    div { h3 { (icons::cube()) (tr.f2_t) } p { (tr.f2_p) } }
-                    div { h3 { (icons::brush()) (tr.f3_t) span.tag { (tr.experimental) } } p { (tr.f3_p) } }
+            }
+        }
+    }
+}
+
+fn cellule(icon: Markup, title: &str, text: &str) -> Markup {
+    html! {
+        div.cell.reveal {
+            span.ico { (icon) }
+            h3 { (title) }
+            p { (text) }
+        }
+    }
+}
+
+/// Compatibilité, présentée comme une liste de technologies : une ligne par sujet, des pastilles.
+fn pile(p: &Page) -> Markup {
+    let tr = p.tr;
+    let langues: Vec<&str> = crate::i18n::Lang::ALL.iter().map(|l| l.tr().lang_name.as_str()).collect();
+    let lignes: [(&str, Vec<(&str, Option<&str>)>); 4] = [
+        (&tr.stack_loaders, LOADERS.iter().map(|l| (*l, None)).collect()),
+        (&tr.load_sources, vec![("Modrinth", Some("#1bd96a")), ("CurseForge", Some("#f16436"))]),
+        (&tr.stack_system, vec![("Windows 10", None), ("Windows 11", None), ("Java auto", None)]),
+        (&tr.stack_langs, langues.iter().map(|l| (*l, None)).collect()),
+    ];
+    html! {
+        section.blk #loaders {
+            div.col {
+                (titre(&tr.load_label, None))
+                p.blk-lead { (tr.load_title) }
+                div.stack {
+                    @for (i, (nom, puces)) in lignes.iter().enumerate() {
+                        div.row {
+                            span.k { span.n { (format!("{:02}", i + 1)) } (nom) }
+                            div.chips {
+                                @for (t, c) in puces {
+                                    span.chip { @if let Some(c) = c { i.sw style=(format!("--c:{c}")) {} } (t) }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -243,37 +225,23 @@ fn horizon(p: &Page) -> Markup {
     let tr = p.tr;
     let shot = format!("/assets/screens/{}/horizon.png", p.lang.screens_dir());
     html! {
-        section.sec #horizon {
-            div.wrap.hz {
-                div.hz-copy.reveal {
-                    span.label { (tr.hz_label) }
-                    h2 { (tr.hz_title) }
-                    p.lead { (tr.hz_text) }
-                    ul.hz-points {
-                        li { (icons::check()) (tr.hz_p1) }
-                        li { (icons::check()) (tr.hz_p2) }
-                        li { (icons::check()) (tr.hz_p3) }
+        section.blk #horizon {
+            div.col {
+                (titre(&tr.hz_label, None))
+                div.cells.hz {
+                    figure.shot.reveal { div.frame { img src=(shot) alt=(tr.alt_horizon) width="1180" height="720" loading="lazy"; } }
+                    div.cell.hz-copy {
+                        h3 { (tr.hz_title) }
+                        ul.hz-points {
+                            li { (icons::check()) (tr.hz_p1) }
+                            li { (icons::check()) (tr.hz_p2) }
+                            li { (icons::check()) (tr.hz_p3) }
+                        }
+                        a.more href="https://playhorizon.dev" target="_blank" rel="noopener" { (tr.hz_site) (icons::external()) }
+                        p.hz-note { (tr.hz_note) }
                     }
-                    div.actions {
-                        a.btn.play href="/download/setup" { (icons::download()) (tr.hero_cta_download) }
-                        a.btn.ghost href="https://playhorizon.dev" target="_blank" rel="noopener" { (tr.hz_site) (icons::external()) }
-                    }
-                    p.hz-note { (tr.hz_note) }
-                }
-                figure.hz-shot.reveal {
-                    img src=(shot) alt=(tr.alt_horizon) width="1180" height="720" loading="lazy";
                 }
             }
-        }
-    }
-}
-
-fn card(icon: Markup, title: &str, text: &str) -> Markup {
-    html! {
-        div.card.reveal {
-            span.ico { (icon) }
-            h3 { (title) }
-            p { (text) }
         }
     }
 }
@@ -286,15 +254,11 @@ fn download(p: &Page, latest: Option<&Release>) -> Markup {
         Some(format!("{} · {}", r.tag_name, format::size(tr, a.size)))
     };
     html! {
-        (layout::fog_divider(p))
-        section.sec #download {
-            div.wrap {
-                div.head.reveal {
-                    span.label { (tr.dl_label) }
-                    h2 { (tr.dl_title) }
-                    p { (tr.dl_text) }
-                }
-                div.dl.reveal {
+        section.blk #download {
+            div.col {
+                (titre(&tr.dl_label, None))
+                p.blk-lead { (tr.dl_text) }
+                div.cells.c4.dl {
                     a.dl-card.main href="/download/setup" {
                         span.top { (icons::download()) (tr.inst_t) span.pill { (tr.recommended) } }
                         span.txt { (tr.inst_p) }
@@ -329,13 +293,10 @@ fn faq(p: &Page) -> Markup {
         (&tr.q5, &tr.a5),
     ];
     html! {
-        section.sec #faq {
-            div.wrap.faq {
-                div.head.left.reveal {
-                    span.label { (tr.faq_label) }
-                    h2 { (tr.faq_title) }
-                }
-                div.qa.reveal {
+        section.blk #faq {
+            div.col {
+                (titre(&tr.faq_title, Some(qa.len())))
+                div.qa {
                     @for (q, a) in qa {
                         details { summary { span { (q) } (icons::chevron()) } p { (a) } }
                     }
