@@ -204,6 +204,7 @@
 
   // ---------- Boutique : studio 3D du skin (skinview3d) ----------
   const stage = document.getElementById("stage");
+  let stageReady = Promise.resolve();   // le joueur est chargé dans l'aperçu
   if (stage && window.skinview3d) {
     const sv = window.skinview3d;
     const canvas = document.getElementById("skin3d");
@@ -324,10 +325,15 @@
       else setBack("elytra", ownCape && back.source === "own" ? "own" : "misty");
     });
     const featName = document.getElementById("feat-name"), featText = document.getElementById("feat-text");
+    const hatNote = document.getElementById("hat-note");
     equipButtons.forEach(b => b.addEventListener("click", () => {
       const src = b.dataset.src || "misty";
-      const on = back.mode === b.dataset.back && back.source === src;
-      setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
+      const hat = b.dataset.back === "none";   // Cloudly : un chapeau, pas encore dans l'aperçu 3D
+      const on = !hat && back.mode === b.dataset.back && back.source === src;
+      if (hat) setBack(ownCape ? "cape" : "none", "own");
+      else setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
+      if (hat) b.setAttribute("aria-pressed", "true");
+      if (hatNote) hatNote.hidden = !hat;
       // Vitrine : le nom et la description de l'article choisi
       if (!on && featName && b.dataset.name) {
         featName.textContent = b.dataset.name;
@@ -423,7 +429,7 @@
       }
     };
     setAnim("walk");
-    loadPlayer(stage.dataset.name).finally(() => stage.classList.add("ready"));
+    stageReady = loadPlayer(stage.dataset.name).finally(() => stage.classList.add("ready"));
 
     // Actualiser : recharge le skin et la cape (après un changement chez Mojang)
     const reloadBtn = document.getElementById("reload");
@@ -466,6 +472,21 @@
         if (/^[A-Za-z0-9_]{3,16}$/.test(name)) loadPlayer(name);
       }, 450);
     });
+  }
+
+  // Boutique : un clic sur un cosmétique ouvre l'essayage (studio 3D) avec cet article porté
+  const tryon = document.getElementById("tryon");
+  if (tryon && tryon.showModal) {
+    document.querySelectorAll("[data-try]").forEach(card => card.addEventListener("click", () => {
+      tryon.showModal();
+      stageReady.then(() => {
+        const b = tryon.querySelector(`.equip[data-thumb="${card.dataset.try}"]`);
+        if (b && b.getAttribute("aria-pressed") !== "true") b.click();
+      });
+    }));
+    tryon.querySelector("[data-close]")?.addEventListener("click", () => tryon.close());
+    // Un clic à côté de la fenêtre la ferme
+    tryon.addEventListener("click", e => { if (e.target === tryon) tryon.close(); });
   }
 
   // ---------- Documentation ----------

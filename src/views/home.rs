@@ -38,6 +38,7 @@ pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
         (download(p, latest))
         (rayures())
         (faq(p))
+        (appel(p))
     };
     layout::render(
         p,
@@ -87,36 +88,62 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
                     a.btn href="/patch-notes" { (tr.nav_patch_notes) (icons::arrow_right()) }
                 }
             }
+            // Le launcher, dans un cadre posé sur le paysage
+            div.col.hero-shot-wrap {
+                figure.hero-shot {
+                    img src=(format!("/assets/screens/{}/home.png", p.lang.screens_dir())) alt=(tr.alt_home) width="1180" height="720" fetchpriority="high";
+                }
+            }
         }
     }
 }
 
-/// Chiffres clés, en tableau (téléchargements, versions, mod loaders, langues, taille).
+/// Dernier appel à télécharger, sur un fond de caractères ASCII qui ondulent.
+fn appel(p: &Page) -> Markup {
+    let tr = p.tr;
+    html! {
+        section.blk.final-cta {
+            div.col {
+                div.cta-box {
+                    pre.ascii-noise aria-hidden="true" {}
+                    div.cta-body {
+                        img src="/assets/icone.png" alt="" width="56" height="56";
+                        h2 { (tr.cta_title) }
+                        p { (tr.cta_text) }
+                        div.actions {
+                            a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
+                            a.btn href="/docs" { (tr.nav_docs) (icons::arrow_right()) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Chiffres clés, en grandes cellules (téléchargements, versions, mod loaders, langues).
 fn chiffres(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
     let tr = p.tr;
-    let taille = latest.and_then(|r| r.asset(Kind::Setup)).map(|a| format::size(tr, a.size));
-    let mut lignes: Vec<(&str, String)> = Vec::new();
+    let mut cases: Vec<(String, &str)> = Vec::new();
     if downloads > 0 {
-        lignes.push((&tr.stat_downloads, milliers(p, downloads)));
-    }
-    if let Some(r) = latest {
-        lignes.push((&tr.card_label, r.tag_name.clone()));
+        cases.push((milliers(p, downloads), &tr.stat_downloads));
     }
     if let Some(n) = p.release_count {
-        lignes.push((&tr.stat_releases, n.to_string()));
+        cases.push((n.to_string(), &tr.stat_releases));
     }
-    lignes.push((&tr.stat_loaders, LOADERS.len().to_string()));
-    lignes.push((&tr.stat_langs, crate::i18n::Lang::ALL.len().to_string()));
-    if let Some(t) = taille {
-        lignes.push((&tr.stat_size, t));
+    cases.push((LOADERS.len().to_string(), &tr.stat_loaders));
+    cases.push((crate::i18n::Lang::ALL.len().to_string(), &tr.stat_langs));
+    if let Some(t) = latest.and_then(|r| r.asset(Kind::Setup)).map(|a| format::size(tr, a.size)) {
+        cases.push((t, &tr.stat_size));
     }
+    cases.truncate(4);
     html! {
         section.blk.numbers {
             div.col {
                 p.caption { (tr.stat_title) }
-                dl.kv {
-                    @for (k, v) in &lignes {
-                        div { dt { (majuscule(k)) } dd { (v) } }
+                dl.cells.big-stats style=(format!("--n:{}", cases.len())) {
+                    @for (v, k) in &cases {
+                        div { dd { (v) } dt { (majuscule(k)) } }
                     }
                 }
             }
@@ -151,12 +178,10 @@ fn milliers(p: &Page, n: u64) -> String {
 fn galerie(p: &Page) -> Markup {
     let tr = p.tr;
     let images = [
-        ("home", &tr.gal_home_t, &tr.gal_home_p),
         ("versions", &tr.gal_versions_t, &tr.gal_versions_p),
         ("profiles", &tr.gal_profiles_t, &tr.gal_profiles_p),
         ("skin", &tr.gal_skin_t, &tr.gal_skin_p),
         ("textures", &tr.gal_textures_t, &tr.gal_textures_p),
-        ("settings", &tr.gal_settings_t, &tr.gal_settings_p),
     ];
     html! {
         section.blk #preview {

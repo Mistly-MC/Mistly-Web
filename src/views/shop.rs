@@ -97,6 +97,17 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
             html! {
                 section.shop-top {
                     div.col {
+                        header.shop-head {
+                            span.label { (tr.shop_label) }
+                            h1 { (tr.shop_h1_1) " " span.soft { (tr.shop_h1_2) } }
+                            p { (tr.shop_click_hint) }
+                        }
+                    }
+                }
+                (collection(p))
+                // L'essayage : le studio 3D, ouvert seulement quand on clique sur un cosmétique
+                dialog.tryon #tryon aria-labelledby="feat-name" {
+                    button.tryon-close type="button" data-close aria-label=(tr.shop_close) { "✕" }
                         div.vitrine {
                             (stage(p, preview.unwrap_or("MHF_Steve"), preview, false))
                             div.featured {
@@ -105,8 +116,8 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                                 p #feat-text { (tr.shop_cape_p) }
                                 div.badges { span.badge.free #feat-badge { (tr.shop_free_client) } }
                                 div.pick role="group" aria-label=(tr.shop_collection) {
-                                    @for a in ARTICLES.iter().filter(|a| a.back.is_some()) {
-                                        button.equip type="button" data-back=(a.back.unwrap_or_default()) data-src=(a.src)
+                                    @for a in &ARTICLES {
+                                        button.equip type="button" data-back=(a.back.unwrap_or("none")) data-src=(a.src) data-thumb=(a.thumb)
                                             data-name=(a.nom(tr)) data-text=(a.texte(tr)) aria-pressed="false"
                                             data-badge=(if a.early { &tr.shop_early_badge } else { &tr.shop_free_client }) data-early=[a.early.then_some("1")]
                                             data-equip=(tr.shop_equip) data-unequip=(tr.shop_unequip) {
@@ -115,6 +126,7 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                                         }
                                     }
                                 }
+                                p.hat-note #hat-note hidden { (icons::alert()) span { (tr.shop_hat_note) } }
                                 div.try {
                                     strong { (tr.shop_try) }
                                     p { (tr.shop_try_p) }
@@ -122,9 +134,7 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                                 }
                             }
                         }
-                    }
                 }
-                (collection(p))
             }
         }
         ShopView::Studio { player } => html! {
@@ -204,12 +214,15 @@ fn collection(p: &Page) -> Markup {
                 h2.blk-title { (tr.shop_collection) sup { "(" (ARTICLES.len()) ")" } }
                 div.cells.c4 {
                     @for a in &ARTICLES {
-                        div.item-card.reveal {
-                            div.item-art { canvas.thumb data-thumb=(a.thumb) width="60" height="96" aria-hidden="true" {} }
-                            div.item-body {
+                        button.item-card.reveal type="button" data-try=(a.thumb) {
+                            span.item-art { canvas.thumb data-thumb=(a.thumb) width="60" height="96" aria-hidden="true" {} }
+                            span.item-body {
                                 strong { (a.nom(tr)) }
-                                p { (a.texte(tr)) }
-                                @if a.early { span.badge.early { (tr.shop_early_badge) } } @else { span.badge.free { (tr.shop_available) } }
+                                span.desc { (a.texte(tr)) }
+                                span.item-foot {
+                                    @if a.early { span.badge.early { (tr.shop_early_badge) } } @else { span.badge.free { (tr.shop_available) } }
+                                    span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
+                                }
                             }
                         }
                     }

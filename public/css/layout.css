@@ -14,7 +14,7 @@
 .ascii-bg.on{opacity:1}
 /* Pages sans hero (doc, pages légales, seed viewer, studio) : le paysage plus bas et plus discret */
 body:not(:has(.hero,.docs-hero,.tools-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
-.shop .page-sky{height:600px;opacity:.55}
+.shop:has(.shop-top) .page-sky{height:clamp(560px,80vh,780px)}
 
 /* Animations du paysage (étoiles, lune, brume pixel) */
 .scene .twinkle{animation:twinkle 4s ease-in-out infinite alternate}

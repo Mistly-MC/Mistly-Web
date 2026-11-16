@@ -187,46 +187,68 @@
   .cat-tabs button span{font-size:11px}
 }
 
-/* ---------- Vitrine : l'article à la une en 3D, la collection, ce qui arrive bientôt ---------- */
+/* ---------- Boutique : en-tête, collection cliquable, essayage dans une fenêtre ---------- */
 .shop-top{position:relative;margin-top:-61px;padding-top:61px}
-.vitrine{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1px;background:var(--line);border-bottom:1px solid var(--line);margin-top:28px;border-top:1px solid var(--line)}
-.vitrine>*{background:rgba(9,9,11,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.vitrine .stage{height:clamp(480px,46vw,600px);border-radius:0}
-.featured{display:flex;flex-direction:column;padding:28px 26px}
+.shop-head{display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(70px,11vw,140px) 20px clamp(150px,17vw,250px)}
+.shop-head .label{font-family:var(--mono);color:#c8d3ee}
+.shop-head h1{margin:14px 0 12px;font-size:clamp(36px,5.4vw,64px);font-weight:600;letter-spacing:-.04em;line-height:1.02;text-shadow:0 4px 30px rgba(5,8,18,.7)}
+.shop-head h1 .soft{color:#a9b9dc}
+.shop-head p{font-size:16px;color:#c3cbe0;text-shadow:0 2px 14px rgba(5,8,18,.9)}
+
+/* La collection : chaque carte ouvre l'essayage */
+.item-card{display:flex;flex-direction:column;align-items:stretch;padding:0;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit;transition:background .2s}
+.item-card:hover{background:var(--bg-2)}
+.item-card:focus-visible{outline-offset:-3px}
+.item-art{display:grid;place-items:center;height:220px;border-bottom:1px solid var(--line);background:radial-gradient(60% 70% at 50% 45%,rgba(140,170,240,.16),transparent 70%),var(--bg-2);transition:background .3s}
+.item-card:hover .item-art{background:radial-gradient(70% 80% at 50% 45%,rgba(160,190,255,.26),transparent 70%),var(--bg-2)}
+.item-art .thumb{width:60px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6));transition:transform .4s ease}
+.item-card:hover .thumb{transform:translateY(-6px) rotate(-3deg) scale(1.06)}
+.item-body{display:flex;flex-direction:column;gap:4px;padding:16px 18px 18px;flex:1}
+.item-body strong{font-size:15px;font-weight:600}
+.item-body .desc{font-size:13.5px;color:var(--muted)}
+.item-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:12px}
+.try-it{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text);opacity:.7;transition:opacity .15s}
+.try-it .ic{width:13px;height:13px;transition:transform .15s}
+.item-card:hover .try-it{opacity:1}
+.item-card:hover .try-it .ic{transform:translateX(3px)}
+
+/* La fenêtre d'essayage */
+.tryon{margin:auto;width:min(1060px,calc(100% - 24px));max-height:calc(100vh - 24px);padding:0;border:1px solid var(--line-2);border-radius:18px;background:var(--bg);color:var(--text);overflow:auto;box-shadow:0 40px 120px -20px rgba(0,0,0,.9)}
+.tryon::backdrop{background:rgba(5,6,10,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.tryon[open]{animation:tryon-in .25s ease}
+@keyframes tryon-in{from{opacity:0;transform:translateY(12px) scale(.98)}}
+.tryon-close{position:absolute;top:12px;right:12px;z-index:5;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--line-2);background:rgba(9,9,11,.8);color:var(--muted);cursor:pointer;font-size:14px}
+.tryon-close:hover{color:var(--text);border-color:rgba(255,255,255,.3)}
+.vitrine{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1px;background:var(--line)}
+.vitrine>*{background:var(--bg)}
+.vitrine .stage{height:clamp(460px,62vh,600px);border-radius:0;background:radial-gradient(60% 60% at 50% 45%,rgba(111,156,255,.14),transparent 70%),var(--bg)}
+.featured{display:flex;flex-direction:column;padding:30px 26px 26px}
 .featured .label{font-family:var(--mono)}
-.featured h1{margin:10px 0 8px;font-size:clamp(30px,3.4vw,42px);font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.featured h1{margin:10px 0 8px;font-size:clamp(28px,3vw,38px);font-weight:600;letter-spacing:-.035em;line-height:1.05}
 .featured>p{color:var(--muted);font-size:15px;max-width:420px}
-.badges{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 22px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px}
 .badge.free{color:#9fe8bf;border-color:rgba(126,226,168,.35)}
 .badge.early{color:#ffd99a;border-color:rgba(255,200,110,.4)}
-/* Les articles à essayer, en vignettes */
-.pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.pick .equip{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 8px 10px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.02);cursor:pointer;font-size:12.5px;color:var(--muted);transition:border-color .15s,background .15s,color .15s}
+.pick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pick .equip{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px 10px;border-radius:12px;border:1px solid var(--line-2);background:rgba(255,255,255,.02);cursor:pointer;font-size:12px;line-height:1.25;text-align:center;color:var(--muted);transition:border-color .15s,background .15s,color .15s}
 .pick .equip:hover{border-color:rgba(255,255,255,.3);color:var(--text)}
 .pick .equip[aria-pressed="true"]{border-color:#b8ccf4;background:rgba(184,204,244,.1);color:var(--text)}
 .pick .thumb{width:30px;height:48px;image-rendering:pixelated}
-.try{margin-top:auto;padding-top:24px;border-top:1px solid var(--line)}
+.hat-note{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:9px 11px;border-radius:10px;font-size:12.5px;color:#ffd99a;background:rgba(255,190,90,.07);border:1px solid rgba(255,190,90,.3)}
+.hat-note[hidden]{display:none}
+.hat-note .ic{width:15px;height:15px;flex:none;margin-top:1px}
+.try{margin-top:auto;padding-top:22px;border-top:1px solid var(--line)}
+.featured .try{margin-top:24px}
 .try strong{font-size:14.5px;font-weight:600}
 .try>p{margin:2px 0 12px;font-size:13.5px;color:var(--muted)}
 .try .shop-form{margin:0;max-width:none}
 .try .shop-form label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.try .field{border-radius:10px;padding:5px 5px 5px 12px;background:rgba(9,9,11,.6);box-shadow:none}
+.try .field{border-radius:10px;padding:5px 5px 5px 12px;background:var(--bg-2);box-shadow:none;backdrop-filter:none}
 .try .field input{font-size:15px;font-weight:500}
 .try .help{font-size:12.5px}
 
-/* Collection */
-.item-card{display:flex;flex-direction:column}
-.item-art{display:grid;place-items:center;height:190px;border-bottom:1px solid var(--line);background:radial-gradient(60% 70% at 50% 45%,rgba(140,170,240,.16),transparent 70%),var(--bg-2)}
-.item-art .thumb{width:60px;height:96px;image-rendering:pixelated;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6));transition:transform .4s ease}
-.item-card:hover .thumb{transform:translateY(-4px) rotate(-2deg)}
-.item-body{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:16px 18px 18px}
-.item-body strong{font-size:15px;font-weight:600}
-.item-body p{font-size:13.5px;color:var(--muted);margin-bottom:8px}
-
 /* Bientôt : un bruit de caractères ASCII qui ondule derrière */
 .soon-card{position:relative;overflow:hidden;min-height:200px}
-.ascii-noise{position:absolute;inset:0;margin:0;padding:6px 8px;font-family:var(--mono);font-size:12px;line-height:13px;color:rgba(184,204,244,.16);white-space:pre;overflow:hidden;user-select:none;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent)}
 .soon-body{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:22px;height:100%}
 .soon-body .ico{display:grid;place-items:center;width:34px;height:34px;margin-bottom:12px;border-radius:10px;border:1px solid var(--line-2);background:rgba(9,9,11,.8);color:var(--text)}
 .soon-body .ico .ic{width:16px;height:16px}
@@ -235,7 +257,9 @@
 
 @media (max-width:900px){
   .vitrine{grid-template-columns:minmax(0,1fr)}
+  .vitrine .stage{height:420px}
 }
 @media (max-width:600px){
   .featured{padding:22px 18px}
+  .pick{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
