@@ -5,51 +5,16 @@ use crate::i18n::{Lang, Tr};
 use maud::{DOCTYPE, Markup, PreEscaped, html};
 use std::sync::LazyLock;
 
-/// « MISTLY » dessiné en caractères ASCII, en bas de chaque page (site.js y fait passer une vague
-/// de lumière). Seulement des caractères que toutes les polices à chasse fixe ont (`#` et `:`) :
-/// les caractères de blocs (█, ╗…) manquent à certaines et le dessin se décalait.
-pub static BANNER: LazyLock<String> = LazyLock::new(|| {
-    // Lettres en pixels, 7 lignes de haut ; un pixel = deux caractères pour qu'il soit carré
-    const LETTRES: [&[&str; 7]; 6] = [
-        &["#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"],
-        &["###", ".#.", ".#.", ".#.", ".#.", ".#.", "###"],
-        &[".####", "#....", "#....", ".###.", "....#", "....#", "####."],
-        &["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
-        &["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
-        &["#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."],
-    ];
-    // Grille des pixels, avec une colonne vide entre les lettres
-    let mut grille: Vec<Vec<bool>> = vec![Vec::new(); 7];
-    for (i, l) in LETTRES.iter().enumerate() {
-        for (r, ligne) in l.iter().enumerate() {
-            if i > 0 {
-                grille[r].push(false);
-            }
-            grille[r].extend(ligne.chars().map(|c| c == '#'));
-        }
-    }
-    let largeur = grille[0].len() + 1;
-    let plein = |r: usize, c: usize| grille.get(r).and_then(|l| l.get(c)).copied().unwrap_or(false);
-    // Une ombre décalée d'un pixel en bas à droite, en `:`
-    (0..8)
-        .map(|r| {
-            (0..largeur)
-                .map(|c| {
-                    if plein(r, c) {
-                        "##"
-                    } else if r > 0 && c > 0 && plein(r - 1, c - 1) {
-                        "::"
-                    } else {
-                        "  "
-                    }
-                })
-                .collect::<String>()
-                .trim_end()
-                .to_string()
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-});
+/// « MISTLY » en lettres de blocs ASCII, en bas de chaque page (site.js y fait passer une vague de
+/// lumière). Affiché en JetBrains Mono, qui a tous ces caractères (█, ╗, ═…) avec la même largeur :
+/// sans elle, le navigateur en prend une autre et les lettres se décalent.
+pub const BANNER: &str = "\
+███╗   ███╗ ██╗ ███████╗ ████████╗ ██╗      ██╗   ██╗
+████╗ ████║ ██║ ██╔════╝ ╚══██╔══╝ ██║      ╚██╗ ██╔╝
+██╔████╔██║ ██║ ███████╗    ██║    ██║       ╚████╔╝
+██║╚██╔╝██║ ██║ ╚════██║    ██║    ██║        ╚██╔╝
+██║ ╚═╝ ██║ ██║ ███████║    ██║    ███████╗    ██║
+╚═╝     ╚═╝ ╚═╝ ╚══════╝    ╚═╝    ╚══════╝    ╚═╝";
 
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
@@ -308,7 +273,7 @@ fn footer(p: &Page) -> Markup {
                     }
                 }
             }
-            pre.ascii-name aria-hidden="true" { (BANNER.as_str()) }
+            pre.ascii-name aria-hidden="true" { (BANNER) }
         }
     }
 }

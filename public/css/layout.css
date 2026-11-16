@@ -32,8 +32,8 @@ body:not(:has(.hero,.docs-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
 
 /* ---------- Navigation : une barre flottante, transparente, en verre dépoli ---------- */
 .nav{position:sticky;top:0;z-index:50;padding-top:12px;pointer-events:none}
-.nav-in{pointer-events:auto;display:flex;align-items:center;gap:16px;height:56px;padding:0 8px 0 18px;border-radius:16px;
-  border:1px solid rgba(255,255,255,.1);background:rgba(12,14,22,.28);
+.nav-in{pointer-events:auto;display:flex;align-items:center;gap:16px;height:56px;padding:0 8px 0 18px;
+  border-radius:0;border:1px solid rgba(255,255,255,.1);background:rgba(12,14,22,.28);
   backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);
   box-shadow:0 1px 0 rgba(255,255,255,.06) inset;transition:background .25s,border-color .25s,box-shadow .25s}
 .nav.scrolled .nav-in{background:rgba(12,13,18,.62);border-color:rgba(255,255,255,.13);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 18px 50px -24px rgba(0,0,0,.9)}
@@ -109,11 +109,14 @@ body:not(:has(.hero,.docs-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
 .made .ic,.fb-right .ic{width:14px;height:14px}
 .totop{padding:5px 10px;border-radius:8px;border:1px solid var(--line-2)}
 /* Le nom en lettres de blocs ASCII : une vague de lumière le parcourt (site.js) */
+/* JetBrains Mono, seulement pour ce dessin : elle a tous les caractères de blocs, à la même largeur */
+@font-face{font-family:"JetBrains Mono";src:url(/assets/JetBrainsMono-Bold.woff2) format("woff2");font-weight:700;font-display:swap;unicode-range:U+2500-259F,U+0020}
 .ascii-name{position:relative;z-index:3;display:block;width:max-content;max-width:100%;margin:30px auto 0;padding-bottom:26px;
-  font-family:var(--mono);font-weight:800;font-size:clamp(7px,1.75vw,20px);line-height:.95;letter-spacing:-.06em;color:#e3eaff;white-space:pre;user-select:none;overflow:hidden;
-  text-shadow:0 0 18px rgba(150,180,255,.25);
+  font-family:"JetBrains Mono",monospace;font-weight:700;font-size:clamp(6px,1.9vw,21px);line-height:1.32;letter-spacing:0;white-space:pre;user-select:none;overflow:hidden;
+  /* Une bande de lumière qui traverse les lettres */
+  color:transparent;background:linear-gradient(100deg,#5d6680 0%,#5d6680 38%,#f2f6ff 48%,#5d6680 58%,#5d6680 100%);background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;animation:name-wave 7s linear infinite;
   -webkit-mask-image:linear-gradient(180deg,#000 70%,transparent);mask-image:linear-gradient(180deg,#000 70%,transparent)}
-.ascii-name span span{transition:opacity .25s}
 .js .ascii-name{opacity:1}
 
 /* En dessous, le menu burger prend le relais (les liens ne tiennent plus sur une ligne) */
@@ -135,3 +138,4 @@ body:not(:has(.hero,.docs-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
   .fcols{grid-template-columns:1fr 1fr}
   .fbottom{flex-direction:column;align-items:flex-start}
 }
+@keyframes name-wave{from{background-position:100% 0}to{background-position:0 0}}

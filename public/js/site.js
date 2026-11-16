@@ -89,34 +89,16 @@
     });
   }
 
-  // Le nom en lettres de blocs du pied de page : une vague de lumière et quelques blocs qui scintillent
+  // Le nom en lettres de blocs du pied de page : quelques blocs qui scintillent (la vague de lumière
+  // est un dégradé CSS ; le texte reste d'un seul tenant, sans coutures entre les caractères)
   const name = document.querySelector(".ascii-name");
   if (name) {
-    const base = name.textContent.split("\n");
-    const width = Math.max(...base.map(l => l.length));
-    name.textContent = "";
-    const spans = base.map(line => {
-      const row = document.createElement("span");
-      row.className = "row";
-      name.append(row, "\n");
-      return [...line].map(ch => {
-        const s = document.createElement("span");
-        s.textContent = ch;
-        row.append(s);
-        return s;
-      });
-    });
+    const base = name.textContent;
     animate(name, t => {
-      const wave = ((t * 0.25) % 1.6) - 0.3;   // position de la vague, de gauche à droite
-      spans.forEach((row, r) => row.forEach((s, c) => {
-        const ch = base[r][c];
-        if (ch === " ") return;
-        const d = Math.abs(c / width - wave - r * 0.01);
-        const flick = ch === "#" && hash(c + Math.floor(t * 6) * 131, r) > 0.97;
-        s.textContent = flick ? "%" : ch;
-        s.style.opacity = (ch === ":" ? 0.18 : 0.42 + Math.max(0, 0.58 - d * 3)).toFixed(2);
-      }));
-    }, 15);
+      const tick = Math.floor(t * 5);
+      let i = 0;
+      name.textContent = base.replace(/█/g, () => (hash(i++, tick) > 0.985 ? "▓" : "█"));
+    }, 5);
   }
 
   // Cartes « bientôt » de la boutique : un bruit de caractères qui ondule
