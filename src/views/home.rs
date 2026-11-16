@@ -5,7 +5,7 @@ use super::layout::{self, Head, Page};
 use crate::format;
 use crate::github::{Kind, Release};
 use crate::markdown;
-use maud::{Markup, html};
+use maud::{Markup, PreEscaped, html};
 
 /// Mod loaders proposés par le launcher.
 const LOADERS: [&str; 6] = ["Forge", "NeoForge", "Fabric", "Quilt", "OptiFine", "LiteLoader"];
@@ -94,12 +94,17 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
     let setup = latest.and_then(|r| r.asset(Kind::Setup));
     html! {
         section.hero {
+            div.hero-moon aria-hidden="true" { (PreEscaped(moon())) }
             div.wrap.hero-grid {
                 div.hero-copy {
-                    div.tags {
-                        span { (icons::cube()) (tr.hero_tag_mc) }
-                        span.sep { "·" }
-                        span { (icons::rust()) (tr.hero_tag_rust) }
+                    // Pastille de version : mène aux notes de la dernière version.
+                    @if let Some(r) = latest {
+                        a.hero-pill href=(format!("/patch-notes#{}", r.tag_name)) {
+                            span.dot aria-hidden="true" {}
+                            strong { (r.tag_name) }
+                            span { (tr.card_whats_new) }
+                            (icons::arrow_right())
+                        }
                     }
                     h1 { (tr.hero_title_1) br; span.accent { (tr.hero_title_2) } }
                     p.sub { (tr.hero_sub) }
@@ -119,7 +124,13 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
                             span.go { (icons::download()) (tr.nav_download) }
                         }
                     }
-                    a.hero-notes href="/patch-notes" { (icons::notes()) (tr.hero_cta_notes) " →" }
+                    div.tags {
+                        span { (icons::cube()) (tr.hero_tag_mc) }
+                        span.sep { "·" }
+                        span { (icons::rust()) (tr.hero_tag_rust) }
+                        span.sep { "·" }
+                        a href="/patch-notes" { (icons::notes()) (tr.hero_cta_notes) }
+                    }
                 }
                 aside.latest {
                     div.term-bar {
@@ -132,29 +143,51 @@ fn hero(p: &Page, latest: Option<&Release>) -> Markup {
                     }
                     div.term-body { @match latest {
                         Some(r) => {
+                            p.cmd aria-hidden="true" { span.prompt { "$" } " mistly --version" }
                             div.ver {
                                 strong { (r.tag_name) }
                                 span { (format::date(tr, r.published_at.as_deref())) }
                             }
-                            @let points = markdown::highlights(r.notes(), 4);
+                            @let points = markdown::highlights(r.notes(), 3);
                             @if points.is_empty() {
                                 p.muted { (tr.card_no_notes) }
                             } @else {
                                 span.small { (tr.card_whats_new) }
                                 ul { @for pt in &points { li { (pt) } } }
                             }
-                            a.more href=(format!("/patch-notes#{}", r.tag_name)) { (tr.card_more) " →" }
+                            p.cmd.last aria-hidden="true" { span.prompt { "$" } " " i.cursor {} }
                         }
                         None => {
                             p.muted { (tr.card_unavailable) }
-                            a.more href="/patch-notes" { (tr.card_more) " →" }
                         }
                     } }
+                    a.term-foot href="/patch-notes" { span { (tr.card_more) } (icons::arrow_right()) }
                 }
             }
         }
         (stats(p, latest))
     }
+}
+
+/// La lune du hero, en pixels : un disque de 13 cases de large avec quelques cratères.
+/// Elle est dessinée ici plutôt que dans le paysage pour pouvoir la placer où l'on veut.
+fn moon() -> String {
+    const R: i32 = 6;
+    let (mut disc, mut craters) = (String::new(), String::new());
+    for y in -R..=R {
+        for x in -R..=R {
+            if x * x + y * y > R * R + 2 {
+                continue;
+            }
+            let crater = [(-3, -2), (-2, -2), (-3, -1), (2, 2), (3, 2), (1, -4), (-1, 3)].contains(&(x, y));
+            let path = if crater { &mut craters } else { &mut disc };
+            path.push_str(&format!("M{} {}h1v1h-1z", x + R, y + R));
+        }
+    }
+    let size = 2 * R + 1;
+    format!(
+        r##"<svg viewBox="0 0 {size} {size}" shape-rendering="crispEdges" focusable="false"><path d="{disc}" fill="#eef4ff"/><path d="{craters}" fill="#c1d2f3"/></svg>"##
+    )
 }
 
 /// Chiffres clés sous le hero. Les nombres qui viennent de GitHub ne s'affichent que s'ils sont connus.

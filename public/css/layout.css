@@ -14,9 +14,14 @@
 /* Accueil : un paysage plus haut, qui remplit tout le premier écran derrière le hero */
 .home .page-sky{height:clamp(700px,108vh,1040px)}
 .home .page-sky .scene{height:clamp(420px,62vw,820px)}
+/* Sur l'accueil, la lune est haute dans le ciel : un fondu très court en haut du paysage, sinon elle s'efface */
+.home .page-sky .scene{-webkit-mask-image:linear-gradient(180deg,transparent,#000 7%);mask-image:linear-gradient(180deg,transparent,#000 7%)}
 /* Pages sans hero (article de doc, page légale, seed viewer, studio) : le texte commence tout en
    haut, donc le paysage s'efface derrière lui. */
 body:not(:has(.hero,.docs-hero,.tools-hero)) .page-sky .scene{opacity:.35}
+/* Étoiles en pixels sur tout le haut du ciel, en deux couches qui scintillent en décalé */
+.home .page-sky::before{content:"";position:absolute;left:50%;top:0;width:2px;height:2px;margin-left:-1100px;color:#dbe7ff;box-shadow:1326px 77px,1617px 24px,296px 274px,385px 187px,237px 259px,879px 19px,352px 222px,1712px 35px,985px 46px,1738px 30px,507px 114px,253px 295px,1624px 25px,905px 23px,545px 148px,1716px 73px,482px 292px,1263px 286px,740px 52px,769px 190px,399px 280px,257px 288px,244px 316px,843px 254px,2177px 218px,1286px 238px,1856px 185px,1227px 127px,736px 124px,335px 294px,1229px 268px,2027px 175px,1838px 147px,299px 60px,2096px 214px,675px 175px,622px 250px,1727px 20px,317px 285px,1285px 174px,1434px 304px,2034px 296px,1868px 35px,383px 138px,1941px 33px,248px 158px}
+.home .page-sky::before{opacity:.55}
 /* Trame de points par-dessus le paysage, comme une image tramée */
 .page-sky::after{content:"";position:absolute;inset:0;background:radial-gradient(rgba(4,7,16,.55) 1px,transparent 1.4px) 0 0/4px 4px}
 

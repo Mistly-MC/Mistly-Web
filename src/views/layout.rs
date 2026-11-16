@@ -99,7 +99,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 @if let Some(json) = &head.jsonld {
                     script type="application/ld+json" { (PreEscaped(json)) }
                 }
-                link rel="preload" href="/assets/Silkscreen-Bold.ttf" as="font" type="font/ttf" crossorigin;
+                link rel="preload" href="/assets/Inter-latin.woff2" as="font" type="font/woff2" crossorigin;
                 @let v = ASSET_VERSION.as_str();
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
