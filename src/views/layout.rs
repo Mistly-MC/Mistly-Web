@@ -123,6 +123,8 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 div.page-sky aria-hidden="true" { (PreEscaped(p.scene)) canvas.ascii-bg {} }
                 // Les deux traits verticaux qui bordent la colonne du site
                 div.rails aria-hidden="true" {}
+                // Traînée de caractères ASCII qui suit la souris (site.js)
+                canvas.cursor-ascii aria-hidden="true" {}
                 (nav(p))
                 main #main { (main) }
                 (footer(p))

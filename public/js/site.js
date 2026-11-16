@@ -89,6 +89,68 @@
     });
   }
 
+  // La souris laisse une traînée de caractères ASCII qui ondulent puis s'effacent
+  const trail = document.querySelector(".cursor-ascii");
+  if (trail && !reduce && matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    const g = trail.getContext("2d");
+    const CELL_W = 9, CELL_H = 15, RADIUS = 70;
+    const CHARS = " .:-=+*#%@";
+    let cols = 0, rows = 0, heat = new Float32Array(0), running = false, last = 0;
+    let mx = -999, my = -999, px = -999, py = -999;
+    const size = () => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      trail.width = innerWidth * dpr; trail.height = innerHeight * dpr;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.font = `12px ${MONO}`;
+      g.textBaseline = "top";
+      cols = Math.ceil(innerWidth / CELL_W); rows = Math.ceil(innerHeight / CELL_H);
+      heat = new Float32Array(cols * rows);
+    };
+    size();
+    addEventListener("resize", size);
+    // Chauffe les cases autour d'un point, plus fort au centre
+    const warm = (x, y, k) => {
+      const c0 = Math.max(0, Math.floor((x - RADIUS) / CELL_W)), c1 = Math.min(cols - 1, Math.ceil((x + RADIUS) / CELL_W));
+      const r0 = Math.max(0, Math.floor((y - RADIUS) / CELL_H)), r1 = Math.min(rows - 1, Math.ceil((y + RADIUS) / CELL_H));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const d = Math.hypot(c * CELL_W + CELL_W / 2 - x, r * CELL_H + CELL_H / 2 - y) / RADIUS;
+        if (d < 1) heat[r * cols + c] = Math.min(1, heat[r * cols + c] + (1 - d) * (1 - d) * k);
+      }
+    };
+    const frame = now => {
+      if (now - last < 33) { requestAnimationFrame(frame); return; }
+      last = now;
+      // Le long du trajet depuis la dernière image, pour une traînée continue
+      const steps = Math.min(12, Math.ceil(Math.hypot(mx - px, my - py) / 12));
+      for (let i = 1; i <= steps; i++) warm(px + (mx - px) * i / steps, py + (my - py) * i / steps, 0.22);
+      px = mx; py = my;
+      g.clearRect(0, 0, innerWidth, innerHeight);
+      const t = now / 1000;
+      let alive = false;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const i = r * cols + c, h = heat[i];
+        if (h < 0.02) { heat[i] = 0; continue; }
+        alive = true;
+        heat[i] = h * 0.93;
+        // Un bruit qui bouge : la traînée frémit au lieu d'être un simple rond
+        const v = h * (0.55 + 0.45 * fbm(c * 0.35 + t * 1.6, r * 0.5 - t));
+        const ch = CHARS[Math.min(CHARS.length - 1, Math.floor(v * CHARS.length))];
+        if (ch === " ") continue;
+        g.fillStyle = `rgba(200,216,255,${Math.min(0.85, v * 0.95).toFixed(3)})`;
+        g.fillText(ch, c * CELL_W, r * CELL_H);
+      }
+      if (alive || mx !== px) requestAnimationFrame(frame);
+      else running = false;
+    };
+    addEventListener("pointermove", e => {
+      if (px < -900) { px = e.clientX; py = e.clientY; }
+      mx = e.clientX; my = e.clientY;
+      if (!running) { running = true; requestAnimationFrame(frame); }
+    }, { passive: true });
+    // En défilant, la traînée reste collée à la page : on l'efface
+    addEventListener("scroll", () => heat.fill(0), { passive: true });
+  }
+
   // Le nom en lettres de blocs du pied de page : quelques blocs qui scintillent (la vague de lumière
   // est un dégradé CSS ; le texte reste d'un seul tenant, sans coutures entre les caractères)
   const name = document.querySelector(".ascii-name");

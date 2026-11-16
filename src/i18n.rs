@@ -11,10 +11,13 @@ pub enum Lang {
     Es,
     Ru,
     It,
+    Pt,
+    Zh,
+    Ja,
 }
 
 impl Lang {
-    pub const ALL: [Lang; 5] = [Lang::Fr, Lang::En, Lang::Es, Lang::Ru, Lang::It];
+    pub const ALL: [Lang; 8] = [Lang::Fr, Lang::En, Lang::Es, Lang::Pt, Lang::It, Lang::Ru, Lang::Zh, Lang::Ja];
 
     pub fn code(self) -> &'static str {
         match self {
@@ -23,6 +26,9 @@ impl Lang {
             Lang::Es => "es",
             Lang::Ru => "ru",
             Lang::It => "it",
+            Lang::Pt => "pt",
+            Lang::Zh => "zh",
+            Lang::Ja => "ja",
         }
     }
 
@@ -119,6 +125,7 @@ traductions! {
     pub hero_cta_download: String,
     pub hero_cta_notes: String,
     pub hero_free: String,
+    pub docs_read: String,
     pub shop_cat_tags: String,
     pub shop_cat_tags_p: String,
     pub shop_click_hint: String,
@@ -440,13 +447,16 @@ fn parse(code: &str, src: &str) -> Tr {
     tr
 }
 
-static TRANSLATIONS: LazyLock<[Tr; 5]> = LazyLock::new(|| {
+static TRANSLATIONS: LazyLock<[Tr; 8]> = LazyLock::new(|| {
     [
         parse("fr", include_str!("../locales/fr.toml")),
         parse("en", include_str!("../locales/en.toml")),
         parse("es", include_str!("../locales/es.toml")),
-        parse("ru", include_str!("../locales/ru.toml")),
+        parse("pt", include_str!("../locales/pt.toml")),
         parse("it", include_str!("../locales/it.toml")),
+        parse("ru", include_str!("../locales/ru.toml")),
+        parse("zh", include_str!("../locales/zh.toml")),
+        parse("ja", include_str!("../locales/ja.toml")),
     ]
 });
 

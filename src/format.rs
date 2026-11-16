@@ -10,7 +10,10 @@ pub fn date(tr: &Tr, iso: Option<&str>) -> String {
         return String::new();
     };
     let month = &tr.months[usize::from(u8::from(d.month())) - 1];
-    if tr.date_order == "mdy" {
+    if tr.date_order == "ymd" {
+        // chinois et japonais : « 2026年11月16日 » (le mois porte déjà son 月)
+        format!("{}年{month}{}日", d.year(), d.day())
+    } else if tr.date_order == "mdy" {
         format!("{month} {}, {}", d.day(), d.year())
     } else {
         format!("{} {month} {}", d.day(), d.year())
@@ -20,6 +23,9 @@ pub fn date(tr: &Tr, iso: Option<&str>) -> String {
 /// Un jour : « 8 novembre » ou « November 8 » (avec l'année si `annee`).
 pub fn jour(tr: &Tr, d: time::Date, annee: bool) -> String {
     let month = &tr.months[usize::from(u8::from(d.month())) - 1];
+    if tr.date_order == "ymd" {
+        return if annee { format!("{}年{month}{}日", d.year(), d.day()) } else { format!("{month}{}日", d.day()) };
+    }
     let base = if tr.date_order == "mdy" { format!("{month} {}", d.day()) } else { format!("{} {month}", d.day()) };
     if annee {
         if tr.date_order == "mdy" { format!("{base}, {}", d.year()) } else { format!("{base} {}", d.year()) }

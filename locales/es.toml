@@ -24,6 +24,7 @@ hero_sub = "Todas las versiones, todos los mod loaders, tus mods de Modrinth y C
 hero_cta_download = "Descargar el launcher"
 hero_cta_notes = "Leer las notas de versión"
 hero_free = "Gratis"
+docs_read = "Leer"
 shop_cat_tags = "Etiquetas de nombre"
 shop_cat_tags_p = "Un estilo para el nombre sobre tu cabeza."
 shop_click_hint = "Haz clic en un cosmético para probarlo en 3D."
@@ -352,4 +353,3 @@ vf_here_p = "La verificación solo se hace en el canal de normas del servidor. C
 vf_already_t = "Ya verificado"
 vf_already_p = "Ya tienes acceso al servidor, no hay nada que hacer."
 
-# Outils et seed viewer

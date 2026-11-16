@@ -60,9 +60,10 @@ body{position:relative}
 .blk-lead{padding:0 22px 22px;margin-top:-8px;color:var(--muted);font-size:15px;max-width:640px}
 /* Bande hachurée entre deux sections */
 .hatch{height:44px;border-top:1px solid var(--line);background:repeating-linear-gradient(-45deg,transparent 0 7px,rgba(255,255,255,.055) 7px 8px)}
-/* Cellules qui partagent leurs bordures : la grille montre la couleur des lignes entre elles */
-.cells{display:grid;gap:1px;background:var(--line);border-top:1px solid var(--line)}
-.cells>*{background:var(--bg);min-width:0}
+/* Cellules qui partagent leurs bordures : chacune trace son bord droit et son bord bas (les cases
+   vides d'une dernière rangée incomplète restent donc vides, sans bloc gris) */
+.cells{display:grid;border-top:1px solid var(--line);margin-bottom:-1px}
+.cells>*{background:var(--bg);min-width:0;box-shadow:inset -1px 0 0 var(--line),inset 0 -1px 0 var(--line)}
 .cells.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .cells.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .cells.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -115,3 +116,8 @@ main,.foot{position:relative;z-index:1}
 /* Bruit de caractères ASCII qui ondule (site.js), derrière une carte ou un encart */
 .ascii-noise{position:absolute;inset:0;margin:0;padding:6px 8px;font-family:var(--mono);font-size:12px;line-height:13px;color:rgba(184,204,244,.16);white-space:pre;overflow:hidden;user-select:none;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent)}
+
+/* Traînée de caractères ASCII derrière la souris (site.js) : par-dessus le fond, sous la navigation,
+   sans jamais capter les clics */
+.cursor-ascii{position:fixed;inset:0;width:100vw;height:100vh;z-index:40;pointer-events:none;mix-blend-mode:screen}
+@media (hover:none){.cursor-ascii{display:none}}

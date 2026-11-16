@@ -138,6 +138,12 @@ pub fn flag(code: &str) -> Markup {
         "it" => ("0 0 3 2", r##"<path fill="#009246" d="M0 0h1v2H0z"/><path fill="#fff" d="M1 0h1v2H1z"/><path fill="#ce2b37" d="M2 0h1v2H2z"/>"##),
         "ru" => ("0 0 3 2", r##"<path fill="#fff" d="M0 0h3v.667H0z"/><path fill="#0039a6" d="M0 .667h3v.667H0z"/><path fill="#d52b1e" d="M0 1.333h3V2H0z"/>"##),
         "es" => ("0 0 3 2", r##"<path fill="#aa151b" d="M0 0h3v2H0z"/><path fill="#f1bf00" d="M0 .5h3v1H0z"/>"##),
+        // Portugal : vert et rouge, avec la sphère armillaire simplifiée
+        "pt" => ("0 0 30 20", r##"<path fill="#da291c" d="M0 0h30v20H0z"/><path fill="#046a38" d="M0 0h12v20H0z"/><circle cx="12" cy="10" r="4" fill="#ffe900"/><circle cx="12" cy="10" r="2.4" fill="#da291c"/><path fill="#fff" d="M11 8.6h2v2.6a1 1 0 0 1-2 0z"/>"##),
+        // Chine : fond rouge, grande étoile et quatre petites
+        "zh" => ("0 0 30 20", r##"<path fill="#ee1c25" d="M0 0h30v20H0z"/><path fill="#ffde00" d="M5 2l1.18 3.62H10L6.91 7.86 8.09 11.5 5 9.26 1.91 11.5 3.09 7.86 0 5.62h3.82z"/><circle cx="10" cy="2" r=".9" fill="#ffde00"/><circle cx="12" cy="4" r=".9" fill="#ffde00"/><circle cx="12" cy="7" r=".9" fill="#ffde00"/><circle cx="10" cy="9" r=".9" fill="#ffde00"/>"##),
+        // Japon : disque rouge sur fond blanc
+        "ja" => ("0 0 30 20", r##"<path fill="#fff" d="M0 0h30v20H0z"/><circle cx="15" cy="10" r="6" fill="#bc002d"/>"##),
         // Royaume-Uni pour l'anglais
         _ => ("0 0 60 30", r##"<path fill="#012169" d="M0 0h60v30H0z"/><path stroke="#fff" stroke-width="6" d="M0 0l60 30M60 0L0 30"/><path stroke="#c8102e" stroke-width="2" d="M0 0l60 30M60 0L0 30"/><path stroke="#fff" stroke-width="10" d="M30 0v30M0 15h60"/><path stroke="#c8102e" stroke-width="6" d="M30 0v30M0 15h60"/>"##),
     };

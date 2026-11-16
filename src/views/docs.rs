@@ -13,26 +13,33 @@ pub fn index(p: &Page, set: &DocSet) -> Markup {
     let tr = p.tr;
     let main = html! {
         section.docs-hero {
-            div.wrap {
+            div.col.docs-head {
                 span.label { (tr.docs_label) }
-                h1 { (tr.docs_h1_1) " " span.accent { (tr.docs_h1_2) } }
+                h1 { (tr.docs_h1_1) " " span.soft { (tr.docs_h1_2) } }
                 p.sub { (tr.docs_sub) }
                 (search_box(p))
             }
         }
-        section.wrap.docs-map {
+        div.docs-map {
             (untranslated(p, set))
-            @for s in Section::ALL {
-                @let pages: Vec<_> = set.in_section(s).collect();
+            @for (i, s) in Section::ALL.iter().enumerate() {
+                @let pages: Vec<_> = set.in_section(*s).collect();
                 @if !pages.is_empty() {
-                    div.map-sec.reveal {
-                        h2 { span.n { (format!("{:02}", Section::ALL.iter().position(|x| *x == s).unwrap() + 1)) } (s.label(tr)) }
-                        ul {
-                            @for d in pages {
-                                li data-search=(search_text(d)) data-slug=(d.slug) {
-                                    a href=(format!("/docs/{}", d.slug)) {
-                                        strong { (d.title) }
-                                        span { (d.description) }
+                    section.blk.map-sec {
+                        div.col {
+                            h2.blk-title {
+                                span.idx { (format!("{:02}", i + 1)) }
+                                (s.label(tr))
+                                sup { "(" (pages.len()) ")" }
+                            }
+                            ul.cells.c3.doc-cards {
+                                @for d in pages {
+                                    li data-search=(search_text(d)) data-slug=(d.slug) {
+                                        a href=(format!("/docs/{}", d.slug)) {
+                                            strong { (d.title) }
+                                            span.desc { (d.description) }
+                                            span.go { (tr.docs_read) (icons::arrow_right()) }
+                                        }
                                     }
                                 }
                             }
@@ -40,7 +47,7 @@ pub fn index(p: &Page, set: &DocSet) -> Markup {
                     }
                 }
             }
-            p.docs-empty hidden { (tr.docs_no_results) }
+            div.col { p.docs-empty hidden { (tr.docs_no_results) } }
         }
     };
     layout::render(
@@ -65,7 +72,7 @@ pub fn page(p: &Page, set: &DocSet, idx: usize) -> Markup {
     let next = set.pages.get(idx + 1);
     let title = format!("{} – {}", d.title, tr.docs_title);
     let main = html! {
-        div.wrap.docs-grid {
+        div.col.docs-grid {
             aside.docs-side aria-label=(tr.docs_menu) {
                 (search_box(p))
                 (sidebar(p, set, &d.slug))

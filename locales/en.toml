@@ -24,6 +24,7 @@ hero_sub = "Every version, every mod loader, your Modrinth and CurseForge mods: 
 hero_cta_download = "Download the launcher"
 hero_cta_notes = "Read the patch notes"
 hero_free = "Free"
+docs_read = "Read"
 shop_cat_tags = "Name tags"
 shop_cat_tags_p = "A style for the name above your head."
 shop_click_hint = "Click a cosmetic to try it on in 3D."
@@ -352,4 +353,3 @@ vf_here_p = "Verification only happens in the server's rules channel. Close this
 vf_already_t = "Already verified"
 vf_already_p = "You already have access to the server, there's nothing to do."
 
-# Outils et seed viewer

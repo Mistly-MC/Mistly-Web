@@ -12,7 +12,7 @@ pub fn render(p: &Page, d: &LegalPage) -> Markup {
     let tr = p.tr;
     let title = format!("{} – Mistly MC", d.title);
     let main = html! {
-        div.wrap.docs-grid {
+        div.col.docs-grid {
             aside.docs-side aria-label=(tr.ft_legal_t) {
                 (menu(p, d.kind))
             }
