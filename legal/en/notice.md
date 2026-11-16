@@ -11,7 +11,7 @@ The **misty-launcher.online** website and the Mistly launcher are published by t
 ## Contact
 
 - **Discord**: [the Mistly server](https://discord.gg/rdQJUgvUh3), the fastest way to reach us;
-- **GitHub**: [report an issue](https://github.com/Misty-MC/Misty/issues) on the launcher's repository.
+- **GitHub**: [report an issue](https://github.com/Misty-MC/Mistly-Launcher/issues) on the launcher's repository.
 
 ## Hosting
 

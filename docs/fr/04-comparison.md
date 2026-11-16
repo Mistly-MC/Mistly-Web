@@ -7,7 +7,7 @@ section = "start"
 Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font pas toutes le même travail : voici une comparaison honnête pour t'aider à choisir. Mistly ne cherche pas à remplacer un client PvP : c'est un **launcher général et léger**, pour toutes les versions et tous les mod loaders.
 
 > [!NOTE]
-> Cette page compare ce que propose chaque launcher. Les fonctionnalités évoluent : si une information n'est plus à jour, dis-le-nous sur [GitHub](https://github.com/Misty-MC/Misty-Launcher/issues).
+> Cette page compare ce que propose chaque launcher. Les fonctionnalités évoluent : si une information n'est plus à jour, dis-le-nous sur [GitHub](https://github.com/Misty-MC/Mistly-Launcher/issues).
 
 ## En un coup d'œil
 

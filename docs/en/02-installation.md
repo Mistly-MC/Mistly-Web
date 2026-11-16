@@ -4,7 +4,7 @@ description = "Installer or portable version: how to install Mistly, where it go
 section = "start"
 +++
 
-Mistly comes in two forms, both available on the [download page](/#download) and in the [GitHub releases](https://github.com/Misty-MC/Misty-Launcher/releases). Both update themselves.
+Mistly comes in two forms, both available on the [download page](/#download) and in the [GitHub releases](https://github.com/Misty-MC/Mistly-Launcher/releases). Both update themselves.
 
 ## Installer (recommended)
 

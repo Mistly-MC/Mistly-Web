@@ -174,7 +174,7 @@ mod tests {
 
     #[test]
     fn jsonld_is_valid_and_names_misty_mc() {
-        let s = home_jsonld("https://example.com", Lang::En.tr(), "Misty-MC/Misty", None);
+        let s = home_jsonld("https://example.com", Lang::En.tr(), "Misty-MC/Mistly-Launcher", None);
         let v: serde_json::Value = serde_json::from_str(&s).unwrap();
         assert!(v.to_string().contains("Mistly MC"));
         assert!(!s.contains("</"));

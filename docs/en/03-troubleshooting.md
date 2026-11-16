@@ -55,7 +55,7 @@ The quickest way: in the [console](/docs/console), click **Send logs** and share
 
 ## Report a bug
 
-Open an issue on [GitHub](https://github.com/Misty-MC/Misty-Launcher/issues) with:
+Open an issue on [GitHub](https://github.com/Misty-MC/Mistly-Launcher/issues) with:
 
 - the Mistly version (Settings → Troubleshooting), or the file made by **Export debug info**;
 - the Minecraft version and the mod loader;

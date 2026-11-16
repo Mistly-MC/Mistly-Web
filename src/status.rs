@@ -82,10 +82,12 @@ pub enum Role {
     Bibliotheques,
     Mods,
     Loaders,
+    /// Releases de Mistly Client (le mod en jeu)
+    Client,
 }
 
 pub const SERVICES: &[Service] = &[
-    Service { nom: "GitHub Releases", groupe: Groupe::Misty, url: "https://github.com/Misty-MC/Misty/releases/latest", role: Role::Telechargement },
+    Service { nom: "GitHub Releases", groupe: Groupe::Misty, url: "https://github.com/Misty-MC/Mistly-Launcher/releases/latest", role: Role::Telechargement },
     Service { nom: "GitHub API", groupe: Groupe::Misty, url: "https://www.githubstatus.com/api/v2/status.json", role: Role::Notes },
     Service { nom: "Horizon", groupe: Groupe::Misty, url: "https://github.com/horizon-rust/horizon/releases", role: Role::Horizon },
     Service { nom: "Mojang API", groupe: Groupe::Minecraft, url: "https://api.mojang.com/users/profiles/minecraft/Notch", role: Role::Comptes },
@@ -101,6 +103,8 @@ pub const SERVICES: &[Service] = &[
     Service { nom: "Forge Maven", groupe: Groupe::Mods, url: "https://maven.minecraftforge.net/", role: Role::Loaders },
     Service { nom: "NeoForge Maven", groupe: Groupe::Mods, url: "https://maven.neoforged.net/", role: Role::Loaders },
     Service { nom: "Quilt Meta", groupe: Groupe::Mods, url: "https://meta.quiltmc.org/v3/versions/loader", role: Role::Loaders },
+    // à la fin : l'historique est rangé par nom, l'ordre d'affichage suit les groupes
+    Service { nom: "Mistly Client Releases", groupe: Groupe::Misty, url: "https://github.com/Misty-MC/Mistly-Client/releases/latest", role: Role::Client },
 ];
 
 /// Une vérification.

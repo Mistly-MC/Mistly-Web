@@ -4,7 +4,7 @@ description = "How Mistly updates itself, how to check for a new version by hand
 section = "help"
 +++
 
-Mistly updates itself from its [GitHub releases](https://github.com/Misty-MC/Misty-Launcher/releases), for both the installer and the portable version.
+Mistly updates itself from its [GitHub releases](https://github.com/Misty-MC/Mistly-Launcher/releases), for both the installer and the portable version.
 
 ## Automatic updates
 

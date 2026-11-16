@@ -4,7 +4,7 @@ description = "Compiler le launcher, lancer ses tests, publier une release et s'
 section = "dev"
 +++
 
-Le code de Mistly est public, sous la [licence Misty](https://github.com/Misty-MC/Misty-Launcher/blob/main/LICENSE.txt) : libre de l'utiliser, de le modifier, de le partager et d'y contribuer, mais il ne peut pas être vendu. Le code est sur [GitHub](https://github.com/Misty-MC/Misty-Launcher) ; le projet Rust est dans le dossier `misty-rust`.
+Le code de Mistly est public, sous la [licence Misty](https://github.com/Misty-MC/Mistly-Launcher/blob/main/LICENSE.txt) : libre de l'utiliser, de le modifier, de le partager et d'y contribuer, mais il ne peut pas être vendu. Le code est sur [GitHub](https://github.com/Misty-MC/Mistly-Launcher) ; le projet Rust est dans le dossier `misty-rust`.
 
 ## Prérequis
 
@@ -66,4 +66,4 @@ cargo test -- --ignored --nocapture
 
 ## Contribuer
 
-Les signalements de bugs et les pull requests sont les bienvenus sur [GitHub](https://github.com/Misty-MC/Misty-Launcher). Pour améliorer cette documentation, utilise le lien **Modifier cette page sur GitHub** en bas de chaque page : la doc se trouve dans le dépôt [Misty-Web](https://github.com/Misty-MC/Misty-Web), dans `docs/<langue>/`.
+Les signalements de bugs et les pull requests sont les bienvenus sur [GitHub](https://github.com/Misty-MC/Mistly-Launcher). Pour améliorer cette documentation, utilise le lien **Modifier cette page sur GitHub** en bas de chaque page : la doc se trouve dans le dépôt [Misty-Web](https://github.com/Misty-MC/Misty-Web), dans `docs/<langue>/`.

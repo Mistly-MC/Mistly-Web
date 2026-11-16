@@ -3,7 +3,8 @@
 //! Variables d'environnement :
 //! - `PORT` (3000 par défaut)
 //! - `GITHUB_TOKEN` (facultatif) : évite la limite de l'API GitHub
-//! - `MISTY_REPO` (`Misty-MC/Misty` par défaut) : dépôt dont on affiche les releases
+//! - `MISTY_REPO` (`Misty-MC/Mistly-Launcher` par défaut) : dépôt dont on affiche les releases
+//! - `CLIENT_REPO` (`Misty-MC/Mistly-Client` par défaut) : dépôt des releases de Mistly Client
 //! - `MISTY_PUBLIC_DIR` (`public` par défaut) : fichiers statiques (CSS, JS, images, polices)
 //! - `SITE_URL` (`https://misty-launcher.online` par défaut) : adresse publique, pour le référencement
 //! - `SKIN_API` (`https://mc-heads.net` par défaut) : service qui fournit les skins (boutique)
@@ -57,6 +58,8 @@ use tower_http::set_header::SetResponseHeaderLayer;
 
 pub struct AppState {
     pub github: Arc<github::GitHub>,
+    /// Releases de Mistly Client, le mod en jeu (dépôt à part depuis la 0.3.8).
+    pub client_releases: Arc<github::GitHub>,
     /// Page de statut : vérifications des services, faites en arrière-plan.
     pub status: Arc<status::Status>,
     /// Paysage de fond (le même que dans le launcher), le même sur toutes les pages.
@@ -120,7 +123,13 @@ async fn main() {
         github: Arc::new(github::GitHub::new(
             env_or("GITHUB_API", "https://api.github.com"),
             env_or("GITHUB_WEB", "https://github.com"),
-            env_or("MISTY_REPO", "Misty-MC/Misty"),
+            env_or("MISTY_REPO", "Misty-MC/Mistly-Launcher"),
+            std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
+        )),
+        client_releases: Arc::new(github::GitHub::client(
+            env_or("GITHUB_API", "https://api.github.com"),
+            env_or("GITHUB_WEB", "https://github.com"),
+            env_or("CLIENT_REPO", "Misty-MC/Mistly-Client"),
             std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
         )),
         status: Arc::new(status::Status::new()),
@@ -144,6 +153,7 @@ async fn main() {
 
     // Tâches de fond : releases GitHub (les pages ne lisent que le cache) et page de statut
     tokio::spawn(state.github.clone().rafraichir_en_boucle());
+    tokio::spawn(state.client_releases.clone().rafraichir_en_boucle());
     tokio::spawn(state.registre.clone().ecrire_en_boucle());
     tokio::spawn(state.status.clone().verifier_en_boucle());
     tokio::spawn(state.telemetrie.clone().menage_en_boucle());

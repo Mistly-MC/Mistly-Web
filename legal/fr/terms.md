@@ -8,7 +8,7 @@ En utilisant le site misty-launcher.online, le launcher Mistly ou Mistly Client,
 
 ## Un logiciel libre et gratuit
 
-Mistly est gratuit et open source, sous [licence MIT](https://github.com/Misty-MC/Misty/blob/main/LICENSE). Vous pouvez l'utiliser, le modifier et le redistribuer en respectant cette licence.
+Mistly est gratuit et open source, sous [licence MIT](https://github.com/Misty-MC/Mistly-Launcher/blob/main/LICENSE.txt). Vous pouvez l'utiliser, le modifier et le redistribuer en respectant cette licence.
 
 ## Minecraft et vos comptes
 

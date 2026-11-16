@@ -26,6 +26,8 @@ pub struct PageQuery {
     player: Option<String>,
     /// Boutique : revenir au formulaire pour changer de pseudo.
     change: Option<String>,
+    /// Patch notes : `client` pour les versions de Mistly Client.
+    project: Option<String>,
 }
 
 /// Réponse HTML : pose le cookie de langue si elle vient d'être choisie avec `?lang=`.
@@ -90,15 +92,19 @@ pub async fn patch_notes(
     headers: HeaderMap,
 ) -> Response {
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
-    let releases = state.github.releases().await;
-    let p = page(
-        &state,
-        lang,
-        "/patch-notes",
-        releases.as_ref().map(|l| l.len()),
-    );
+    let launcher = state.github.releases().await;
+    let client = state.client_releases.releases().await;
+    let p = page(&state, lang, "/patch-notes", launcher.as_ref().map(|l| l.len()));
     let filter = patch_notes::Filter::from_query(q.filter.as_deref());
-    let markup = patch_notes::render(&p, releases.as_deref().map(|v| v.as_slice()), filter);
+    let est_client = q.project.as_deref() == Some("client");
+    let projet = patch_notes::Projet {
+        client: est_client,
+        repo: if est_client { state.client_releases.repo() } else { state.github.repo() },
+        launcher: launcher.as_ref().map(|l| l.len()),
+        mod_client: client.as_ref().map(|l| l.len()),
+    };
+    let releases = if est_client { client } else { launcher };
+    let markup = patch_notes::render(&p, releases.as_deref().map(|v| v.as_slice()), filter, &projet);
     html_response(StatusCode::OK, markup, lang, remember)
 }
 

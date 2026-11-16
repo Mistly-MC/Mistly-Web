@@ -125,6 +125,8 @@ traductions! {
     pub hero_cta_download: String,
     pub hero_cta_notes: String,
     pub hero_free: String,
+    pub st_role_client: String,
+    pub pn_project: String,
     pub os_soon: String,
     pub os_macos_p: String,
     pub os_linux_p: String,

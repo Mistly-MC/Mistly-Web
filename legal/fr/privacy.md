@@ -8,7 +8,7 @@ Mistly n'a ni compte utilisateur, ni publicité, ni outil de mesure d'audience. 
 
 ## Responsable du traitement
 
-L'équipe Mistly, joignable sur [Discord](https://discord.gg/rdQJUgvUh3) ou sur [GitHub](https://github.com/Misty-MC/Misty/issues). Voir les [mentions légales](/legal).
+L'équipe Mistly, joignable sur [Discord](https://discord.gg/rdQJUgvUh3) ou sur [GitHub](https://github.com/Misty-MC/Mistly-Launcher/issues). Voir les [mentions légales](/legal).
 
 ## En visitant le site
 

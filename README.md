@@ -15,7 +15,7 @@ Rendered server-side in Rust: pages, translations, patch notes and the pixel-art
 [![Docker](https://img.shields.io/badge/deploy-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](Dockerfile)
 [![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
 
-[**Website**](https://misty-launcher.online/) · [**Docs**](https://misty-launcher.online/docs) · [**Patch notes**](https://misty-launcher.online/patch-notes) · [**Launcher**](https://github.com/Misty-MC/Misty) · [**Releases**](https://github.com/Misty-MC/Misty/releases)
+[**Website**](https://misty-launcher.online/) · [**Docs**](https://misty-launcher.online/docs) · [**Patch notes**](https://misty-launcher.online/patch-notes) · [**Launcher**](https://github.com/Misty-MC/Mistly-Launcher) · [**Releases**](https://github.com/Misty-MC/Mistly-Launcher/releases)
 
 <img src="public/assets/screens/en/home.png" alt="Mistly launcher, shown on the website" width="800" />
 

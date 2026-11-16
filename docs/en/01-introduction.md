@@ -40,7 +40,7 @@ The interface is available in English, French, Spanish, Italian, Portuguese and 
 
 ## License
 
-Mistly's code is public under the [Misty License](https://github.com/Misty-MC/Misty-Launcher/blob/main/LICENSE.txt): free to use, modify, share and contribute to, but it may not be sold.
+Mistly's code is public under the [Misty License](https://github.com/Misty-MC/Mistly-Launcher/blob/main/LICENSE.txt): free to use, modify, share and contribute to, but it may not be sold.
 
 ## Where to go next
 

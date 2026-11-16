@@ -38,29 +38,56 @@ impl Filter {
     }
 }
 
-pub fn render(p: &Page, releases: Option<&[Release]>, filter: Filter) -> Markup {
+/// Le projet affiché : le launcher, ou Mistly Client (le mod en jeu, publié dans son propre dépôt).
+pub struct Projet<'a> {
+    pub client: bool,
+    /// `owner/repo` du projet affiché
+    pub repo: &'a str,
+    /// Nombre de versions de chaque projet (onglets)
+    pub launcher: Option<usize>,
+    pub mod_client: Option<usize>,
+}
+
+impl Projet<'_> {
+    /// Paramètre à garder dans les liens des filtres.
+    fn param(&self) -> &'static str {
+        if self.client { "&project=client" } else { "" }
+    }
+}
+
+pub fn render(p: &Page, releases: Option<&[Release]>, filter: Filter, projet: &Projet) -> Markup {
     let tr = p.tr;
+    let releases_url = format!("https://github.com/{}/releases", projet.repo);
     let main = html! {
         section.hero.pn-hero {
             div.wrap { div.pn-copy {
                 div.tags {
                     span { (tr.pn_label) }
                     span.sep { "·" }
-                    a href=(p.github_url()) target="_blank" rel="noopener" { (icons::github()) (p.repo) }
+                    a href=(format!("https://github.com/{}", projet.repo)) target="_blank" rel="noopener" { (icons::github()) (projet.repo) }
                 }
                 h1 { (tr.pn_h1_1) br; span.accent { (tr.pn_h1_2) } }
                 p.sub { (tr.pn_sub) }
                 div.actions {
                     a.btn.play href="#versions" { (icons::notes()) (tr.pn_browse) }
-                    a.btn.ghost href=(p.releases_url()) target="_blank" rel="noopener" { (icons::github()) (tr.pn_all_github) }
+                    a.btn.ghost href=(releases_url) target="_blank" rel="noopener" { (icons::github()) (tr.pn_all_github) }
                 }
             } }
         }
         section.sec #versions {
             div.wrap.versions {
+                // Deux projets publiés séparément : le launcher, et Mistly Client (le mod en jeu)
+                nav.projects aria-label=(tr.pn_project) {
+                    a href="/patch-notes#versions" aria-current=[(!projet.client).then_some("page")] {
+                        "Launcher" @if let Some(n) = projet.launcher { span { (n) } }
+                    }
+                    a href="/patch-notes?project=client#versions" aria-current=[projet.client.then_some("page")] {
+                        "Mistly Client" @if let Some(n) = projet.mod_client { span { (n) } }
+                    }
+                }
                 @match releases {
                     None => { p.empty { (tr.pn_unavailable) } }
-                    Some(list) => { (list_view(p, list, filter)) }
+                    Some(list) => { (list_view(p, list, filter, projet)) }
                 }
             }
         }
@@ -79,7 +106,7 @@ pub fn render(p: &Page, releases: Option<&[Release]>, filter: Filter) -> Markup 
     )
 }
 
-fn list_view(p: &Page, list: &[Release], filter: Filter) -> Markup {
+fn list_view(p: &Page, list: &[Release], filter: Filter, projet: &Projet) -> Markup {
     let tr = p.tr;
     let latest_tag = github::latest(list).map(|r| r.tag_name.as_str());
     let stable = list.iter().filter(|r| !r.prerelease).count();
@@ -93,7 +120,7 @@ fn list_view(p: &Page, list: &[Release], filter: Filter) -> Markup {
         div.toolbar {
             nav.chips aria-label=(tr.pn_label) {
                 @for (f, label, n) in chips {
-                    a href=(format!("/patch-notes?filter={}#versions", f.slug())) aria-current=[(f == filter).then_some("true")] {
+                    a href=(format!("/patch-notes?filter={}{}#versions", f.slug(), projet.param())) aria-current=[(f == filter).then_some("true")] {
                         (label) span { (n) }
                     }
                 }

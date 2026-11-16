@@ -11,7 +11,7 @@ Le site **misty-launcher.online** et le launcher Mistly sont édités par l'équ
 ## Contact
 
 - **Discord** : [le serveur de Mistly](https://discord.gg/rdQJUgvUh3), le moyen le plus rapide de nous joindre ;
-- **GitHub** : [signaler un problème](https://github.com/Misty-MC/Misty/issues) sur le dépôt du launcher.
+- **GitHub** : [signaler un problème](https://github.com/Misty-MC/Mistly-Launcher/issues) sur le dépôt du launcher.
 
 ## Hébergement
 

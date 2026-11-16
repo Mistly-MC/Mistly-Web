@@ -267,6 +267,7 @@ fn footer(p: &Page) -> Markup {
                         ul {
                             li { a href="/download/setup" { (tr.inst_t) } }
                             li { a href="/download/portable" { (tr.port_t) } }
+                            li { a href="/patch-notes?project=client" { "Mistly Client" } }
                             li { a href=(p.releases_url()) target="_blank" rel="noopener" { (tr.github_t) (icons::external()) } }
                             li { a href=(p.github_url()) target="_blank" rel="noopener" { "GitHub" (icons::external()) } }
                         }

@@ -60,7 +60,7 @@ pub struct Asset {
 /// Les deux fichiers publiés à chaque version.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Kind {
-    /// `Misty-Setup-<version>.exe`
+    /// `Misty-Setup-<version>.exe` (ou `Mistly-Setup-…`)
     Setup,
     /// `Misty-<version>.zip`
     Portable,
@@ -78,9 +78,13 @@ impl Kind {
     pub fn matches(self, file: &str) -> bool {
         let f = file.to_ascii_lowercase();
         match self {
-            Kind::Setup => f.starts_with("misty-setup-") && f.ends_with(".exe"),
+            // `Misty-…` ou, depuis le changement de nom, `Mistly-…`
+            Kind::Setup => (f.starts_with("misty-setup-") || f.starts_with("mistly-setup-")) && f.ends_with(".exe"),
             Kind::Portable => {
-                f.starts_with("misty-") && !f.starts_with("misty-setup") && f.ends_with(".zip")
+                (f.starts_with("misty-") || f.starts_with("mistly-"))
+                    && !f.starts_with("misty-setup")
+                    && !f.starts_with("mistly-setup")
+                    && f.ends_with(".zip")
             }
         }
     }
@@ -123,6 +127,8 @@ pub struct GitHub {
     requete: tokio::sync::Mutex<()>,
     fichier_cache: PathBuf,
     pub miroir: Miroir,
+    /// Copier les fichiers de la dernière version sur le serveur (le launcher oui, Mistly Client non)
+    copie: bool,
 }
 
 enum Reponse {
@@ -131,7 +137,17 @@ enum Reponse {
 }
 
 impl GitHub {
+    /// Les releases du launcher (copiées sur le serveur pour les téléchargements).
     pub fn new(api_base: String, web_base: String, repo: String, token: Option<String>) -> Self {
+        Self::avec(api_base, web_base, repo, token, "misty-site-releases.json", true)
+    }
+
+    /// Les releases de Mistly Client (le mod en jeu, publié à part) : affichées, pas copiées.
+    pub fn client(api_base: String, web_base: String, repo: String, token: Option<String>) -> Self {
+        Self::avec(api_base, web_base, repo, token, "misty-site-client-releases.json", false)
+    }
+
+    fn avec(api_base: String, web_base: String, repo: String, token: Option<String>, cache: &str, copie: bool) -> Self {
         let http = crate::http()
             .user_agent(USER_AGENT)
             .connect_timeout(Duration::from_secs(5))
@@ -141,7 +157,7 @@ impl GitHub {
         let dossier = std::env::var_os("MISTY_CACHE_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(std::env::temp_dir);
-        let fichier_cache = dossier.join("misty-site-releases.json");
+        let fichier_cache = dossier.join(cache);
         let mut etat = Etat::default();
         // Dernière liste connue (redémarrage) : servie tout de suite, rafraîchie ensuite
         if let Some(liste) = std::fs::read(&fichier_cache)
@@ -161,6 +177,7 @@ impl GitHub {
             requete: tokio::sync::Mutex::new(()),
             fichier_cache,
             miroir: Miroir::new(dossier.join("misty-site-downloads")),
+            copie,
         }
     }
 
@@ -198,7 +215,7 @@ impl GitHub {
         loop {
             self.rafraichir().await;
             // copie locale des fichiers de la dernière version (ne télécharge que ce qui manque)
-            if let Some(r) = self.en_cache().as_deref().and_then(|l| latest(l)).cloned() {
+            if let Some(r) = self.en_cache().as_deref().and_then(|l| latest(l)).cloned().filter(|_| self.copie) {
                 self.miroir.synchroniser(&r).await;
             }
             let echecs = self.etat.lock().unwrap().echecs;

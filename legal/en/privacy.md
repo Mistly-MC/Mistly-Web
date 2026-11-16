@@ -8,7 +8,7 @@ Mistly has no user accounts, no ads and no analytics tools. We collect as little
 
 ## Data controller
 
-The Mistly team, reachable on [Discord](https://discord.gg/rdQJUgvUh3) or on [GitHub](https://github.com/Misty-MC/Misty/issues). See the [legal notice](/legal).
+The Mistly team, reachable on [Discord](https://discord.gg/rdQJUgvUh3) or on [GitHub](https://github.com/Misty-MC/Mistly-Launcher/issues). See the [legal notice](/legal).
 
 ## When you visit the website
 
