@@ -614,6 +614,7 @@
       capeBtn?.setAttribute("aria-pressed", String(mode === "cape" && source === "own" && !!ownCape));
       elytraBtn?.setAttribute("aria-pressed", String(mode === "elytra"));
       equipButtons.forEach(b => {
+        if (b.dataset.back === "none") return;   // un chapeau : porté à part (voir porterChapeau)
         const on = source === (b.dataset.src || "misty") && b.dataset.back === mode;
         b.setAttribute("aria-pressed", String(on));
         // Les boutons de la vitrine gardent leur vignette et leur nom ; ceux du studio disent Équiper / Retirer
@@ -629,16 +630,47 @@
       if (back.mode === "elytra") setBack(ownCape ? "cape" : "none", "own");
       else setBack("elytra", ownCape && back.source === "own" ? "own" : "misty");
     });
+    // Cloudly : le petit nuage du mod au-dessus de la tête, avec les mêmes cubes que dans le jeu
+    // (CloudHatLayer de Mistly Client, en pixels de modèle ; y vers le bas dans le jeu, vers le
+    // haut ici). Les cubes sont faits avec les classes du modèle 3D du joueur.
+    const tete = viewer.playerObject.skin.head;
+    const cubeModele = tete.innerLayer;
+    const CUBES_NUAGE = [
+      [-5, -12.5, -4, 10, 3, 8, 0xf2f6ff], [-3, -15, -3, 6, 3, 6, 0xffffff], [0, -14, 0.5, 4, 2, 4, 0xffffff],
+      [-7, -12, -3, 3, 2, 6, 0xe4ecfb], [4, -12, -2.5, 3, 2, 5, 0xe4ecfb],
+    ];
+    const nuage = CUBES_NUAGE.map(([x, y, z, l, h, p, couleur]) => {
+      const matiere = new cubeModele.material.constructor({ color: couleur, emissive: 0x7d8fb8, emissiveIntensity: 0.55 });
+      const cube = new cubeModele.constructor(new cubeModele.geometry.constructor(l, h, p), matiere);
+      cube.position.set(x + l / 2, -(y + h / 2), z + p / 2);
+      cube.userData.y = cube.position.y;
+      cube.visible = false;
+      tete.add(cube);
+      return cube;
+    });
+    let chapeauPorte = false, flotte = 0;
+    // le nuage flotte doucement, comme en jeu
+    const flotter = maintenant => {
+      nuage.forEach(c => { c.position.y = c.userData.y + Math.sin(maintenant / 1000 * 1.6) * 0.45; });
+      flotte = chapeauPorte && !reduce ? requestAnimationFrame(flotter) : 0;
+    };
+    const porterChapeau = on => {
+      chapeauPorte = on;
+      nuage.forEach(c => { c.visible = on; });
+      equipButtons.filter(b => b.dataset.back === "none").forEach(b => {
+        b.setAttribute("aria-pressed", String(on));
+        if (!b.querySelector(".thumb")) b.textContent = on ? b.dataset.unequip : b.dataset.equip;
+        b.closest(".item")?.classList.toggle("equipped", on);
+      });
+      if (on && !flotte) flotte = requestAnimationFrame(flotter);
+    };
     const featName = document.getElementById("feat-name"), featText = document.getElementById("feat-text");
-    const hatNote = document.getElementById("hat-note");
     equipButtons.forEach(b => b.addEventListener("click", () => {
       const src = b.dataset.src || "misty";
-      const hat = b.dataset.back === "none";   // Cloudly : un chapeau, pas encore dans l'aperçu 3D
-      const on = !hat && back.mode === b.dataset.back && back.source === src;
-      if (hat) setBack(ownCape ? "cape" : "none", "own");
+      const hat = b.dataset.back === "none";   // Cloudly : un chapeau, porté par-dessus la cape
+      const on = hat ? chapeauPorte : back.mode === b.dataset.back && back.source === src;
+      if (hat) porterChapeau(!on);
       else setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
-      if (hat) b.setAttribute("aria-pressed", "true");
-      if (hatNote) hatNote.hidden = !hat;
       // Vitrine : le nom et la description de l'article choisi
       if (!on && featName && b.dataset.name) {
         featName.textContent = b.dataset.name;
@@ -807,7 +839,7 @@
     setAnim("walk");
     stageReady = loadPlayer(stage.dataset.name).finally(() => stage.classList.add("ready"));
 
-    // Catalogue des emotes (/shop/emotes) : chaque bouton joue son emote ; le Câlin d'abord
+    // Catalogue des emotes (/shop/emotes) : chaque bouton joue son emote
     const choix = [...document.querySelectorAll(".emote-choice")];
     const jouerChoix = b => {
       press(choix, b);
@@ -815,7 +847,9 @@
       stage.dispatchEvent(new CustomEvent("emote", { detail: { cle: d.try, nom: d.name, texte: d.text, badge: d.badge } }));
     };
     choix.forEach(b => b.addEventListener("click", () => jouerChoix(b)));
-    if (choix.length) stageReady.then(() => jouerChoix(choix[0]));
+    // Une page de catalogue (emotes, capes, chapeaux) s'ouvre sur le premier de sa liste
+    const premierChoix = document.querySelector("[data-catalogue] .pick button");
+    if (premierChoix) stageReady.then(() => premierChoix.click());
 
     // Actualiser : recharge le skin et la cape (après un changement chez Mojang)
     const reloadBtn = document.getElementById("reload");

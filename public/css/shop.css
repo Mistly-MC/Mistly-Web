@@ -46,20 +46,6 @@
 /* Cercle runique au sol (trois anneaux en perspective) */
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Lucioles qui montent autour du joueur */
-.motes{position:absolute;inset:0 0 70px;z-index:3;pointer-events:none;overflow:hidden}
-.motes i{position:absolute;bottom:12%;width:4px;height:4px;border-radius:1px;background:#e3eeff;box-shadow:0 0 8px 2px rgba(156,192,255,.8);opacity:0;animation:mote 6s ease-in infinite}
-.motes i:nth-child(1){left:30%;animation-delay:0s}
-.motes i:nth-child(2){left:62%;animation-delay:-1.2s;animation-duration:7s}
-.motes i:nth-child(3){left:44%;animation-delay:-2.4s}
-.motes i:nth-child(4){left:70%;animation-delay:-3.1s;animation-duration:5.5s}
-.motes i:nth-child(5){left:24%;animation-delay:-4s;animation-duration:7.5s}
-.motes i:nth-child(6){left:55%;animation-delay:-4.8s}
-.motes i:nth-child(7){left:38%;animation-delay:-5.5s;animation-duration:6.5s}
-.motes i:nth-child(8){left:76%;animation-delay:-1.8s;background:#ffe2b0;box-shadow:0 0 8px 2px rgba(255,206,140,.7)}
-.motes i:nth-child(9){left:20%;animation-delay:-3.6s;background:#ffe2b0;box-shadow:0 0 8px 2px rgba(255,206,140,.7)}
-.motes i:nth-child(10){left:50%;animation-delay:-0.6s;animation-duration:8s}
-@keyframes mote{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}60%{transform:translate(14px,-200px)}100%{opacity:0;transform:translate(-8px,-340px)}}
 
 /* ---------- Commandes de l'aperçu : vues, animations, cape, élytres ---------- */
 .stage-top,.stage-bar{position:absolute;left:14px;right:14px;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -81,8 +67,9 @@
 .toggle:disabled{opacity:.4;cursor:not-allowed}
 #reload.busy .ic{animation:spin .8s linear infinite}
 #reload.busy{pointer-events:none;opacity:.8}
-.stage .drag{position:absolute;left:0;right:0;bottom:64px;z-index:3;text-align:center;font-size:12.5px;color:var(--dim);pointer-events:none}
-.stage canvas{inset:64px 0 70px;height:calc(100% - 134px)!important}
+/* L'indication « Glisse pour faire tourner » : une ligne à elle dans la barre, au-dessus des boutons */
+.stage-bar .drag{flex-basis:100%;margin:0 0 2px;text-align:center;font-size:12.5px;color:var(--dim);pointer-events:none}
+.stage canvas{inset:64px 0 92px;height:calc(100% - 156px)!important}
 /* Sans JavaScript (ou si la 3D ne se charge pas), on cache les commandes. */
 .stage:not(.ready) .stage-top,.stage:not(.ready) .stage-bar,.stage:not(.ready) .drag{visibility:hidden}
 
@@ -98,7 +85,6 @@
   background:radial-gradient(70% 55% at 50% 40%,rgba(111,156,255,.16),transparent 70%),linear-gradient(180deg,rgb(var(--bg-rgb) / .72),rgb(var(--bg-rgb) / .82));
   border:1px solid var(--line-2);box-shadow:0 30px 60px -24px rgba(0,0,0,.65);
 }
-.studio-stage .drag{bottom:70px}
 
 .locker{padding:22px;border-radius:22px;background:rgb(var(--bg-rgb) / .82);border:1px solid var(--line-2);box-shadow:0 30px 60px -24px rgba(0,0,0,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pcard{display:flex;gap:16px;align-items:flex-start}
@@ -279,7 +265,7 @@
 a.soon-card{text-decoration:none}
 .item-art.emote .thumb{width:90px;height:144px}
 
-/* Page des emotes : un titre, puis l'aperçu 3D et la liste des emotes côte à côte */
+/* Pages de catalogue (emotes, capes, chapeaux) : un titre, puis l'aperçu 3D et la liste côte à côte */
 .emotes-head{padding:6px 0 22px}
 .emotes-head h1{font-size:clamp(30px,4vw,44px);font-weight:600;letter-spacing:-.035em;line-height:1.05}
 .emotes-head h1 sup{font-family:var(--mono);font-size:13px;font-weight:400;color:var(--dim);margin-left:4px}
@@ -290,3 +276,6 @@ a.soon-card{text-decoration:none}
 .pick .emote-choice:hover{border-color:rgb(var(--fg-rgb) / .3);color:var(--text)}
 .pick .emote-choice[aria-pressed="true"]{border-color:#ff9cb7;background:rgba(255,156,183,.1);color:var(--text)}
 @media (max-width:600px){.pick.emote-pick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Un bouton de l'aperçu caché (comme « Sur un joueur » hors du câlin) reste caché */
+.toggle[hidden]{display:none}

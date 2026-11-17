@@ -231,17 +231,37 @@ pub async fn shop(
     res
 }
 
-/// Le catalogue des emotes, joué sur le dernier pseudo choisi dans la boutique (s'il y en a un).
-pub async fn shop_emotes(
+/// Une page de catalogue (`/shop/emotes`, `/shop/capes`, `/shop/hats`), essayée sur le pseudo saisi
+/// dans sa case (retenu comme dans la boutique), sinon sur le dernier choisi.
+pub async fn shop_catalogue(
     State(state): State<Arc<AppState>>,
+    Path(slug): Path<String>,
     Query(q): Query<PageQuery>,
+    uri: Uri,
     headers: HeaderMap,
 ) -> Response {
+    let Some(cat) = shop::Catalogue::from_slug(&slug) else {
+        return not_found(State(state), uri, headers).await;
+    };
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
     let count = state.github.releases().await.map(|l| l.len());
-    let p = page(&state, lang, "/shop/emotes", count);
+    let path = format!("/shop/{}", cat.slug());
+    let p = page(&state, lang, &path, count);
     let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
-    html_response(StatusCode::OK, shop::render_emotes(&p, saved), lang, remember)
+    let typed = q.player.as_deref().map(str::trim);
+    let (player, value, invalid, new_player) = match typed {
+        Some(name) if shop::valid_username(name) => (Some(name), name, false, Some(name)),
+        Some(name) => (saved, name, !name.is_empty(), None),
+        None => (saved, saved.unwrap_or(""), false, None),
+    };
+    let mut res = html_response(StatusCode::OK, shop::render_catalogue(&p, cat, player, value, invalid), lang, remember);
+    if let Some(name) = new_player {
+        let cookie = format!("{PLAYER_COOKIE}={name}; Path=/; Max-Age=31536000; SameSite=Lax");
+        if let Ok(v) = HeaderValue::from_str(&cookie) {
+            res.headers_mut().append(header::SET_COOKIE, v);
+        }
+    }
+    res
 }
 
 fn texture_response(png: axum::body::Bytes) -> Response {
