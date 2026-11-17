@@ -584,9 +584,6 @@ fn locker(p: &Page, player: &str) -> Markup {
                             div.slot { (c.icon()) span { (tr.shop_badge) } }
                         }
                     }
-                    @if item.is_some() {
-                        p.equip-warn role="status" hidden { (icons::alert()) span { (tr.shop_unsupported) } }
-                    }
                 }
             }
         }

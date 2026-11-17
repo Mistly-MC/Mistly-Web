@@ -119,12 +119,6 @@
 .slot.item.equipped{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 0 24px -6px rgba(122,168,255,.7)}
 .slot.item.equipped .equip{background:var(--panel);color:var(--text);border:1px solid var(--line-2)}
 
-/* Avertissement à l'équipement */
-.equip-warn{
-  display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:11px 13px;border-radius:12px;font-size:13.5px;line-height:1.45;
-  color:#ffd99a;background:rgba(255,190,90,.08);border:1px solid rgba(255,190,90,.35);
-}
-.equip-warn .ic{flex:none;width:17px;height:17px;margin-top:1px;color:#ffc56b}
 
 /* Onglets des catégories */
 .cat-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:16px}

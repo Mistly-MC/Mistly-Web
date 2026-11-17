@@ -1,4 +1,4 @@
-// Petites améliorations côté navigateur. Tout le contenu est rendu par le serveur Rust :
+    // Blockbench// Petites améliorations côté navigateur. Tout le contenu est rendu par le serveur Rust :
 // sans ce script, le site reste entièrement utilisable.
 (() => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -516,8 +516,10 @@
     const animButtons = [...stage.querySelectorAll("[data-anim]")];
     const emoteButtons = [...document.querySelectorAll("[data-emote]")];
     const amiBtn = stage.querySelector('[data-toggle="partner"]');
+    let animActuelle = "walk";
     const setAnim = key => {
       const Anim = ANIMS[key];
+      animActuelle = key;
       ami.visible = false;
       ami.resetJoints();
       ami.rotation.set(0, 0, 0);
@@ -538,6 +540,22 @@
       if (key === "fly" && back.mode === "none") setBack("elytra", ownCape ? "own" : "misty");
     };
     animButtons.forEach(b => b.addEventListener("click", () => setAnim(b.dataset.anim)));
+    // Maj enfoncée : le joueur s'accroupit, comme en jeu ; relâchée : il reprend son animation
+    // (sauf pendant qu'on tape un pseudo, où Maj sert aux majuscules)
+    let avantMaj = null;
+    const relacherMaj = () => {
+      if (avantMaj === null) return;
+      const a = avantMaj;
+      avantMaj = null;
+      setAnim(a);
+    };
+    addEventListener("keydown", e => {
+      if (e.key !== "Shift" || e.repeat || avantMaj !== null || e.target.closest?.("input, textarea, [contenteditable]")) return;
+      avantMaj = animActuelle;
+      setAnim("crouch");
+    });
+    addEventListener("keyup", e => { if (e.key === "Shift") relacherMaj(); });
+    addEventListener("blur", relacherMaj);
     // « Sur un joueur » : le câlin avec ou sans l'ami en face
     amiBtn?.addEventListener("click", () => {
       avecAmi = !avecAmi;
@@ -608,7 +626,19 @@
       return c;
     };
     const misty = capeTexture();
-    const early = capeTexture([[58, 22, 48], [190, 120, 30]], "star");   // aube : prune vers or
+    // Cape early player : la texture faite dans Blockbench (public/models/early_cape.bbmodel,
+    // exportée en public/assets/capes/early.png). Les vignettes et la cape portée se redessinent
+    // quand elle est chargée.
+    const versionSite = new URL(document.querySelector('script[src*="site.js"]').src).searchParams.get("v") || "";
+    const early = document.createElement("canvas");
+    early.width = 64; early.height = 32;
+    const imageEarly = new Image();
+    imageEarly.onload = () => {
+      early.getContext("2d").drawImage(imageEarly, 0, 0);
+      dessinerVignettes();
+      if (back.source === "early") setBack(back.mode, "early");
+    };
+    imageEarly.src = `/assets/capes/early.png?v=${versionSite}`;
     let ownCape = null;                       // URL de la cape du joueur, s'il en a une
     const back = { mode: "none", source: "own" };
     const capeBtn = stage.querySelector('[data-toggle="cape"]');
@@ -627,9 +657,6 @@
         // Les boutons de la vitrine gardent leur vignette et leur nom ; ceux du studio disent Équiper / Retirer
         if (!b.querySelector(".thumb")) b.textContent = on ? b.dataset.unequip : b.dataset.equip;
         b.closest(".item")?.classList.toggle("equipped", on);
-        // Avertissement : ce cosmétique ne s'affiche pas encore en jeu
-        const warn = b.closest(".cat-panel")?.querySelector(".equip-warn");
-        if (warn) warn.hidden = !on;
       });
     };
     capeBtn?.addEventListener("click", () => setBack(back.mode === "cape" && back.source === "own" ? "none" : "cape", "own"));
@@ -637,52 +664,101 @@
       if (back.mode === "elytra") setBack(ownCape ? "cape" : "none", "own");
       else setBack("elytra", ownCape && back.source === "own" ? "own" : "misty");
     });
-    // Chapeaux, en cubes posés sur la tête du joueur 3D. Les cubes sont faits avec les classes du
-    // modèle 3D du joueur (pixels de modèle, y vers le haut, la tête va de 0 à 8).
+    // Chapeaux : des modèles Blockbench (public/models/<clé>.bbmodel, format Modded Entity, UV en
+    // boîte comme dans Minecraft), lus ici et posés sur la tête du joueur 3D. Les objets 3D sont
+    // faits avec les classes du modèle du joueur (skinview3d n'expose pas three.js).
     const tete = viewer.playerObject.skin.head;
     const cubeModele = tete.innerLayer;
-    const cube = (l, h, p, couleur, x, y, z, lueur = 0x7d8fb8, intensite = 0.55) => {
-      const matiere = new cubeModele.material.constructor({ color: couleur, emissive: lueur, emissiveIntensity: intensite });
-      const c = new cubeModele.constructor(new cubeModele.geometry.constructor(l, h, p), matiere);
-      c.position.set(x, y, z);
-      return c;
+    // Blockbench : y vers le haut, la tête de 24 à 32, le devant au nord (-z). Ici : la tête de 0 à
+    // 8, le devant vers +z ; on tourne donc le modèle d'un demi-tour autour de y.
+    const versIci = ([x, y, z]) => [-x, y - 24, -z];
+    const angles = (r = [0, 0, 0]) => [-r[0], r[1], -r[2]].map(a => a * Math.PI / 180);
+    // faces du cube de three.js, dans son ordre : +x, -x, +y, -y, +z, -z (après le demi-tour)
+    const FACES = ["west", "east", "up", "down", "north", "south"];
+    const objetVide = () => new cubeModele.constructor();
+    const construireModele = (m, image) => {
+      const L = m.resolution?.width || 64, H = m.resolution?.height || 64;
+      const toile = document.createElement("canvas");
+      toile.width = L; toile.height = H;
+      toile.getContext("2d").drawImage(image, 0, 0);
+      const modeleTex = viewer.skinTexture;
+      const tex = new modeleTex.constructor(toile);
+      tex.magFilter = modeleTex.magFilter;
+      tex.minFilter = modeleTex.minFilter;
+      tex.colorSpace = modeleTex.colorSpace;
+      tex.needsUpdate = true;
+      const matiere = new cubeModele.material.constructor({ map: tex, transparent: true, alphaTest: 0.5, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.25 });
+      const cubes = new Map(m.elements.map(e => [e.uuid, e]));
+      const groupes = new Map((m.groups || []).map(g => [g.uuid, g]));
+      const nommes = {};
+      const cubeVers = (e, origineParent) => {
+        const [fx, fy, fz] = e.from, [tx, ty, tz] = e.to;
+        const geo = new cubeModele.geometry.constructor(tx - fx, ty - fy, tz - fz);
+        const uv = [];
+        for (const nom of FACES) {
+          const [x1, y1, x2, y2] = e.faces[nom].uv;
+          // coins haut-gauche, haut-droit, bas-gauche, bas-droit de la face vue de dehors
+          uv.push(x1 / L, 1 - y1 / H, x2 / L, 1 - y1 / H, x1 / L, 1 - y2 / H, x2 / L, 1 - y2 / H);
+        }
+        geo.attributes.uv.array.set(uv);
+        geo.attributes.uv.needsUpdate = true;
+        const pivot = objetVide();
+        const o = versIci(e.origin || [0, 0, 0]), p = versIci(origineParent);
+        pivot.position.set(o[0] - p[0], o[1] - p[1], o[2] - p[2]);
+        pivot.rotation.order = "ZYX";
+        pivot.rotation.set(...angles(e.rotation));
+        const maille = new cubeModele.constructor(geo, matiere);
+        const c = versIci([(fx + tx) / 2, (fy + ty) / 2, (fz + tz) / 2]);
+        maille.position.set(c[0] - o[0], c[1] - o[1], c[2] - o[2]);
+        pivot.add(maille);
+        return pivot;
+      };
+      const noeud = (entree, origineParent) => {
+        if (typeof entree === "string") return cubes.has(entree) ? cubeVers(cubes.get(entree), origineParent) : null;
+        const g = groupes.get(entree.uuid) || entree;
+        if (g.name === "ref") return null;   // la tête de référence, seulement pour modéliser
+        const obj = objetVide();
+        const o = versIci(g.origin || [0, 0, 0]), p = versIci(origineParent);
+        obj.position.set(o[0] - p[0], o[1] - p[1], o[2] - p[2]);
+        obj.rotation.order = "ZYX";
+        obj.rotation.set(...angles(g.rotation));
+        obj.userData.repos = obj.rotation.z;
+        nommes[g.name] = obj;
+        for (const enfant of entree.children || []) { const n = noeud(enfant, g.origin || [0, 0, 0]); if (n) obj.add(n); }
+        return obj;
+      };
+      const racine = objetVide();
+      racine.position.set(0, 0, 0);
+      for (const entree of m.outliner) { const n = noeud(entree, [0, 24, 0]); if (n) racine.add(n); }
+      racine.userData.nommes = nommes;
+      racine.userData.y = 0;
+      return racine;
     };
-    // un groupe vide (même classe, sans forme) : ce qu'on y met bouge ensemble
-    const groupe = (x, y, z, enfants) => {
-      const g = new cubeModele.constructor();
-      g.position.set(x, y, z);
-      enfants.forEach(e => g.add(e));
-      return g;
-    };
-    // Cloudly : les mêmes cubes que CloudHatLayer de Mistly Client (là-bas, y vers le bas)
-    const CUBES_NUAGE = [
-      [-5, -12.5, -4, 10, 3, 8, 0xf2f6ff], [-3, -15, -3, 6, 3, 6, 0xffffff], [0, -14, 0.5, 4, 2, 4, 0xffffff],
-      [-7, -12, -3, 3, 2, 6, 0xe4ecfb], [4, -12, -2.5, 3, 2, 5, 0xe4ecfb],
-    ];
-    // Oreilles de lapin : deux oreilles blanches à l'intérieur rose, un peu écartées, posées sur la tête
-    const oreille = cote => {
-      const o = groupe(cote * 2.4, 8, 0.3, [
-        cube(2.6, 8, 1.4, 0xf5f5f8, 0, 4, 0, 0x50505a, 0.35),
-        cube(1.2, 6, 0.3, 0xf3a3bd, 0, 3.6, 0.82, 0x5a3040, 0.3),
-      ]);
-      o.rotation.z = -cote * 0.17;
-      return o;
-    };
-    const CHAPEAUX = {
-      cloudly: CUBES_NUAGE.map(([x, y, z, l, h, p, couleur]) => cube(l, h, p, couleur, x + l / 2, -(y + h / 2), z + p / 2)),
-      bunny: [oreille(-1), oreille(1)],
-    };
-    Object.values(CHAPEAUX).flat().forEach(c => { c.userData.y = c.position.y; c.visible = false; tete.add(c); });
+    const chapeaux = {};
+    const chargerChapeau = cle => chapeaux[cle] ??= fetch(`/models/${cle === "bunny" ? "bunny_ears" : cle}.bbmodel?v=${versionSite}`)
+      .then(r => r.json())
+      .then(m => new Promise((ok, ko) => {
+        const image = new Image();
+        image.onload = () => ok(construireModele(m, image));
+        image.onerror = ko;
+        image.src = m.textures[0].source;
+      }))
+      .then(modele => { modele.visible = false; tete.add(modele); return modele; });
     let chapeauPorte = null, flotte = 0;
     // le nuage flotte doucement, comme en jeu ; les oreilles frémissent
     const flotter = maintenant => {
       const t = maintenant / 1000;
-      if (chapeauPorte === "cloudly") CHAPEAUX.cloudly.forEach(c => { c.position.y = c.userData.y + Math.sin(t * 1.6) * 0.45; });
-      if (chapeauPorte === "bunny") CHAPEAUX.bunny.forEach((o, i) => { o.rotation.z = (i ? -0.17 : 0.17) + Math.sin(t * 2.2 + i * 1.3) * 0.06; });
+      chapeaux[chapeauPorte]?.then(m => {
+        if (chapeauPorte === "cloudly") m.position.y = Math.sin(t * 1.6) * 0.45;
+        if (chapeauPorte === "bunny") ["ear_left", "ear_right"].forEach((n, i) => {
+          const o = m.userData.nommes[n];
+          if (o) o.rotation.z = o.userData.repos + Math.sin(t * 2.2 + i * 1.3) * 0.05;
+        });
+      });
       flotte = chapeauPorte && !reduce ? requestAnimationFrame(flotter) : 0;
     };
     // le pseudo au-dessus de la tête monte au-dessus du chapeau porté
-    const HAUTEUR_CHAPEAU = { cloudly: 7, bunny: 9 };
+    const HAUTEUR_CHAPEAU = { cloudly: 10, bunny: 13 };
     const placerPseudo = () => {
       viewer.nameTagYOffset = (viewer.playerObject.ears.visible ? 25 : 20) + (HAUTEUR_CHAPEAU[chapeauPorte] || 0);
       if (viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset;
@@ -691,7 +767,9 @@
     const porterChapeau = cle => {
       chapeauPorte = cle;
       placerPseudo();
-      Object.entries(CHAPEAUX).forEach(([k, cubes]) => cubes.forEach(c => { c.visible = k === cle; }));
+      // le modèle se charge la première fois qu'on le porte
+      Object.entries(chapeaux).forEach(([k, p]) => p.then(m => { m.visible = k === chapeauPorte; }));
+      if (cle) chargerChapeau(cle).then(m => { m.visible = chapeauPorte === cle; }).catch(() => {});
       equipButtons.filter(b => b.dataset.back === "none").forEach(b => {
         const on = b.dataset.thumb === cle;
         b.setAttribute("aria-pressed", String(on));
@@ -787,9 +865,10 @@
       d.drawImage(p, (c.width - p.width * echelle) / 2, (c.height - p.height * echelle) / 2, p.width * echelle, p.height * echelle);
     };
     // Vignettes des articles Mistly, dessinées depuis la texture (et celles des emotes)
-    document.querySelectorAll("canvas.thumb").forEach(c => {
+    const dessinerVignettes = () => document.querySelectorAll("canvas.thumb").forEach(c => {
       if (c.dataset.thumb.startsWith("emote-")) return dessinerEmote(c, c.dataset.thumb.slice(6));
       const g = c.getContext("2d");
+      g.clearRect(0, 0, c.width, c.height);
       g.imageSmoothingEnabled = false;
       if (c.dataset.thumb === "cape") g.drawImage(misty, 1, 1, 10, 16, 0, 0, c.width, c.height);
       else if (c.dataset.thumb === "early") g.drawImage(early, 1, 1, 10, 16, 0, 0, c.width, c.height);
@@ -820,6 +899,7 @@
         g.save(); g.scale(-1, 1); g.drawImage(misty, 34, 2, 9, 20, -c.width, 0, w, c.height); g.restore();
       }
     });
+    dessinerVignettes();
 
     // Vues face / profil / dos (la rotation automatique s'arrête)
     const rotateBtn = stage.querySelector('[data-toggle="rotate"]');
