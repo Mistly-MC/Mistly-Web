@@ -150,3 +150,31 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .dl-card.soon{cursor:default;opacity:.75}
 .dl-card.soon:hover{background:var(--bg)}
 .dl-card.soon .badge{margin-left:auto}
+
+/* ---------- Captures en thème clair ou sombre, selon le thème du site ---------- */
+.th-light{display:none}
+:root[data-theme="light"] .th-light{display:block}
+:root[data-theme="light"] .th-dark{display:none}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .th-light{display:block}
+  :root:not([data-theme="dark"]) .th-dark{display:none}
+}
+
+/* ---------- Aperçu : le launcher, dont on clique les onglets ---------- */
+.sim{padding:0 20px 20px}
+.sim-screen{position:relative}
+.sim-view[hidden]{display:none}
+.sim-view img{width:100%;height:auto;border-radius:9px}
+.sim-hot{position:absolute;padding:0;border:0;border-radius:10px;background:none;cursor:pointer;transition:background .15s,box-shadow .15s}
+.sim-hot[hidden]{display:none}
+.sim-hot:hover{background:rgba(140,170,255,.14);box-shadow:inset 0 0 0 1px rgba(160,190,255,.45)}
+.sim-hot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sim-bar{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.sim-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.sim-tabs .chip{cursor:pointer;font-family:inherit;font-size:13px;padding:6px 12px;transition:color .15s,background .15s,border-color .15s}
+.sim-tabs .chip:hover{color:var(--text);background:rgb(var(--fg-rgb) / .06)}
+.sim-tabs .chip[aria-selected="true"]{color:var(--on-solid);background:var(--solid);border-color:var(--solid)}
+.sim-cap{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-size:14px}
+.sim-cap strong{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.sim-cap span{color:var(--muted)}
+@media (max-width:640px){.sim{padding:0 12px 12px}}

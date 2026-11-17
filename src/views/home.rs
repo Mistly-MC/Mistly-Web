@@ -47,7 +47,7 @@ pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
             description: &tr.description,
             jsonld: Some(crate::seo::home_jsonld(p.site_url, tr, p.repo, latest)),
             css: &["home"],
-            scripts: &[],
+            scripts: &["/js/sim.js"],
             body_class: "home",
         },
         main,
@@ -85,7 +85,7 @@ fn hero(p: &Page) -> Markup {
             // Le launcher, dans un cadre posé sur le paysage
             div.col.hero-shot-wrap {
                 figure.hero-shot {
-                    img src=(format!("/assets/screens/{}/home.png", p.lang.screens_dir())) alt=(tr.alt_home) width="1180" height="720" fetchpriority="high";
+                    (capture(p, "home", &tr.alt_home, "eager"))
                 }
             }
         }
@@ -168,28 +168,95 @@ fn milliers(p: &Page, n: u64) -> String {
     out
 }
 
-/// Captures du launcher, chacune dans un cadre avec sa légende.
+/// Une capture du launcher, en thème sombre et en thème clair : le CSS montre celle du thème du
+/// site (`.th-dark` / `.th-light`), et le navigateur ne charge que celle qui s'affiche.
+fn capture(p: &Page, nom: &str, alt: &str, chargement: &str) -> Markup {
+    let dir = p.lang.screens_dir();
+    html! {
+        img.th-dark src=(format!("/assets/screens/{dir}/{nom}.png")) alt=(alt) width="1180" height="720" loading=(chargement);
+        img.th-light src=(format!("/assets/screens/{dir}/light/{nom}.png")) alt=(alt) width="1180" height="720" loading="lazy";
+    }
+}
+
+/// Zone cliquable posée sur la capture, en pixels de la capture (1180 × 720) : `x0, y0, x1, y1`,
+/// l'écran qu'elle ouvre, et les écrans où elle existe (vide : tous).
+struct Zone {
+    r: (u32, u32, u32, u32),
+    va: &'static str,
+    sur: &'static [&'static str],
+}
+
+const fn z(x0: u32, y0: u32, x1: u32, y1: u32, va: &'static str, sur: &'static [&'static str]) -> Zone {
+    Zone { r: (x0, y0, x1, y1), va, sur }
+}
+
+/// Zones communes à toutes les captures (logo, avatar, options, choix de version) et propres à
+/// certaines (croix de fermeture, onglet Horizon). Les onglets du haut dépendent de la langue.
+fn zones(dir: &str) -> Vec<Zone> {
+    let onglets: [(u32, u32, &'static str); 6] = if dir == "fr" {
+        [(252, 310, "home"), (318, 366, "skin"), (374, 436, "profiles"), (444, 576, "notes"), (583, 721, "textures"), (729, 782, "friends")]
+    } else {
+        [(263, 311, "home"), (319, 367, "skin"), (375, 445, "profiles"), (453, 566, "notes"), (574, 686, "textures"), (694, 763, "friends")]
+    };
+    let horizon = if dir == "fr" { (623, 713) } else { (625, 715) };
+    let mut v = vec![
+        z(14, 14, 78, 78, "home", &[]),
+        z(104, 26, 216, 66, "home", &[]),
+        z(14, 642, 78, 706, "settings", &[]),
+        z(90, 642, 472, 706, "versions", &[]),
+        z(1102, 642, 1166, 706, "skin", &[]),
+        z(1124, 88, 1168, 132, "home", &["versions", "horizon"]),
+        z(horizon.0, 144, horizon.1, 181, "horizon", &["versions"]),
+        z(90, 144, 188, 181, "versions", &["horizon"]),
+        z(1113, 99, 1157, 143, "home", &["settings"]),
+    ];
+    v.extend(onglets.iter().map(|&(x0, x1, va)| z(x0, 24, x1, 66, va, &[])));
+    v
+}
+
+/// Aperçu : le launcher, dont on peut cliquer les onglets (une capture par écran, rien ne marche
+/// vraiment). Les pastilles en dessous font la même chose, et suffisent sur téléphone.
 fn galerie(p: &Page) -> Markup {
     let tr = p.tr;
-    let images = [
-        ("versions", &tr.gal_versions_t, &tr.gal_versions_p),
-        ("profiles", &tr.gal_profiles_t, &tr.gal_profiles_p),
+    let ecrans: [(&str, &str, &str); 9] = [
+        ("home", &tr.gal_home_t, &tr.gal_home_p),
         ("skin", &tr.gal_skin_t, &tr.gal_skin_p),
+        ("profiles", &tr.gal_profiles_t, &tr.gal_profiles_p),
+        ("notes", &tr.gal_notes_t, &tr.gal_notes_p),
         ("textures", &tr.gal_textures_t, &tr.gal_textures_p),
+        ("friends", &tr.gal_friends_t, &tr.gal_friends_p),
+        ("versions", &tr.gal_versions_t, &tr.gal_versions_p),
+        ("settings", &tr.gal_settings_t, &tr.gal_settings_p),
+        ("horizon", &tr.hz_label, &tr.alt_horizon),
     ];
+    let pct = |v: u32, total: u32| format!("{:.3}%", v as f64 * 100.0 / total as f64);
     html! {
         section.blk #preview {
             div.col {
-                (titre(&tr.prev_label, Some(images.len())))
-                div.cells.c2 {
-                    @for (i, (img, t, d)) in images.iter().enumerate() {
-                        figure.shot.reveal {
-                            div.frame {
-                                img src=(format!("/assets/screens/{}/{img}.png", p.lang.screens_dir())) alt=(t) width="1180" height="720"
-                                    loading=(if i < 2 { "eager" } else { "lazy" });
+                (titre(&tr.prev_label, None))
+                p.blk-lead { (tr.prev_hint) }
+                div.sim data-sim {
+                    div.frame.sim-screen {
+                        @for (i, (nom, t, d)) in ecrans.iter().enumerate() {
+                            div.sim-view data-view=(nom) data-t=(t) data-p=(d) hidden[i > 0] {
+                                (capture(p, nom, t, if i == 0 { "eager" } else { "lazy" }))
                             }
-                            figcaption { strong { (t) } span { (d) } }
                         }
+                        @for zone in zones(p.lang.screens_dir()) {
+                            @let (x0, y0, x1, y1) = zone.r;
+                            @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
+                            button.sim-hot type="button" data-go=(zone.va) data-on=(zone.sur.join(" ")) aria-label=(t) title=(t)
+                                hidden[!zone.sur.is_empty() && !zone.sur.contains(&"home")]
+                                style=(format!("left:{};top:{};width:{};height:{}", pct(x0, 1180), pct(y0, 720), pct(x1 - x0, 1180), pct(y1 - y0, 720))) {}
+                        }
+                    }
+                    div.sim-bar {
+                        div.sim-tabs role="tablist" {
+                            @for (i, (nom, t, _)) in ecrans.iter().take(8).enumerate() {
+                                button.chip type="button" role="tab" data-go=(nom) aria-selected=(if i == 0 { "true" } else { "false" }) { (t) }
+                            }
+                        }
+                        p.sim-cap aria-live="polite" { strong { (ecrans[0].1) } " " span { (ecrans[0].2) } }
                     }
                 }
             }
@@ -242,13 +309,12 @@ fn pile(p: &Page) -> Markup {
 /// Horizon : Minecraft réécrit en Rust, jouable depuis le launcher.
 fn horizon(p: &Page) -> Markup {
     let tr = p.tr;
-    let shot = format!("/assets/screens/{}/horizon.png", p.lang.screens_dir());
     html! {
         section.blk #horizon {
             div.col {
                 (titre(&tr.hz_label, None))
                 div.cells.hz {
-                    figure.shot.reveal { div.frame { img src=(shot) alt=(tr.alt_horizon) width="1180" height="720" loading="lazy"; } }
+                    figure.shot.reveal { div.frame { (capture(p, "horizon", &tr.alt_horizon, "lazy")) } }
                     div.cell.hz-copy {
                         h3 { (tr.hz_title) }
                         ul.hz-points {
