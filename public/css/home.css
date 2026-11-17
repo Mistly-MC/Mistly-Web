@@ -180,7 +180,7 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .sim-cap{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;align-items:baseline;font-size:14px;min-height:1.5em}
 .sim-cap strong{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .sim-cap span{color:var(--muted)}
-/* Transition : l'écran qui part reste par-dessus, rogné par la gauche sous une bande d'ASCII */
+/* Transition : l'écran qui part reste par-dessus, rogné par la gauche sous un nuage en pixels */
 .sim-view.sim-sortante{position:absolute;inset:0;z-index:1}
-.sim-ascii{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;border-radius:11px}
+.sim-nuage{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;border-radius:11px}
 .sim-hot{z-index:3}

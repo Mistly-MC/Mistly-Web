@@ -214,6 +214,7 @@ fn zones(dir: &str) -> Vec<Zone> {
 fn apercu(p: &Page) -> Markup {
     let tr = p.tr;
     let ecrans: [(&str, &str, &str); 9] = [
+        ("home", &tr.gal_home_t, &tr.gal_home_p),
         ("skin", &tr.gal_skin_t, &tr.gal_skin_p),
         ("profiles", &tr.gal_profiles_t, &tr.gal_profiles_p),
         ("notes", &tr.gal_notes_t, &tr.gal_notes_p),
@@ -221,7 +222,6 @@ fn apercu(p: &Page) -> Markup {
         ("friends", &tr.gal_friends_t, &tr.gal_friends_p),
         ("versions", &tr.gal_versions_t, &tr.gal_versions_p),
         ("settings", &tr.gal_settings_t, &tr.gal_settings_p),
-        ("home", &tr.gal_home_t, &tr.gal_home_p),
         ("horizon", &tr.hz_label, &tr.alt_horizon),
     ];
     let pct = |v: u32, total: u32| format!("{:.3}%", v as f64 * 100.0 / total as f64);
@@ -235,8 +235,8 @@ fn apercu(p: &Page) -> Markup {
                             (capture(p, nom, t, if i == 0 { "eager" } else { "lazy" }))
                         }
                     }
-                    // transition : une bande de caractères ASCII balaie l'écran (dessinée par sim.js)
-                    canvas.sim-ascii aria-hidden="true" {}
+                    // transition : un nuage en pixels traverse l'écran (dessiné par sim.js)
+                    canvas.sim-nuage aria-hidden="true" {}
                     @for zone in zones(p.lang.screens_dir()) {
                         @let (x0, y0, x1, y1) = zone.r;
                         @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
