@@ -15,8 +15,6 @@ pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
         (hero(p))
         (chiffres(p, latest, downloads))
         (rayures())
-        (galerie(p))
-        (rayures())
         section.blk #features {
             div.col {
                 (titre(&tr.feat_label, Some(6)))
@@ -82,12 +80,8 @@ fn hero(p: &Page) -> Markup {
                     span.btn.os-soon aria-disabled="true" title=(tr.os_linux_p) { (icons::linux()) "Linux" span.badge { (tr.os_soon) } }
                 }
             }
-            // Le launcher, dans un cadre posé sur le paysage
-            div.col.hero-shot-wrap {
-                figure.hero-shot {
-                    (capture(p, "home", &tr.alt_home, "eager"))
-                }
-            }
+            // Le launcher, dans un cadre posé sur le paysage : on peut cliquer ses onglets
+            (apercu(p))
         }
     }
 }
@@ -174,7 +168,7 @@ fn capture(p: &Page, nom: &str, alt: &str, chargement: &str) -> Markup {
     let dir = p.lang.screens_dir();
     let v = layout::ASSET_VERSION.as_str();
     html! {
-        img.th-dark src=(format!("/assets/screens/{dir}/{nom}.png?v={v}")) alt=(alt) width="1180" height="720" loading=(chargement);
+        img.th-dark src=(format!("/assets/screens/{dir}/{nom}.png?v={v}")) alt=(alt) width="1180" height="720" loading=(chargement) fetchpriority=[(chargement == "eager").then_some("high")];
         img.th-light src=(format!("/assets/screens/{dir}/light/{nom}.png?v={v}")) alt=(alt) width="1180" height="720" loading="lazy";
     }
 }
@@ -215,9 +209,9 @@ fn zones(dir: &str) -> Vec<Zone> {
     v
 }
 
-/// Aperçu : le launcher, dont on peut cliquer les onglets (une capture par écran, rien ne marche
-/// vraiment). Les pastilles en dessous font la même chose, et suffisent sur téléphone.
-fn galerie(p: &Page) -> Markup {
+/// Le launcher en haut de la page, dont on peut cliquer les onglets (une capture par écran, rien
+/// ne marche vraiment). Les pastilles en dessous font la même chose, et suffisent sur téléphone.
+fn apercu(p: &Page) -> Markup {
     let tr = p.tr;
     let ecrans: [(&str, &str, &str); 9] = [
         ("skin", &tr.gal_skin_t, &tr.gal_skin_p),
@@ -232,37 +226,33 @@ fn galerie(p: &Page) -> Markup {
     ];
     let pct = |v: u32, total: u32| format!("{:.3}%", v as f64 * 100.0 / total as f64);
     html! {
-        section.blk #preview {
-            div.col {
-                (titre(&tr.prev_label, None))
-                p.blk-lead { (tr.prev_hint) }
-                div.sim data-sim {
-                    div.frame {
-                        // les zones se placent sur la capture elle-même, pas sur le cadre (qui a une marge)
-                        div.sim-screen {
-                            @for (i, (nom, t, d)) in ecrans.iter().enumerate() {
-                                div.sim-view data-view=(nom) data-t=(t) data-p=(d) hidden[i > 0] {
-                                    (capture(p, nom, t, if i == 0 { "eager" } else { "lazy" }))
-                                }
-                            }
-                            @for zone in zones(p.lang.screens_dir()) {
-                                @let (x0, y0, x1, y1) = zone.r;
-                                @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
-                                button.sim-hot type="button" data-go=(zone.va) data-on=(zone.sur.join(" ")) aria-label=(t) title=(t)
-                                    hidden[!zone.sur.is_empty() && !zone.sur.contains(&ecrans[0].0)]
-                                    style=(format!("left:{};top:{};width:{};height:{}", pct(x0, 1180), pct(y0, 720), pct(x1 - x0, 1180), pct(y1 - y0, 720))) {}
-                            }
+        div.col.hero-shot-wrap #preview data-sim {
+            figure.hero-shot {
+                // les zones se placent sur la capture elle-même, pas sur le cadre (qui a une marge)
+                div.sim-screen role="group" aria-label=(tr.prev_hint) {
+                    @for (i, (nom, t, d)) in ecrans.iter().enumerate() {
+                        div.sim-view data-view=(nom) data-t=(t) data-p=(d) hidden[i > 0] {
+                            (capture(p, nom, t, if i == 0 { "eager" } else { "lazy" }))
                         }
                     }
-                    div.sim-bar {
-                        div.sim-tabs role="tablist" {
-                            @for (i, (nom, t, _)) in ecrans.iter().take(8).enumerate() {
-                                button.chip type="button" role="tab" data-go=(nom) aria-selected=(if i == 0 { "true" } else { "false" }) { (t) }
-                            }
-                        }
-                        p.sim-cap aria-live="polite" { strong { (ecrans[0].1) } " " span { (ecrans[0].2) } }
+                    // transition : une bande de caractères ASCII balaie l'écran (dessinée par sim.js)
+                    canvas.sim-ascii aria-hidden="true" {}
+                    @for zone in zones(p.lang.screens_dir()) {
+                        @let (x0, y0, x1, y1) = zone.r;
+                        @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
+                        button.sim-hot type="button" data-go=(zone.va) data-on=(zone.sur.join(" ")) aria-label=(t) title=(t)
+                            hidden[!zone.sur.is_empty() && !zone.sur.contains(&ecrans[0].0)]
+                            style=(format!("left:{};top:{};width:{};height:{}", pct(x0, 1180), pct(y0, 720), pct(x1 - x0, 1180), pct(y1 - y0, 720))) {}
                     }
                 }
+            }
+            div.sim-bar {
+                div.sim-tabs role="tablist" {
+                    @for (i, (nom, t, _)) in ecrans.iter().take(8).enumerate() {
+                        button.chip type="button" role="tab" data-go=(nom) aria-selected=(if i == 0 { "true" } else { "false" }) { (t) }
+                    }
+                }
+                p.sim-cap aria-live="polite" { strong { (ecrans[0].1) } " " span { (ecrans[0].2) } }
             }
         }
     }

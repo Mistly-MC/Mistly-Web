@@ -161,24 +161,26 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 }
 
 /* ---------- Aperçu : le launcher, dont on clique les onglets ---------- */
-.sim{padding:0 20px 20px}
 .sim-screen{position:relative}
 .sim-view[hidden]{display:none}
-.sim-view img{vertical-align:top;width:100%;height:auto;border-radius:9px}
+.sim-view img{vertical-align:top;width:100%;height:auto;border-radius:11px}
 .sim-hot{position:absolute;padding:0;border:0;border-radius:10px;background:none;cursor:pointer;transition:background .15s,box-shadow .15s}
 .sim-hot[hidden]{display:none}
 .sim-hot:hover{background:rgba(140,170,255,.14);box-shadow:inset 0 0 0 1px rgba(160,190,255,.45)}
 .sim-hot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.sim-bar{display:flex;flex-direction:column;gap:12px;margin-top:16px}
-.sim-tabs{display:flex;flex-wrap:wrap;gap:8px}
+.sim-bar{display:flex;flex-direction:column;align-items:center;gap:10px;margin:20px 0 34px;padding:0 12px;text-align:center}
+.sim-tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
 .sim-tabs .chip{cursor:pointer;font-family:inherit;font-size:13px;padding:6px 12px;transition:color .15s,background .15s,border-color .15s}
 .sim-tabs .chip:hover{color:var(--text);background:rgb(var(--fg-rgb) / .06)}
 .sim-tabs .chip[aria-selected="true"]{color:var(--on-solid);background:var(--solid);border-color:var(--solid)}
 .sim-tabs .chip{position:relative;overflow:hidden}
-.sim.auto .sim-tabs .chip[aria-selected="true"]::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:currentColor;opacity:.6;transform-origin:left;animation:sim-barre var(--sim-duree,3500ms) linear forwards}
-.sim.auto.en-pause .sim-tabs .chip[aria-selected="true"]::after{animation-play-state:paused}
+[data-sim].auto .sim-tabs .chip[aria-selected="true"]::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:currentColor;opacity:.6;transform-origin:left;animation:sim-barre var(--sim-duree,3500ms) linear forwards}
+[data-sim].auto.en-pause .sim-tabs .chip[aria-selected="true"]::after{animation-play-state:paused}
 @keyframes sim-barre{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-.sim-cap{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-size:14px}
+.sim-cap{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;align-items:baseline;font-size:14px;min-height:1.5em}
 .sim-cap strong{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .sim-cap span{color:var(--muted)}
-@media (max-width:640px){.sim{padding:0 12px 12px}}
+/* Transition : l'écran qui part reste par-dessus, rogné par la gauche sous une bande d'ASCII */
+.sim-view.sim-sortante{position:absolute;inset:0;z-index:1}
+.sim-ascii{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;border-radius:11px}
+.sim-hot{z-index:3}
