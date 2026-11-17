@@ -246,8 +246,8 @@ fn collection(p: &Page) -> Markup {
                 div.cells.c3 {
                     @for c in bientot {
                         @let (titre, texte) = c.text(tr);
-                        // Chapeaux et ailes ont déjà un article à essayer : la carte ouvre l'essayage
-                        @let essai = match c { Category::Headwear => Some("cloudly"), Category::Wings => Some("elytra"), _ => None };
+                        // Chapeaux, ailes et emotes ont déjà un article à essayer : la carte ouvre l'essayage
+                        @let essai = match c { Category::Headwear => Some("cloudly"), Category::Wings => Some("elytra"), Category::Emotes => Some("hug"), _ => None };
                         @let corps = html! {
                             pre.ascii-noise aria-hidden="true" {}
                             span.soon-body {
@@ -282,6 +282,7 @@ fn stage(p: &Page, skin: &str, name: Option<&str>, studio: bool) -> Markup {
         ("run", &tr.shop_anim_run),
         ("fly", &tr.shop_anim_fly),
         ("crouch", &tr.shop_anim_crouch),
+        ("hug", &tr.shop_anim_hug),
     ];
     html! {
         div.stage.studio-stage[studio] #stage data-skin=(skin) data-name=(name.unwrap_or("")) {
@@ -368,7 +369,17 @@ fn locker(p: &Page, player: &str) -> Markup {
                                     data-equip=(tr.shop_equip) data-unequip=(tr.shop_unequip) { (tr.shop_equip) }
                             }
                         }
-                        @for _ in 0..(if item.is_some() { 5 } else { 6 }) {
+                        // Emotes : le Câlin, joué dans l'aperçu (pas encore en jeu)
+                        @let emote = matches!(c, Category::Emotes);
+                        @if emote {
+                            div.slot.item {
+                                div.emote-art { (icons::smile()) }
+                                strong { (tr.shop_anim_hug) }
+                                button.btn.play.sm type="button" data-emote="hug" aria-pressed="false"
+                                    data-play=(tr.shop_try_on) data-stop=(tr.shop_emote_stop) { (tr.shop_try_on) }
+                            }
+                        }
+                        @for _ in 0..(if item.is_some() || emote { 5 } else { 6 }) {
                             div.slot { (c.icon()) span { (tr.shop_badge) } }
                         }
                     }

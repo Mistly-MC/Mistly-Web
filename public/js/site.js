@@ -376,19 +376,96 @@
         : null;
     };
 
-    // Animations : repos, marche, course, vol, salut, accroupi
-    const ANIMS = { idle: sv.IdleAnimation, walk: sv.WalkingAnimation, run: sv.RunningAnimation, fly: sv.FlyingAnimation, crouch: sv.CrouchAnimation };
+    // Emote « Câlin » (aperçu d'une emote à venir) : un ami arrive en face, on s'enlace, on se
+    // lâche, en boucle. L'ami est un deuxième joueur (skin d'Alex), posé à côté dans la scène.
+    const ami = new sv.PlayerObject();
+    ami.visible = false;
+    ami.backEquipment = null;
+    viewer.playerWrapper.add(ami);
+    let amiHabille = false;
+    const habillerAmi = () => {
+      if (amiHabille || !viewer.skinTexture) return;
+      amiHabille = true;
+      // en attendant (ou si le skin d'Alex ne charge pas) : le même skin que le joueur
+      ami.skin.map = viewer.skinTexture;
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== 64 || img.height !== 64) return;
+        const c = document.createElement("canvas");
+        c.width = c.height = 64;
+        c.getContext("2d").drawImage(img, 0, 0);
+        // même genre de texture que celle du joueur (pixels nets, mêmes couleurs)
+        const modele = viewer.skinTexture;
+        const tex = new modele.constructor(c);
+        tex.magFilter = modele.magFilter;
+        tex.minFilter = modele.minFilter;
+        tex.colorSpace = modele.colorSpace;
+        tex.needsUpdate = true;
+        ami.skin.map = tex;
+        ami.skin.modelType = "slim";
+      };
+      img.src = "/skin/MHF_Alex";
+    };
+    const lisse = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+    class Calin extends sv.PlayerAnimation {
+      animate(joueur) {
+        const DUREE = 3.6, t = this.progress % DUREE;
+        // 0 : chacun de son côté, 1 : enlacés (arrivée en 0,8 s, départ à partir de 2,7 s)
+        const k = lisse(t / 0.8) * (1 - lisse((t - 2.7) / 0.8));
+        const balance = Math.sin(t * 3.2) * 0.07 * k;  // on se berce un peu
+        const ecart = 9 - 4.8 * k;                      // demi-distance entre les deux (têtes qui se touchent)
+        const pose = (p, cote, haut) => {
+          p.position.x = cote * ecart;
+          p.rotation.y = -cote * Math.PI / 2 + balance;
+          const s = p.skin;
+          // bras tendus vers l'autre puis refermés dans son dos ; l'un passe au-dessus des
+          // épaules, l'autre autour de la taille
+          const leve = haut ? 1.75 : 1.2, serre = haut ? 0.55 : 0.75;
+          s.rightArm.rotation.x = -leve * k;
+          s.leftArm.rotation.x = -leve * k;
+          s.rightArm.rotation.z = -serre * k;
+          s.leftArm.rotation.z = serre * k;
+          s.head.rotation.x = (haut ? 0.12 : -0.08) * k;
+          s.head.rotation.y = cote * 0.35 * k;          // la tête sur le côté, contre l'épaule
+          s.body.rotation.x = 0.06 * k;
+          // les pieds avancent un peu pendant l'approche
+          const pas = Math.sin(Math.min(t, 0.8) / 0.8 * Math.PI * 2) * 0.45 * (1 - k) * (t < 0.8 ? 1 : 0);
+          s.rightLeg.rotation.x = pas;
+          s.leftLeg.rotation.x = -pas;
+        };
+        pose(joueur, -1, true);
+        ami.visible = true;
+        pose(ami, 1, false);
+      }
+    }
+
+    // Animations : repos, marche, course, vol, salut, accroupi, et l'emote Câlin
+    const ANIMS = { idle: sv.IdleAnimation, walk: sv.WalkingAnimation, run: sv.RunningAnimation, fly: sv.FlyingAnimation, crouch: sv.CrouchAnimation, hug: Calin };
     const SPEED = { walk: 0.6, run: 0.8 };
     const animButtons = [...stage.querySelectorAll("[data-anim]")];
+    const emoteButtons = [...document.querySelectorAll("[data-emote]")];
     const setAnim = key => {
       const Anim = ANIMS[key];
+      ami.visible = false;
+      ami.resetJoints();
+      if (key === "hug") habillerAmi();
       viewer.animation = Anim ? new Anim() : null;
       if (viewer.animation) { viewer.animation.speed = SPEED[key] ?? 1; viewer.animation.paused = reduce; }
+      // animations figées (mouvements réduits) : le câlin s'affiche quand même, bras refermés
+      if (key === "hug" && reduce) { viewer.animation.progress = 1.6; viewer.animation.paused = false; viewer.animation.speed = 0; }
       press(animButtons, animButtons.find(b => b.dataset.anim === key));
+      emoteButtons.forEach(b => {
+        const on = b.dataset.emote === key;
+        b.setAttribute("aria-pressed", String(on));
+        b.textContent = on ? b.dataset.stop : b.dataset.play;
+        b.closest(".item")?.classList.toggle("equipped", on);
+      });
       // Voler sans rien dans le dos : on sort les élytres
       if (key === "fly" && back.mode === "none") setBack("elytra", ownCape ? "own" : "misty");
     };
     animButtons.forEach(b => b.addEventListener("click", () => setAnim(b.dataset.anim)));
+    // Bouton d'une emote (onglet Emotes du studio) : la jouer, ou l'arrêter et revenir à la marche
+    emoteButtons.forEach(b => b.addEventListener("click", () => setAnim(b.getAttribute("aria-pressed") === "true" ? "walk" : b.dataset.emote)));
 
     // Cape et élytres : la vraie cape du joueur (Mojang) ou la texture Mistly
     // Texture de cape et d'élytres. `pal` : couleur du haut et écart jusqu'au bas ; `emblem` : nuage ou étoile.
@@ -643,7 +720,8 @@
       const haut = tryon.getBoundingClientRect().top + scrollY - 90;
       scrollTo({ top: haut, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       stageReady.then(() => {
-        const b = tryon.querySelector(`.equip[data-thumb="${card.dataset.try}"]`);
+        // un cosmétique à porter, ou une emote à jouer (le Câlin)
+        const b = tryon.querySelector(`.equip[data-thumb="${card.dataset.try}"], [data-anim="${card.dataset.try}"]`);
         if (b && b.getAttribute("aria-pressed") !== "true") b.click();
       });
     }));

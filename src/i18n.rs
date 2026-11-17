@@ -378,6 +378,8 @@ traductions! {
     pub shop_anim_run: String,
     pub shop_anim_fly: String,
     pub shop_anim_crouch: String,
+    pub shop_anim_hug: String,
+    pub shop_emote_stop: String,
     pub shop_own_cape: String,
     pub shop_elytra: String,
     pub shop_rotate: String,
