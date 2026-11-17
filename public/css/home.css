@@ -174,6 +174,10 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .sim-tabs .chip{cursor:pointer;font-family:inherit;font-size:13px;padding:6px 12px;transition:color .15s,background .15s,border-color .15s}
 .sim-tabs .chip:hover{color:var(--text);background:rgb(var(--fg-rgb) / .06)}
 .sim-tabs .chip[aria-selected="true"]{color:var(--on-solid);background:var(--solid);border-color:var(--solid)}
+.sim-tabs .chip{position:relative;overflow:hidden}
+.sim.auto .sim-tabs .chip[aria-selected="true"]::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:100%;background:currentColor;opacity:.6;transform-origin:left;animation:sim-barre var(--sim-duree,3500ms) linear forwards}
+.sim.auto.en-pause .sim-tabs .chip[aria-selected="true"]::after{animation-play-state:paused}
+@keyframes sim-barre{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .sim-cap{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-size:14px}
 .sim-cap strong{font-size:15px;font-weight:600;letter-spacing:-.01em}
 .sim-cap span{color:var(--muted)}

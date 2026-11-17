@@ -172,9 +172,10 @@ fn milliers(p: &Page, n: u64) -> String {
 /// site (`.th-dark` / `.th-light`), et le navigateur ne charge que celle qui s'affiche.
 fn capture(p: &Page, nom: &str, alt: &str, chargement: &str) -> Markup {
     let dir = p.lang.screens_dir();
+    let v = layout::ASSET_VERSION.as_str();
     html! {
-        img.th-dark src=(format!("/assets/screens/{dir}/{nom}.png")) alt=(alt) width="1180" height="720" loading=(chargement);
-        img.th-light src=(format!("/assets/screens/{dir}/light/{nom}.png")) alt=(alt) width="1180" height="720" loading="lazy";
+        img.th-dark src=(format!("/assets/screens/{dir}/{nom}.png?v={v}")) alt=(alt) width="1180" height="720" loading=(chargement);
+        img.th-light src=(format!("/assets/screens/{dir}/light/{nom}.png?v={v}")) alt=(alt) width="1180" height="720" loading="lazy";
     }
 }
 
@@ -219,7 +220,6 @@ fn zones(dir: &str) -> Vec<Zone> {
 fn galerie(p: &Page) -> Markup {
     let tr = p.tr;
     let ecrans: [(&str, &str, &str); 9] = [
-        ("home", &tr.gal_home_t, &tr.gal_home_p),
         ("skin", &tr.gal_skin_t, &tr.gal_skin_p),
         ("profiles", &tr.gal_profiles_t, &tr.gal_profiles_p),
         ("notes", &tr.gal_notes_t, &tr.gal_notes_p),
@@ -227,6 +227,7 @@ fn galerie(p: &Page) -> Markup {
         ("friends", &tr.gal_friends_t, &tr.gal_friends_p),
         ("versions", &tr.gal_versions_t, &tr.gal_versions_p),
         ("settings", &tr.gal_settings_t, &tr.gal_settings_p),
+        ("home", &tr.gal_home_t, &tr.gal_home_p),
         ("horizon", &tr.hz_label, &tr.alt_horizon),
     ];
     let pct = |v: u32, total: u32| format!("{:.3}%", v as f64 * 100.0 / total as f64);
@@ -248,7 +249,7 @@ fn galerie(p: &Page) -> Markup {
                                 @let (x0, y0, x1, y1) = zone.r;
                                 @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
                                 button.sim-hot type="button" data-go=(zone.va) data-on=(zone.sur.join(" ")) aria-label=(t) title=(t)
-                                    hidden[!zone.sur.is_empty() && !zone.sur.contains(&"home")]
+                                    hidden[!zone.sur.is_empty() && !zone.sur.contains(&ecrans[0].0)]
                                     style=(format!("left:{};top:{};width:{};height:{}", pct(x0, 1180), pct(y0, 720), pct(x1 - x0, 1180), pct(y1 - y0, 720))) {}
                             }
                         }
