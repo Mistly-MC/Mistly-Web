@@ -231,6 +231,19 @@ pub async fn shop(
     res
 }
 
+/// Le catalogue des emotes, joué sur le dernier pseudo choisi dans la boutique (s'il y en a un).
+pub async fn shop_emotes(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<PageQuery>,
+    headers: HeaderMap,
+) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let count = state.github.releases().await.map(|l| l.len());
+    let p = page(&state, lang, "/shop/emotes", count);
+    let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
+    html_response(StatusCode::OK, shop::render_emotes(&p, saved), lang, remember)
+}
+
 fn texture_response(png: axum::body::Bytes) -> Response {
     let mut res = Body::from(png).into_response();
     let h = res.headers_mut();

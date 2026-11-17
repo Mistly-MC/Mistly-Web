@@ -183,6 +183,7 @@ async fn main() {
         .route("/", get(routes::index))
         .route("/patch-notes", get(routes::patch_notes))
         .route("/shop", get(routes::shop))
+        .route("/shop/emotes", get(routes::shop_emotes))
         .route("/skin/{name}", get(routes::skin))
         .route("/cape/{name}", get(routes::cape))
         .route("/player/{name}", get(routes::player))

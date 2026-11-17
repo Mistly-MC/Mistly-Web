@@ -271,16 +271,22 @@
 .tryon-close{position:absolute;top:12px;right:12px;z-index:5;display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line-2);background:rgb(var(--bg-rgb) / .8);color:var(--muted);cursor:pointer;font-size:14px}
 .tryon-close:hover{color:var(--text);border-color:rgb(var(--fg-rgb) / .3)}
 
-/* Tendances : cinq cartes sur une ligne */
-.cells.c5{grid-template-columns:repeat(5,minmax(0,1fr))}
-@media (max-width:1100px){.cells.c5{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:900px){.cells.c5{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:600px){.cells.c5{grid-template-columns:minmax(0,1fr)}}
 .badge.new{color:#ffb3cb;border-color:rgba(255,156,183,.45)}
 
-/* Emotes : vignette sur un fond rosé, et la carte « Emotes » est un lien vers le catalogue */
+/* Emotes : vignette sur un fond rosé, et la carte « Emotes » est un lien vers leur page */
 .item-art.emote{background:radial-gradient(60% 70% at 50% 45%,rgba(255,156,183,.16),transparent 70%),var(--bg-2)}
 .item-card:hover .item-art.emote{background:radial-gradient(70% 80% at 50% 45%,rgba(255,156,183,.26),transparent 70%),var(--bg-2)}
 a.soon-card{text-decoration:none}
-#emotes{scroll-margin-top:90px}
 .item-art.emote .thumb{width:90px;height:144px}
+
+/* Page des emotes : un titre, puis l'aperçu 3D et la liste des emotes côte à côte */
+.emotes-head{padding:6px 0 22px}
+.emotes-head h1{font-size:clamp(30px,4vw,44px);font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.emotes-head h1 sup{font-family:var(--mono);font-size:13px;font-weight:400;color:var(--dim);margin-left:4px}
+.emotes-head p{margin-top:8px;color:var(--muted);font-size:15px;max-width:620px}
+.emotes-page .vitrine{border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.pick.emote-pick{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:22px}
+.pick .emote-choice{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px 10px;border-radius:12px;border:1px solid var(--line-2);background:rgb(var(--fg-rgb) / .02);cursor:pointer;font:inherit;font-size:12px;line-height:1.25;text-align:center;color:var(--muted);transition:border-color .15s,background .15s,color .15s}
+.pick .emote-choice:hover{border-color:rgb(var(--fg-rgb) / .3);color:var(--text)}
+.pick .emote-choice[aria-pressed="true"]{border-color:#ff9cb7;background:rgba(255,156,183,.1);color:var(--text)}
+@media (max-width:600px){.pick.emote-pick{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -394,6 +394,7 @@ traductions! {
     pub shop_trending: String,
     pub shop_new: String,
     pub shop_emotes_lead: String,
+    pub shop_partner: String,
     pub shop_own_cape: String,
     pub shop_elytra: String,
     pub shop_rotate: String,

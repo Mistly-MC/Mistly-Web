@@ -385,16 +385,17 @@
     const POSES = {
       // Câlin : les bras s'ouvrent, se referment devant (sur le joueur en face), on se berce,
       // la tête penchée, puis les bras se rouvrent et retombent
-      hug: (p, temps) => {
+      // (autour : à quel point les bras se referment ; leve : à quelle hauteur ils passent)
+      hug: (p, temps, { autour = 0.8, leve = 1.35 } = {}) => {
         const t = temps % 6, s = p.skin;
         const ouvert = Math.max(fenetre(t, 0, 0.6, 0.6, 1.2), fenetre(t, 4.6, 5.2, 5.2, 5.9));
         const serre = fenetre(t, 0.6, 1.2, 4.6, 5.2);
         const berce = Math.sin((t - 1.2) * Math.PI / 0.9) * serre;
         const presse = 0.08 * Math.sin(t * 5) * serre;
-        s.rightArm.rotation.x = -0.3 * ouvert - 1.35 * serre;
-        s.leftArm.rotation.x = -0.3 * ouvert - 1.35 * serre;
-        s.rightArm.rotation.z = -1.25 * ouvert + (0.8 + presse) * serre;
-        s.leftArm.rotation.z = 1.25 * ouvert - (0.8 + presse) * serre;
+        s.rightArm.rotation.x = -0.3 * ouvert - leve * serre;
+        s.leftArm.rotation.x = -0.3 * ouvert - leve * serre;
+        s.rightArm.rotation.z = -1.25 * ouvert + (autour + presse) * serre;
+        s.leftArm.rotation.z = 1.25 * ouvert - (autour + presse) * serre;
         s.body.rotation.x = -0.06 * ouvert + 0.08 * serre;
         s.head.rotation.x = -0.12 * ouvert + 0.18 * serre;
         s.head.rotation.z = 0.28 * berce;
@@ -452,8 +453,52 @@
         s.leftArm.rotation.z = 0.05 * k;
       },
     };
+    // Pour essayer le câlin sur quelqu'un : un deuxième joueur (skin d'Alex) en face, qui rend le
+    // câlin. Le bouton « Sur un joueur » de l'aperçu le montre ou le cache.
+    const ami = new sv.PlayerObject();
+    ami.visible = false;
+    ami.backEquipment = null;
+    viewer.playerWrapper.add(ami);
+    let avecAmi = true, amiHabille = false;
+    const habillerAmi = () => {
+      if (amiHabille || !viewer.skinTexture) return;
+      amiHabille = true;
+      // en attendant (ou si le skin d'Alex ne charge pas) : le même skin que le joueur
+      ami.skin.map = viewer.skinTexture;
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== 64 || img.height !== 64) return;
+        const c = document.createElement("canvas");
+        c.width = c.height = 64;
+        c.getContext("2d").drawImage(img, 0, 0);
+        // même genre de texture que celle du joueur (pixels nets, mêmes couleurs)
+        const modele = viewer.skinTexture;
+        const tex = new modele.constructor(c);
+        tex.magFilter = modele.magFilter;
+        tex.minFilter = modele.minFilter;
+        tex.colorSpace = modele.colorSpace;
+        tex.needsUpdate = true;
+        ami.skin.map = tex;
+        ami.skin.modelType = "slim";
+      };
+      img.src = "/skin/MHF_Alex";
+    };
+    // les deux face à face, vus de profil ; les bras de l'un passent sur les épaules de l'autre,
+    // ceux de l'autre autour de la taille
+    const calinADeux = (joueur, temps) => {
+      joueur.position.x = -4.4;
+      joueur.rotation.y = Math.PI / 2;
+      POSES.hug(joueur, temps, { autour: 0.4, leve: 1.5 });
+      ami.visible = true;
+      ami.position.x = 4.4;
+      ami.rotation.y = -Math.PI / 2;
+      POSES.hug(ami, temps, { autour: 0.5, leve: 1.1 });
+    };
     const EMOTES = Object.fromEntries(Object.entries(POSES).map(([cle, pose]) => [cle, class extends sv.PlayerAnimation {
-      animate(joueur) { pose(joueur, this.progress); }
+      animate(joueur) {
+        if (cle === "hug" && avecAmi) calinADeux(joueur, this.progress);
+        else pose(joueur, this.progress);
+      }
     }]));
     // pose figée (mouvements réduits) : le moment le plus parlant de chaque emote
     const POSE_FIXE = { hug: 2, wave: 1, clap: 0.35, dance: 0.6, cheer: 0.2, facepalm: 1.5 };
@@ -463,8 +508,14 @@
     const SPEED = { walk: 0.6, run: 0.8 };
     const animButtons = [...stage.querySelectorAll("[data-anim]")];
     const emoteButtons = [...document.querySelectorAll("[data-emote]")];
+    const amiBtn = stage.querySelector('[data-toggle="partner"]');
     const setAnim = key => {
       const Anim = ANIMS[key];
+      ami.visible = false;
+      ami.resetJoints();
+      ami.rotation.set(0, 0, 0);
+      if (key === "hug") habillerAmi();
+      if (amiBtn) amiBtn.hidden = key !== "hug";
       viewer.animation = Anim ? new Anim() : null;
       if (viewer.animation) { viewer.animation.speed = SPEED[key] ?? 1; viewer.animation.paused = reduce; }
       // animations figées (mouvements réduits) : une emote s'affiche quand même, dans sa pose
@@ -480,6 +531,16 @@
       if (key === "fly" && back.mode === "none") setBack("elytra", ownCape ? "own" : "misty");
     };
     animButtons.forEach(b => b.addEventListener("click", () => setAnim(b.dataset.anim)));
+    // « Sur un joueur » : le câlin avec ou sans l'ami en face
+    amiBtn?.addEventListener("click", () => {
+      avecAmi = !avecAmi;
+      amiBtn.setAttribute("aria-pressed", String(avecAmi));
+      if (!avecAmi) {
+        ami.visible = false;
+        viewer.playerObject.position.set(0, 0, 0);
+        viewer.playerObject.rotation.set(0, 0, 0);
+      }
+    });
     // Bouton d'une emote (onglet Emotes du studio) : la jouer, ou l'arrêter et revenir à la marche
     emoteButtons.forEach(b => b.addEventListener("click", () => setAnim(b.getAttribute("aria-pressed") === "true" ? "walk" : b.dataset.emote)));
 
@@ -597,7 +658,7 @@
         featText.textContent = texte;
         const b = document.getElementById("feat-badge");
         b.textContent = badge;
-        b.className = "badge";
+        b.className = cle === "hug" ? "badge new" : "badge";
         equipButtons.forEach(x => x.closest(".pick") && x.setAttribute("aria-pressed", "false"));
       }
     });
@@ -745,6 +806,16 @@
     };
     setAnim("walk");
     stageReady = loadPlayer(stage.dataset.name).finally(() => stage.classList.add("ready"));
+
+    // Catalogue des emotes (/shop/emotes) : chaque bouton joue son emote ; le Câlin d'abord
+    const choix = [...document.querySelectorAll(".emote-choice")];
+    const jouerChoix = b => {
+      press(choix, b);
+      const d = b.dataset;
+      stage.dispatchEvent(new CustomEvent("emote", { detail: { cle: d.try, nom: d.name, texte: d.text, badge: d.badge } }));
+    };
+    choix.forEach(b => b.addEventListener("click", () => jouerChoix(b)));
+    if (choix.length) stageReady.then(() => jouerChoix(choix[0]));
 
     // Actualiser : recharge le skin et la cape (après un changement chez Mojang)
     const reloadBtn = document.getElementById("reload");

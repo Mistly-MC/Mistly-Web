@@ -1,7 +1,8 @@
 //! Boutique de cosmétiques.
 //!
 //! - Sans pseudo : la vitrine. L'article à la une en 3D (sur Steve, ou sur le pseudo saisi), les
-//!   tendances à essayer d'un clic, le catalogue des emotes, et les catégories qui arrivent bientôt.
+//!   tendances à essayer d'un clic, et les catégories qui arrivent bientôt.
+//! - `/shop/emotes` : le catalogue des emotes, jouées dans l'aperçu 3D (pas encore en jeu).
 //! - Avec un pseudo : le studio. À gauche, le skin du joueur en 3D (vues face / profil / dos,
 //!   animations, sa vraie cape, élytres) ; à droite, sa fiche et les catégories de
 //!   cosmétiques, toutes « bientôt disponibles », avec la cape et les élytres Mistly à essayer.
@@ -177,6 +178,61 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
     )
 }
 
+/// Le catalogue des emotes (`/shop/emotes`) : l'aperçu 3D à gauche, sur le dernier pseudo choisi
+/// (ou Steve), et la liste des emotes à droite. Un clic joue l'emote dans l'aperçu.
+pub fn render_emotes(p: &Page, player: Option<&str>) -> Markup {
+    let tr = p.tr;
+    let (premier, premier_texte) = emote_texte(tr, EMOTES[0]);
+    let main = html! {
+        section.studio.emotes-page {
+            div.wrap {
+                nav.crumbs aria-label="Breadcrumb" {
+                    a href="/shop" { (icons::bag()) (tr.shop_label) }
+                    span { "/" }
+                    span { (tr.shop_cat_emotes) }
+                }
+                header.emotes-head {
+                    h1 { (tr.shop_cat_emotes) sup { "(" (EMOTES.len()) ")" } }
+                    p { (tr.shop_emotes_lead) }
+                }
+                div.vitrine {
+                    (stage(p, player.unwrap_or("MHF_Steve"), player, false))
+                    div.featured {
+                        span.label { (tr.shop_cat_emotes) }
+                        h1 #feat-name { (premier) }
+                        p #feat-text { (premier_texte) }
+                        div.badges { span.badge.new #feat-badge { (tr.shop_new) } }
+                        div.pick.emote-pick role="group" aria-label=(tr.shop_cat_emotes) {
+                            @for (i, cle) in EMOTES.iter().enumerate() {
+                                @let (nom, texte) = emote_texte(tr, cle);
+                                button.emote-choice type="button" data-try=(cle) data-name=(nom) data-text=(texte)
+                                    data-badge=(if *cle == "hug" { &tr.shop_new } else { &tr.shop_badge })
+                                    aria-pressed=(if i == 0 { "true" } else { "false" }) {
+                                    canvas.thumb data-thumb=(format!("emote-{cle}")) width="30" height="48" aria-hidden="true" {}
+                                    span { (nom) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+    let titre = format!("{} – {}", tr.shop_cat_emotes, tr.shop_title);
+    layout::render(
+        p,
+        Head {
+            title: &titre,
+            description: &tr.shop_emotes_lead,
+            jsonld: None,
+            css: &["home", "patch-notes", "shop"],
+            scripts: &["/vendor/skinview3d/skinview3d.bundle.js"],
+            body_class: "shop",
+        },
+        main,
+    )
+}
+
 /// Un article de la collection Mistly.
 struct Article {
     /// Vignette dessinée par site.js
@@ -249,18 +305,21 @@ fn carte_emote(tr: &Tr, cle: &str, nouveau: bool) -> Markup {
     }
 }
 
-/// Les tendances, le catalogue des emotes, puis les catégories qui arrivent bientôt.
+/// Les tendances : la nouveauté puis les pages les plus vues (cape, élytres, Cloudly).
+const TENDANCES: [&str; 3] = ["cape", "elytra", "cloudly"];
+
+/// Les tendances, puis les catégories qui arrivent bientôt.
 fn collection(p: &Page) -> Markup {
     let tr = p.tr;
     let bientot = [Category::Headwear, Category::Wings, Category::Tags, Category::Auras, Category::Pets, Category::Emotes];
     html! {
         section.blk {
             div.col {
-                h2.blk-title { (tr.shop_trending) sup { "(" (ARTICLES.len() + 1) ")" } }
-                div.cells.c5 {
+                h2.blk-title { (tr.shop_trending) sup { "(" (TENDANCES.len() + 1) ")" } }
+                div.cells.c4 {
                     // la nouveauté d'abord : le Câlin
                     (carte_emote(tr, "hug", true))
-                    @for a in &ARTICLES {
+                    @for a in ARTICLES.iter().filter(|a| TENDANCES.contains(&a.thumb)) {
                         button.item-card.reveal type="button" data-try=(a.thumb) {
                             span.item-art { canvas.thumb data-thumb=(a.thumb) width="60" height="96" aria-hidden="true" {} }
                             span.item-body {
@@ -272,19 +331,6 @@ fn collection(p: &Page) -> Markup {
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-        div.col.hatch aria-hidden="true" {}
-        // Le catalogue des emotes (la carte « Emotes » plus bas y mène)
-        section.blk #emotes {
-            div.col {
-                h2.blk-title { (tr.shop_cat_emotes) sup { "(" (EMOTES.len()) ")" } }
-                p.blk-lead { (tr.shop_emotes_lead) }
-                div.cells.c3 {
-                    @for cle in EMOTES {
-                        (carte_emote(tr, cle, cle == "hug"))
                     }
                 }
             }
@@ -313,8 +359,8 @@ fn collection(p: &Page) -> Markup {
                         @if let Some(t) = essai {
                             button.soon-card.clickable.reveal type="button" data-try=(t) { (corps) }
                         } @else if matches!(c, Category::Emotes) {
-                            // Emotes : la carte mène au catalogue, plus haut
-                            a.soon-card.clickable.reveal href="#emotes" { (corps) }
+                            // Emotes : la carte ouvre le catalogue, sur sa propre page
+                            a.soon-card.clickable.reveal href="/shop/emotes" { (corps) }
                         } @else {
                             div.soon-card.reveal { (corps) }
                         }
@@ -359,6 +405,8 @@ fn stage(p: &Page, skin: &str, name: Option<&str>, studio: bool) -> Markup {
                     }
                 }
                 div.toggles {
+                    // Câlin : avec un deuxième joueur en face (montré seulement pendant le câlin)
+                    button.toggle type="button" data-toggle="partner" aria-pressed="true" hidden { (icons::user()) span { (tr.shop_partner) } }
                     button.toggle type="button" data-toggle="cape" aria-pressed="false" disabled title=(tr.shop_no_cape) { (icons::cape()) span { (tr.shop_own_cape) } }
                     button.toggle type="button" data-toggle="elytra" aria-pressed="false" { (icons::wings()) span { (tr.shop_elytra) } }
                 }
