@@ -376,83 +376,99 @@
         : null;
     };
 
-    // Emote « Câlin » (aperçu d'une emote à venir) : un ami arrive en face, on s'enlace, on se
-    // lâche, en boucle. L'ami est un deuxième joueur (skin d'Alex), posé à côté dans la scène.
-    const ami = new sv.PlayerObject();
-    ami.visible = false;
-    ami.backEquipment = null;
-    viewer.playerWrapper.add(ami);
-    let amiHabille = false;
-    const habillerAmi = () => {
-      if (amiHabille || !viewer.skinTexture) return;
-      amiHabille = true;
-      // en attendant (ou si le skin d'Alex ne charge pas) : le même skin que le joueur
-      ami.skin.map = viewer.skinTexture;
-      const img = new Image();
-      img.onload = () => {
-        if (img.width !== 64 || img.height !== 64) return;
-        const c = document.createElement("canvas");
-        c.width = c.height = 64;
-        c.getContext("2d").drawImage(img, 0, 0);
-        // même genre de texture que celle du joueur (pixels nets, mêmes couleurs)
-        const modele = viewer.skinTexture;
-        const tex = new modele.constructor(c);
-        tex.magFilter = modele.magFilter;
-        tex.minFilter = modele.minFilter;
-        tex.colorSpace = modele.colorSpace;
-        tex.needsUpdate = true;
-        ami.skin.map = tex;
-        ami.skin.modelType = "slim";
-      };
-      img.src = "/skin/MHF_Alex";
-    };
+    // ---- Emotes (aperçu de celles qui arrivent sur Mistly Client) ----
+    // Chacune pose le joueur selon le temps écoulé (en secondes), en boucle. Pour skinview3d, une
+    // rotation.z positive rapproche le bras droit du corps (et éloigne le gauche).
     const lisse = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
-    class Calin extends sv.PlayerAnimation {
-      animate(joueur) {
-        const DUREE = 3.6, t = this.progress % DUREE;
-        // 0 : chacun de son côté, 1 : enlacés (arrivée en 0,8 s, départ à partir de 2,7 s)
-        const k = lisse(t / 0.8) * (1 - lisse((t - 2.7) / 0.8));
-        const balance = Math.sin(t * 3.2) * 0.07 * k;  // on se berce un peu
-        const ecart = 9 - 4.8 * k;                      // demi-distance entre les deux (têtes qui se touchent)
-        const pose = (p, cote, haut) => {
-          p.position.x = cote * ecart;
-          p.rotation.y = -cote * Math.PI / 2 + balance;
-          const s = p.skin;
-          // bras tendus vers l'autre puis refermés dans son dos ; l'un passe au-dessus des
-          // épaules, l'autre autour de la taille
-          const leve = haut ? 1.75 : 1.2, serre = haut ? 0.55 : 0.75;
-          s.rightArm.rotation.x = -leve * k;
-          s.leftArm.rotation.x = -leve * k;
-          s.rightArm.rotation.z = -serre * k;
-          s.leftArm.rotation.z = serre * k;
-          s.head.rotation.x = (haut ? 0.12 : -0.08) * k;
-          s.head.rotation.y = cote * 0.35 * k;          // la tête sur le côté, contre l'épaule
-          s.body.rotation.x = 0.06 * k;
-          // les pieds avancent un peu pendant l'approche
-          const pas = Math.sin(Math.min(t, 0.8) / 0.8 * Math.PI * 2) * 0.45 * (1 - k) * (t < 0.8 ? 1 : 0);
-          s.rightLeg.rotation.x = pas;
-          s.leftLeg.rotation.x = -pas;
-        };
-        pose(joueur, -1, true);
-        ami.visible = true;
-        pose(ami, 1, false);
-      }
-    }
+    // 0 → 1 entre a et b, puis 1 → 0 entre c et d
+    const fenetre = (t, a, b, c, d) => lisse((t - a) / (b - a)) * (1 - lisse((t - c) / (d - c)));
+    const POSES = {
+      // Câlin : les bras s'ouvrent, se referment devant (sur le joueur en face), on se berce,
+      // la tête penchée, puis les bras se rouvrent et retombent
+      hug: (p, temps) => {
+        const t = temps % 6, s = p.skin;
+        const ouvert = Math.max(fenetre(t, 0, 0.6, 0.6, 1.2), fenetre(t, 4.6, 5.2, 5.2, 5.9));
+        const serre = fenetre(t, 0.6, 1.2, 4.6, 5.2);
+        const berce = Math.sin((t - 1.2) * Math.PI / 0.9) * serre;
+        const presse = 0.08 * Math.sin(t * 5) * serre;
+        s.rightArm.rotation.x = -0.3 * ouvert - 1.35 * serre;
+        s.leftArm.rotation.x = -0.3 * ouvert - 1.35 * serre;
+        s.rightArm.rotation.z = -1.25 * ouvert + (0.8 + presse) * serre;
+        s.leftArm.rotation.z = 1.25 * ouvert - (0.8 + presse) * serre;
+        s.body.rotation.x = -0.06 * ouvert + 0.08 * serre;
+        s.head.rotation.x = -0.12 * ouvert + 0.18 * serre;
+        s.head.rotation.z = 0.28 * berce;
+        p.rotation.z = 0.07 * berce;
+      },
+      // Salut : la main droite levée qui s'agite
+      wave: (p, temps) => {
+        const t = temps % 2.4, s = p.skin, k = fenetre(t, 0, 0.35, 2.0, 2.4);
+        s.rightArm.rotation.z = -(2.55 + 0.35 * Math.sin(t * 9)) * k;
+        s.rightArm.rotation.x = -0.15 * k;
+        s.head.rotation.z = -0.12 * k;
+        s.leftArm.rotation.z = 0.08 * k;
+      },
+      // Applaudir : les mains se rejoignent devant, en rythme, avec un petit rebond
+      clap: (p, temps) => {
+        const t = temps % 2, s = p.skin, k = fenetre(t, 0, 0.25, 1.75, 2);
+        const tape = Math.abs(Math.sin(t * Math.PI * 3));
+        s.rightArm.rotation.x = -1.15 * k;
+        s.leftArm.rotation.x = -1.15 * k;
+        s.rightArm.rotation.z = (0.2 + 0.38 * tape) * k;
+        s.leftArm.rotation.z = -(0.2 + 0.38 * tape) * k;
+        s.head.rotation.x = -0.1 * k;
+        p.position.y = 0.5 * tape * k;
+      },
+      // Danse : bras qui montent l'un après l'autre, hanches qui tournent, petits sauts
+      dance: (p, temps) => {
+        const t = temps % 2.4, s = p.skin, w = t * Math.PI * 2 / 1.2, k = fenetre(t, 0, 0.2, 2.2, 2.4);
+        s.rightArm.rotation.z = -(1.3 + 1.0 * Math.sin(w)) * k;
+        s.leftArm.rotation.z = (1.3 - 1.0 * Math.sin(w)) * k;
+        s.rightLeg.rotation.x = 0.35 * Math.sin(w * 2) * k;
+        s.leftLeg.rotation.x = -0.35 * Math.sin(w * 2) * k;
+        s.head.rotation.z = 0.2 * Math.sin(w) * k;
+        p.rotation.y = 0.35 * Math.sin(w) * k;
+        p.position.y = 0.9 * Math.abs(Math.sin(w * 2)) * k;
+      },
+      // Victoire : les deux bras en l'air et des sauts de joie
+      cheer: (p, temps) => {
+        const t = temps % 2.4, s = p.skin, k = fenetre(t, 0, 0.25, 2.1, 2.4);
+        const saut = Math.max(0, Math.sin(t * Math.PI * 2 / 0.8));
+        s.rightArm.rotation.z = -(2.75 - 0.25 * saut) * k;
+        s.leftArm.rotation.z = (2.75 - 0.25 * saut) * k;
+        s.rightLeg.rotation.z = -0.12 * saut * k;
+        s.leftLeg.rotation.z = 0.12 * saut * k;
+        s.head.rotation.x = -0.25 * k;
+        p.position.y = 3 * saut * k;
+      },
+      // Facepalm : la main droite sur le visage, la tête qui tombe et secoue doucement
+      facepalm: (p, temps) => {
+        const t = temps % 3.2, s = p.skin, k = fenetre(t, 0, 0.45, 2.7, 3.2);
+        s.rightArm.rotation.x = -2.25 * k;
+        s.rightArm.rotation.z = 0.55 * k;
+        s.head.rotation.x = 0.35 * k;
+        s.head.rotation.y = 0.18 * Math.sin(t * 4) * k;
+        s.body.rotation.x = 0.1 * k;
+        s.leftArm.rotation.z = 0.05 * k;
+      },
+    };
+    const EMOTES = Object.fromEntries(Object.entries(POSES).map(([cle, pose]) => [cle, class extends sv.PlayerAnimation {
+      animate(joueur) { pose(joueur, this.progress); }
+    }]));
+    // pose figée (mouvements réduits) : le moment le plus parlant de chaque emote
+    const POSE_FIXE = { hug: 2, wave: 1, clap: 0.35, dance: 0.6, cheer: 0.2, facepalm: 1.5 };
 
-    // Animations : repos, marche, course, vol, salut, accroupi, et l'emote Câlin
-    const ANIMS = { idle: sv.IdleAnimation, walk: sv.WalkingAnimation, run: sv.RunningAnimation, fly: sv.FlyingAnimation, crouch: sv.CrouchAnimation, hug: Calin };
+    // Animations : repos, marche, course, vol, accroupi, et les emotes
+    const ANIMS = { idle: sv.IdleAnimation, walk: sv.WalkingAnimation, run: sv.RunningAnimation, fly: sv.FlyingAnimation, crouch: sv.CrouchAnimation, ...EMOTES };
     const SPEED = { walk: 0.6, run: 0.8 };
     const animButtons = [...stage.querySelectorAll("[data-anim]")];
     const emoteButtons = [...document.querySelectorAll("[data-emote]")];
     const setAnim = key => {
       const Anim = ANIMS[key];
-      ami.visible = false;
-      ami.resetJoints();
-      if (key === "hug") habillerAmi();
       viewer.animation = Anim ? new Anim() : null;
       if (viewer.animation) { viewer.animation.speed = SPEED[key] ?? 1; viewer.animation.paused = reduce; }
-      // animations figées (mouvements réduits) : le câlin s'affiche quand même, bras refermés
-      if (key === "hug" && reduce) { viewer.animation.progress = 1.6; viewer.animation.paused = false; viewer.animation.speed = 0; }
+      // animations figées (mouvements réduits) : une emote s'affiche quand même, dans sa pose
+      if (key in POSE_FIXE && reduce) { viewer.animation.progress = POSE_FIXE[key]; viewer.animation.paused = false; viewer.animation.speed = 0; }
       press(animButtons, animButtons.find(b => b.dataset.anim === key));
       emoteButtons.forEach(b => {
         const on = b.dataset.emote === key;
@@ -571,8 +587,79 @@
         badge.className = "badge " + (b.dataset.early ? "early" : "free");
       }
     }));
-    // Vignettes des articles Mistly, dessinées depuis la texture
+    // Une emote demandée par la boutique (tendances, catalogue) : jouée dans l'aperçu, avec son
+    // nom et sa description dans la fiche à côté
+    stage.addEventListener("emote", e => {
+      const { cle, nom, texte, badge } = e.detail;
+      setAnim(cle);
+      if (featName && nom) {
+        featName.textContent = nom;
+        featText.textContent = texte;
+        const b = document.getElementById("feat-badge");
+        b.textContent = badge;
+        b.className = "badge";
+        equipButtons.forEach(x => x.closest(".pick") && x.setAttribute("aria-pressed", "false"));
+      }
+    });
+
+    // Vignette d'une emote : un petit personnage en pixels dans la pose de l'emote, vu de face.
+    // Angles des bras et des jambes en degrés depuis la verticale (positif : vers l'extérieur).
+    const POSES_2D = {
+      hug: { bras: [-118, -118], tete: 8, deco: "coeur" },
+      wave: { bras: [8, 152], tete: -6, deco: "vagues" },
+      clap: { bras: [-38, -38], deco: "etoiles" },
+      dance: { bras: [138, 28], jambes: [22, 0], haut: -1, tete: 8, deco: "note" },
+      cheer: { bras: [158, 158], jambes: [10, 10], haut: -4, deco: "etincelles" },
+      facepalm: { bras: [-162, 6], tete: 10, deco: "goutte" },
+    };
+    const COULEURS = { cheveux: "#3b2a1d", peau: "#c08d6b", yeux: "#3a3f9e", haut: "#2fa3a9", bas: "#3f45b3", pieds: "#4c4c55" };
+    const dessinerEmote = (c, cle) => {
+      const pose = POSES_2D[cle];
+      if (!pose) return;
+      // dessin en petit (30 × 48), net, puis agrandi pixel par pixel
+      const p = document.createElement("canvas");
+      p.width = 30; p.height = 48;
+      const g = p.getContext("2d");
+      const y0 = 10 + (pose.haut || 0);
+      const membre = (x, y, angle, h, couleurs) => {
+        g.save(); g.translate(x, y); g.rotate(angle * Math.PI / 180);
+        couleurs.forEach(([de, a, coul]) => { g.fillStyle = coul; g.fillRect(-2, de, 4, a - de); });
+        g.restore();
+      };
+      const [jg, jd] = pose.jambes || [0, 0];
+      membre(13, y0 + 20, jg, 12, [[0, 9, COULEURS.bas], [9, 12, COULEURS.pieds]]);
+      membre(17, y0 + 20, -jd, 12, [[0, 9, COULEURS.bas], [9, 12, COULEURS.pieds]]);
+      g.fillStyle = COULEURS.haut; g.fillRect(11, y0 + 8, 8, 12);
+      g.save(); g.translate(15, y0 + 8); g.rotate((pose.tete || 0) * Math.PI / 180);
+      g.fillStyle = COULEURS.peau; g.fillRect(-4, -8, 8, 8);
+      g.fillStyle = COULEURS.cheveux; g.fillRect(-4, -8, 8, 3);
+      g.fillStyle = COULEURS.yeux; g.fillRect(-3, -4, 1, 1); g.fillRect(2, -4, 1, 1);
+      g.restore();
+      // bras par-dessus le corps (croisés pour le câlin, sur le visage pour le facepalm)
+      const [bg, bd] = pose.bras;
+      membre(9, y0 + 9, bg, 12, [[0, 4, COULEURS.haut], [4, 12, COULEURS.peau]]);
+      membre(21, y0 + 9, -bd, 12, [[0, 4, COULEURS.haut], [4, 12, COULEURS.peau]]);
+      // petit décor qui dit l'émotion
+      const px = (x, y, coul) => { g.fillStyle = coul; g.fillRect(x, y, 1, 1); };
+      const motif = (lignes, x, y, coul) => lignes.forEach((l, j) => [...l].forEach((ch, i) => ch === "#" && px(x + i, y + j, coul)));
+      if (pose.deco === "coeur") motif([".#.#.", "#####", "#####", ".###.", "..#.."], 12, 1, "#ff7aa8");
+      if (pose.deco === "note") motif(["..##", "..#.", "..#.", "###.", "##.."], 22, 2, "#ffd36b");
+      if (pose.deco === "etoiles") { motif([".#.", "###", ".#."], 5, 12, "#ffd36b"); motif([".#.", "###", ".#."], 22, 10, "#ffd36b"); }
+      if (pose.deco === "etincelles") { motif(["#.#", ".#.", "#.#"], 3, 4, "#ffd36b"); motif(["#.#", ".#.", "#.#"], 24, 3, "#ffd36b"); }
+      if (pose.deco === "vagues") { motif(["#..", ".#.", "..#"], 24, 4, "#9cc0ff"); motif(["#.", ".#"], 27, 9, "#9cc0ff"); }
+      if (pose.deco === "goutte") motif([".#", "##", "##"], 22, 4, "#7fb8ff");
+      // pixels nets : chaque pixel est plein ou vide
+      const img = g.getImageData(0, 0, p.width, p.height);
+      for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 110 ? 255 : 0;
+      g.putImageData(img, 0, 0);
+      const d = c.getContext("2d");
+      d.imageSmoothingEnabled = false;
+      const echelle = Math.min(c.width / p.width, c.height / p.height);
+      d.drawImage(p, (c.width - p.width * echelle) / 2, (c.height - p.height * echelle) / 2, p.width * echelle, p.height * echelle);
+    };
+    // Vignettes des articles Mistly, dessinées depuis la texture (et celles des emotes)
     document.querySelectorAll("canvas.thumb").forEach(c => {
+      if (c.dataset.thumb.startsWith("emote-")) return dessinerEmote(c, c.dataset.thumb.slice(6));
       const g = c.getContext("2d");
       g.imageSmoothingEnabled = false;
       if (c.dataset.thumb === "cape") g.drawImage(misty, 1, 1, 10, 16, 0, 0, c.width, c.height);
@@ -720,8 +807,13 @@
       const haut = tryon.getBoundingClientRect().top + scrollY - 90;
       scrollTo({ top: haut, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       stageReady.then(() => {
-        // un cosmétique à porter, ou une emote à jouer (le Câlin)
-        const b = tryon.querySelector(`.equip[data-thumb="${card.dataset.try}"], [data-anim="${card.dataset.try}"]`);
+        // une emote à jouer, ou un cosmétique à porter
+        if (card.dataset.carteEmote !== undefined) {
+          const d = card.dataset;
+          document.getElementById("stage")?.dispatchEvent(new CustomEvent("emote", { detail: { cle: d.try, nom: d.name, texte: d.text, badge: d.badge } }));
+          return;
+        }
+        const b = tryon.querySelector(`.equip[data-thumb="${card.dataset.try}"]`);
         if (b && b.getAttribute("aria-pressed") !== "true") b.click();
       });
     }));

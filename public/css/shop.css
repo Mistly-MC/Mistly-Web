@@ -271,8 +271,16 @@
 .tryon-close{position:absolute;top:12px;right:12px;z-index:5;display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line-2);background:rgb(var(--bg-rgb) / .8);color:var(--muted);cursor:pointer;font-size:14px}
 .tryon-close:hover{color:var(--text);border-color:rgb(var(--fg-rgb) / .3)}
 
-/* Emote à essayer (le Câlin) : une icône à la place de la vignette */
-.slot.item .emote-art{flex:1;min-height:0;display:grid;place-items:center;color:#ff9cb7}
-.slot.item .emote-art svg,.slot.item .emote-art .ic{width:34px;height:34px;opacity:1;color:inherit;filter:drop-shadow(0 6px 14px rgba(255,156,183,.45))}
-.slot.item [data-emote]{width:100%;padding:6px 8px;font-size:12.5px;border-radius:9px}
-.slot.item.equipped [data-emote]{background:var(--panel);color:var(--text);border:1px solid var(--line-2)}
+/* Tendances : cinq cartes sur une ligne */
+.cells.c5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:1100px){.cells.c5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:900px){.cells.c5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.cells.c5{grid-template-columns:minmax(0,1fr)}}
+.badge.new{color:#ffb3cb;border-color:rgba(255,156,183,.45)}
+
+/* Emotes : vignette sur un fond rosé, et la carte « Emotes » est un lien vers le catalogue */
+.item-art.emote{background:radial-gradient(60% 70% at 50% 45%,rgba(255,156,183,.16),transparent 70%),var(--bg-2)}
+.item-card:hover .item-art.emote{background:radial-gradient(70% 80% at 50% 45%,rgba(255,156,183,.26),transparent 70%),var(--bg-2)}
+a.soon-card{text-decoration:none}
+#emotes{scroll-margin-top:90px}
+.item-art.emote .thumb{width:90px;height:144px}

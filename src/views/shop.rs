@@ -1,7 +1,7 @@
 //! Boutique de cosmétiques.
 //!
-//! - Sans pseudo : la vitrine. L'article à la une en 3D (sur Steve, ou sur le pseudo saisi), la
-//!   collection Mistly à essayer d'un clic, et les catégories qui arrivent bientôt.
+//! - Sans pseudo : la vitrine. L'article à la une en 3D (sur Steve, ou sur le pseudo saisi), les
+//!   tendances à essayer d'un clic, le catalogue des emotes, et les catégories qui arrivent bientôt.
 //! - Avec un pseudo : le studio. À gauche, le skin du joueur en 3D (vues face / profil / dos,
 //!   animations, sa vraie cape, élytres) ; à droite, sa fiche et les catégories de
 //!   cosmétiques, toutes « bientôt disponibles », avec la cape et les élytres Mistly à essayer.
@@ -214,15 +214,52 @@ impl Article {
     }
 }
 
-/// La collection Mistly, puis les catégories qui arrivent bientôt.
+/// Les emotes du catalogue, dans l'ordre affiché. Un aperçu sur le site : elles ne sont pas
+/// encore dans Mistly Client. Leurs animations et leurs vignettes sont dans `site.js`.
+const EMOTES: [&str; 6] = ["hug", "wave", "clap", "dance", "cheer", "facepalm"];
+
+/// Nom et description d'une emote.
+fn emote_texte<'a>(tr: &'a Tr, cle: &str) -> (&'a str, &'a str) {
+    match cle {
+        "hug" => (&tr.shop_anim_hug, &tr.shop_emote_hug_p),
+        "wave" => (&tr.shop_emote_wave, &tr.shop_emote_wave_p),
+        "clap" => (&tr.shop_emote_clap, &tr.shop_emote_clap_p),
+        "dance" => (&tr.shop_emote_dance, &tr.shop_emote_dance_p),
+        "cheer" => (&tr.shop_emote_cheer, &tr.shop_emote_cheer_p),
+        _ => (&tr.shop_emote_facepalm, &tr.shop_emote_facepalm_p),
+    }
+}
+
+/// Carte d'une emote (tendances, catalogue) : un clic la joue dans l'essayage.
+fn carte_emote(tr: &Tr, cle: &str, nouveau: bool) -> Markup {
+    let (nom, texte) = emote_texte(tr, cle);
+    let badge = if nouveau { &tr.shop_new } else { &tr.shop_badge };
+    html! {
+        button.item-card.reveal type="button" data-try=(cle) data-carte-emote="" data-name=(nom) data-text=(texte) data-badge=(tr.shop_badge) {
+            span.item-art.emote { canvas.thumb data-thumb=(format!("emote-{cle}")) width="90" height="144" aria-hidden="true" {} }
+            span.item-body {
+                strong { (nom) }
+                span.desc { (texte) }
+                span.item-foot {
+                    span.badge.new[nouveau] { (badge) }
+                    span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
+                }
+            }
+        }
+    }
+}
+
+/// Les tendances, le catalogue des emotes, puis les catégories qui arrivent bientôt.
 fn collection(p: &Page) -> Markup {
     let tr = p.tr;
     let bientot = [Category::Headwear, Category::Wings, Category::Tags, Category::Auras, Category::Pets, Category::Emotes];
     html! {
         section.blk {
             div.col {
-                h2.blk-title { (tr.shop_collection) sup { "(" (ARTICLES.len()) ")" } }
-                div.cells.c4 {
+                h2.blk-title { (tr.shop_trending) sup { "(" (ARTICLES.len() + 1) ")" } }
+                div.cells.c5 {
+                    // la nouveauté d'abord : le Câlin
+                    (carte_emote(tr, "hug", true))
                     @for a in &ARTICLES {
                         button.item-card.reveal type="button" data-try=(a.thumb) {
                             span.item-art { canvas.thumb data-thumb=(a.thumb) width="60" height="96" aria-hidden="true" {} }
@@ -240,14 +277,27 @@ fn collection(p: &Page) -> Markup {
             }
         }
         div.col.hatch aria-hidden="true" {}
+        // Le catalogue des emotes (la carte « Emotes » plus bas y mène)
+        section.blk #emotes {
+            div.col {
+                h2.blk-title { (tr.shop_cat_emotes) sup { "(" (EMOTES.len()) ")" } }
+                p.blk-lead { (tr.shop_emotes_lead) }
+                div.cells.c3 {
+                    @for cle in EMOTES {
+                        (carte_emote(tr, cle, cle == "hug"))
+                    }
+                }
+            }
+        }
+        div.col.hatch aria-hidden="true" {}
         section.blk {
             div.col {
                 h2.blk-title { (tr.shop_coming_t) sup { "(" (bientot.len()) ")" } }
                 div.cells.c3 {
                     @for c in bientot {
                         @let (titre, texte) = c.text(tr);
-                        // Chapeaux, ailes et emotes ont déjà un article à essayer : la carte ouvre l'essayage
-                        @let essai = match c { Category::Headwear => Some("cloudly"), Category::Wings => Some("elytra"), Category::Emotes => Some("hug"), _ => None };
+                        // Chapeaux et ailes ont déjà un article à essayer : la carte ouvre l'essayage
+                        @let essai = match c { Category::Headwear => Some("cloudly"), Category::Wings => Some("elytra"), _ => None };
                         @let corps = html! {
                             pre.ascii-noise aria-hidden="true" {}
                             span.soon-body {
@@ -256,12 +306,15 @@ fn collection(p: &Page) -> Markup {
                                 span.desc { (texte) }
                                 span.soon-foot {
                                     span.badge { (tr.shop_badge) }
-                                    @if essai.is_some() { span.try-it { (tr.shop_try_on) (icons::arrow_right()) } }
+                                    @if essai.is_some() || matches!(c, Category::Emotes) { span.try-it { (tr.shop_try_on) (icons::arrow_right()) } }
                                 }
                             }
                         };
                         @if let Some(t) = essai {
                             button.soon-card.clickable.reveal type="button" data-try=(t) { (corps) }
+                        } @else if matches!(c, Category::Emotes) {
+                            // Emotes : la carte mène au catalogue, plus haut
+                            a.soon-card.clickable.reveal href="#emotes" { (corps) }
                         } @else {
                             div.soon-card.reveal { (corps) }
                         }
@@ -282,7 +335,6 @@ fn stage(p: &Page, skin: &str, name: Option<&str>, studio: bool) -> Markup {
         ("run", &tr.shop_anim_run),
         ("fly", &tr.shop_anim_fly),
         ("crouch", &tr.shop_anim_crouch),
-        ("hug", &tr.shop_anim_hug),
     ];
     html! {
         div.stage.studio-stage[studio] #stage data-skin=(skin) data-name=(name.unwrap_or("")) {
@@ -369,17 +421,19 @@ fn locker(p: &Page, player: &str) -> Markup {
                                     data-equip=(tr.shop_equip) data-unequip=(tr.shop_unequip) { (tr.shop_equip) }
                             }
                         }
-                        // Emotes : le Câlin, joué dans l'aperçu (pas encore en jeu)
+                        // Emotes : tout le catalogue, joué dans l'aperçu (pas encore en jeu)
                         @let emote = matches!(c, Category::Emotes);
                         @if emote {
-                            div.slot.item {
-                                div.emote-art { (icons::smile()) }
-                                strong { (tr.shop_anim_hug) }
-                                button.btn.play.sm type="button" data-emote="hug" aria-pressed="false"
-                                    data-play=(tr.shop_try_on) data-stop=(tr.shop_emote_stop) { (tr.shop_try_on) }
+                            @for cle in EMOTES {
+                                div.slot.item {
+                                    canvas.thumb data-thumb=(format!("emote-{cle}")) width="60" height="96" aria-hidden="true" {}
+                                    strong { (emote_texte(tr, cle).0) }
+                                    button.btn.play.sm type="button" data-emote=(cle) aria-pressed="false"
+                                        data-play=(tr.shop_try_on) data-stop=(tr.shop_emote_stop) { (tr.shop_try_on) }
+                                }
                             }
                         }
-                        @for _ in 0..(if item.is_some() || emote { 5 } else { 6 }) {
+                        @for _ in 0..(if emote { 0 } else if item.is_some() { 5 } else { 6 }) {
                             div.slot { (c.icon()) span { (tr.shop_badge) } }
                         }
                     }
