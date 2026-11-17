@@ -24,8 +24,6 @@ pub struct PageQuery {
     filter: Option<String>,
     /// Boutique : pseudo Minecraft saisi.
     player: Option<String>,
-    /// Boutique : revenir au formulaire pour changer de pseudo.
-    change: Option<String>,
     /// Patch notes : `client` pour les versions de Mistly Client.
     project: Option<String>,
 }
@@ -201,22 +199,30 @@ pub async fn shop(
     let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
     let typed = q.player.as_deref().map(str::trim);
 
-    let (view, new_player) = match (typed, q.change.is_some(), saved) {
-        (Some(name), _, _) if shop::valid_username(name) => {
-            (ShopView::Studio { player: name }, Some(name))
-        }
-        (Some(name), _, _) => (
+    // Toujours la boutique : un pseudo saisi (retenu) ou retenu met seulement son skin dans
+    // l'aperçu ; s'il vient d'être saisi, l'essayage s'ouvre dessus.
+    let (view, new_player) = match typed {
+        Some(name) if shop::valid_username(name) => (
+            ShopView::Form {
+                value: name,
+                invalid: false,
+                open: true,
+            },
+            Some(name),
+        ),
+        Some(name) => (
             ShopView::Form {
                 value: name,
                 invalid: !name.is_empty(),
+                open: false,
             },
             None,
         ),
-        (None, false, Some(name)) => (ShopView::Studio { player: name }, None),
-        (None, _, saved) => (
+        None => (
             ShopView::Form {
                 value: saved.unwrap_or(""),
                 invalid: false,
+                open: false,
             },
             None,
         ),

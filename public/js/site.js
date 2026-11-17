@@ -749,7 +749,7 @@
       }))
       .then(modele => { modele.visible = false; tete.add(modele); return modele; });
     let chapeauPorte = null, flotte = 0;
-    // Taille du chapeau porté (le curseur « Taille », entre 60 et 140 %) : le chapeau grandit ou
+    // Taille du chapeau porté (le curseur « Taille », de 60 % à 100 %, sa taille d'origine) : il
     // rapetisse à partir du haut de la tête (y = 8), où il est posé
     let tailleChapeau = 1;
     const ajusterTaille = m => {
@@ -770,7 +770,7 @@
       flotte = chapeauPorte && !reduce ? requestAnimationFrame(flotter) : 0;
     };
     // le pseudo au-dessus de la tête monte au-dessus du chapeau porté
-    const HAUTEUR_CHAPEAU = { cloudly: 10, bunny: 13 };
+    const HAUTEUR_CHAPEAU = { cloudly: 8, bunny: 13 };
     const placerPseudo = () => {
       viewer.nameTagYOffset = (viewer.playerObject.ears.visible ? 25 : 20) + (HAUTEUR_CHAPEAU[chapeauPorte] || 0) * tailleChapeau;
       if (viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset;
@@ -778,7 +778,7 @@
     const reglageTaille = document.getElementById("reglage-taille");
     const curseurTaille = document.getElementById("taille-chapeau");
     curseurTaille?.addEventListener("input", () => {
-      tailleChapeau = Math.min(1.4, Math.max(0.6, Number(curseurTaille.value) || 1));
+      tailleChapeau = Math.min(1, Math.max(0.6, Number(curseurTaille.value) || 1));
       document.getElementById("taille-valeur").textContent = `${Math.round(tailleChapeau * 100)} %`;
       Object.values(chapeaux).forEach(p => p.then(ajusterTaille));
       placerPseudo();
@@ -816,7 +816,8 @@
     const placerMinime = () => {
       const haut = corps.innerLayer.position.y + 6;
       const hanches = (minime.skin.position.y + minime.skin.leftLeg.position.y) * ECHELLE_MINIME;
-      minime.position.set(6 * epaule, haut - hanches + 0.4, -0.6);
+      // un peu vers l'extérieur de l'épaule : sa tête ne touche pas celle du joueur
+      minime.position.set(7 * epaule, haut - hanches + 0.4, -0.6);
     };
     let minimePorte = false, minimeNom = null, bouge = 0;
     const habillerMinime = async nom => {
@@ -858,21 +859,21 @@
       image.src = `/skin/${nom}`;
     };
     // assis, les jambes en avant ; il fait coucou de son bras extérieur, l'autre posé
-    // assis à califourchon sur l'épaule : les jambes écartées pendent devant ; le bras du côté
-    // extérieur se lève et fait coucou, l'autre se pose vers la tête du joueur. (Pour skinview3d,
-    // une rotation.z positive écarte le bras ou la jambe gauche, une négative le droit.)
+    // assis à califourchon sur l'épaule : les jambes écartées pendent devant, les bras posés
+    // dessus. (Pour skinview3d, une rotation.z positive écarte le bras ou la jambe gauche, une
+    // négative le droit.)
     const poserMinime = maintenant => {
       const t = maintenant / 1000, s = minime.skin;
       s.rightLeg.rotation.x = s.leftLeg.rotation.x = -1.25;
       s.rightLeg.rotation.z = -0.38; s.leftLeg.rotation.z = 0.38;
-      const coucou = 2.25 + Math.sin(t * 7) * 0.45;
-      const [leve, pose] = epaule > 0 ? [s.leftArm, s.rightArm] : [s.rightArm, s.leftArm];
-      leve.rotation.x = 0;
-      leve.rotation.z = epaule * coucou;
-      pose.rotation.x = -0.35;
-      pose.rotation.z = -epaule * 1.1;
-      s.head.rotation.y = Math.sin(t * 0.8) * 0.25 - epaule * 0.15;
-      s.head.rotation.z = epaule * 0.08;
+      // les deux bras baissés, posés devant sur les jambes, qui se balancent à peine
+      const balance = Math.sin(t * 2) * 0.06;
+      s.leftArm.rotation.x = s.rightArm.rotation.x = -0.75 + balance;
+      s.leftArm.rotation.z = 0.12;
+      s.rightArm.rotation.z = -0.12;
+      // la tête regarde un peu vers l'extérieur, loin de celle du joueur
+      s.head.rotation.y = Math.sin(t * 0.8) * 0.2 + epaule * 0.2;
+      s.head.rotation.z = -epaule * 0.05;
     };
     const animerMinime = maintenant => {
       poserMinime(maintenant);

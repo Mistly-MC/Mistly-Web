@@ -15,10 +15,9 @@ use maud::{Markup, html};
 
 /// Ce que la page affiche.
 pub enum ShopView<'a> {
-    /// Formulaire du pseudo (avec la saisie précédente et, si besoin, l'erreur).
-    Form { value: &'a str, invalid: bool },
-    /// Le studio du joueur choisi.
-    Studio { player: &'a str },
+    /// La boutique, avec le pseudo saisi ou retenu (son skin dans l'aperçu) et, si besoin,
+    /// l'erreur ; `open` : l'essayage est déplié d'office (un pseudo vient d'être saisi).
+    Form { value: &'a str, invalid: bool, open: bool },
 }
 
 /// Pseudo Minecraft valide : 3 à 16 caractères, lettres ASCII, chiffres et `_`.
@@ -26,72 +25,38 @@ pub fn valid_username(name: &str) -> bool {
     (3..=16).contains(&name.len()) && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
 }
 
-/// Catégories de cosmétiques (inspirées des grandes boutiques de cosmétiques Minecraft).
+/// Catégories de cosmétiques montrées dans « Bientôt dans la boutique ».
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Category {
     Capes,
-    Wings,
     Headwear,
-    Bodywear,
     Auras,
     /// Styles du pseudo au-dessus de la tête
     Tags,
     Pets,
     Emotes,
-    Bundles,
 }
 
 impl Category {
-    const ALL: [Category; 8] = [
-        Category::Capes,
-        Category::Wings,
-        Category::Headwear,
-        Category::Bodywear,
-        Category::Auras,
-        Category::Pets,
-        Category::Emotes,
-        Category::Bundles,
-    ];
-
-    fn slug(self) -> &'static str {
-        match self {
-            Category::Capes => "capes",
-            Category::Wings => "wings",
-            Category::Headwear => "headwear",
-            Category::Bodywear => "bodywear",
-            Category::Auras => "auras",
-            Category::Tags => "tags",
-            Category::Pets => "pets",
-            Category::Emotes => "emotes",
-            Category::Bundles => "bundles",
-        }
-    }
-
     fn text(self, tr: &Tr) -> (&str, &str) {
         match self {
             Category::Capes => (&tr.shop_cat_capes, &tr.shop_cat_capes_p),
-            Category::Wings => (&tr.shop_cat_wings, &tr.shop_cat_wings_p),
             Category::Headwear => (&tr.shop_cat_hats, &tr.shop_cat_hats_p),
-            Category::Bodywear => (&tr.shop_cat_bodywear, &tr.shop_cat_bodywear_p),
             Category::Auras => (&tr.shop_cat_effects, &tr.shop_cat_effects_p),
             Category::Tags => (&tr.shop_cat_tags, &tr.shop_cat_tags_p),
             Category::Pets => (&tr.shop_cat_pets, &tr.shop_cat_pets_p),
             Category::Emotes => (&tr.shop_cat_emotes, &tr.shop_cat_emotes_p),
-            Category::Bundles => (&tr.shop_cat_bundles, &tr.shop_cat_bundles_p),
         }
     }
 
     fn icon(self) -> Markup {
         match self {
             Category::Capes => icons::cape(),
-            Category::Wings => icons::wings(),
             Category::Headwear => icons::crown(),
-            Category::Bodywear => icons::shirt(),
             Category::Auras => icons::sparkles(),
             Category::Tags => icons::tag(),
             Category::Pets => icons::paw(),
             Category::Emotes => icons::smile(),
-            Category::Bundles => icons::package(),
         }
     }
 }
@@ -99,7 +64,7 @@ impl Category {
 pub fn render(p: &Page, view: ShopView) -> Markup {
     let tr = p.tr;
     let main = match view {
-        ShopView::Form { value, invalid } => {
+        ShopView::Form { value, invalid, open } => {
             let preview = valid_username(value).then_some(value);
             html! {
                 section.shop-top {
@@ -112,8 +77,8 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                     }
                 }
                 // L'essayage : le studio 3D, dans la page, déplié seulement quand on clique sur un
-                // cosmétique (ou ouvert d'office après une saisie de pseudo refusée)
-                section.tryon #tryon aria-labelledby="feat-name" hidden[!invalid] {
+                // cosmétique (ou ouvert d'office après une saisie de pseudo, acceptée ou refusée)
+                section.tryon #tryon aria-labelledby="feat-name" hidden[!invalid && !open] {
                   div.tryon-in {
                     div.col.tryon-box {
                     button.tryon-close type="button" data-close aria-label=(tr.shop_close) { "✕" }
@@ -141,17 +106,6 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                 (collection(p))
             }
         }
-        ShopView::Studio { player } => html! {
-            section.studio {
-                div.wrap {
-                    (haut_de_page(tr, player))
-                    div.studio-grid {
-                        (stage(p, player, Some(player), true))
-                        (locker(p, player))
-                    }
-                }
-            }
-        },
     };
     layout::render(
         p,
@@ -235,12 +189,13 @@ impl Catalogue {
 }
 
 /// Réglages de l'article porté, montrés par site.js quand ils servent : la taille du chapeau
-/// (entre 60 et 140 %), et le pseudo dont le Minime prend le skin (le sien par défaut).
+/// (de 60 % à 100 %, la taille d'origine, par défaut), le pseudo dont le Minime prend le skin (le
+/// sien par défaut) et l'épaule où il s'assoit.
 fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
     html! {
         div.reglage #reglage-taille hidden {
             label for="taille-chapeau" { (tr.shop_size) }
-            input #taille-chapeau type="range" min="0.6" max="1.4" step="0.05" value="1";
+            input #taille-chapeau type="range" min="0.6" max="1" step="0.05" value="1";
             output #taille-valeur for="taille-chapeau" { "100 %" }
         }
         div.reglage #reglage-minime hidden {
@@ -545,81 +500,6 @@ fn stage(p: &Page, skin: &str, name: Option<&str>, studio: bool) -> Markup {
                     button.toggle type="button" data-toggle="partner" aria-pressed="true" hidden { (icons::user()) span { (tr.shop_partner) } }
                     button.toggle type="button" data-toggle="cape" aria-pressed="false" disabled title=(tr.shop_no_cape) { (icons::cape()) span { (tr.shop_own_cape) } }
                     button.toggle type="button" data-toggle="elytra" aria-pressed="false" { (icons::wings()) span { (tr.shop_elytra) } }
-                }
-            }
-        }
-    }
-}
-
-/// Fiche du joueur et catégories de cosmétiques.
-fn locker(p: &Page, player: &str) -> Markup {
-    let tr = p.tr;
-    html! {
-        aside.locker {
-            div.pcard {
-                img.head src=(format!("https://mc-heads.net/avatar/{player}/96")) alt="" width="64" height="64";
-                div.pinfo {
-                    h1 #pname { (player) }
-                    div.pmeta {
-                        span.chip #pmodel data-classic=(tr.shop_model_classic) data-slim=(tr.shop_model_slim) { (tr.shop_model_classic) }
-                    }
-                    button.uuid #puuid type="button" title=(tr.shop_copy_uuid) data-copied=(tr.shop_copied) hidden {
-                        code {} (icons::copy())
-                    }
-                    p.pmissing #pmissing hidden { (tr.shop_not_found) }
-                }
-            }
-            div.plinks {
-                a href=(format!("https://namemc.com/profile/{player}")) target="_blank" rel="noopener" { (tr.shop_namemc) (icons::external()) }
-                a href="/shop?change=1" { (tr.shop_change) }
-            }
-
-            h2 { (tr.shop_cosmetics_t) }
-            p.muted { (tr.shop_cosmetics_p) }
-            div.cat-tabs role="tablist" aria-label=(tr.shop_cosmetics_t) {
-                @for (i, c) in Category::ALL.iter().enumerate() {
-                    button type="button" role="tab" id=(format!("tab-{}", c.slug())) aria-controls=(format!("cat-{}", c.slug()))
-                        aria-selected=(if i == 0 { "true" } else { "false" }) data-cat=(c.slug()) {
-                        (c.icon()) span { (c.text(tr).0) }
-                    }
-                }
-            }
-            @for (i, c) in Category::ALL.iter().enumerate() {
-                @let (title, text) = c.text(tr);
-                div.cat-panel role="tabpanel" id=(format!("cat-{}", c.slug())) aria-labelledby=(format!("tab-{}", c.slug())) hidden[i != 0] {
-                    div.cat-head { h3 { (c.icon()) (title) } span.badge { (tr.shop_soon) } }
-                    p { (text) }
-                    @let item = match c {
-                        Category::Capes => Some(("cape", &tr.shop_item_cape)),
-                        Category::Wings => Some(("elytra", &tr.shop_item_elytra)),
-                        _ => None,
-                    };
-                    div.slots {
-                        // Première case : l'article Mistly à essayer, s'il y en a un dans cette catégorie.
-                        @if let Some((back, name)) = item {
-                            div.slot.item {
-                                canvas.thumb data-thumb=(back) width="60" height="96" aria-hidden="true" {}
-                                strong { (name) }
-                                button.btn.play.sm.equip type="button" data-back=(back) aria-pressed="false"
-                                    data-equip=(tr.shop_equip) data-unequip=(tr.shop_unequip) { (tr.shop_equip) }
-                            }
-                        }
-                        // Emotes : tout le catalogue, joué dans l'aperçu (pas encore en jeu)
-                        @let emote = matches!(c, Category::Emotes);
-                        @if emote {
-                            @for cle in EMOTES {
-                                div.slot.item {
-                                    canvas.thumb data-thumb=(format!("emote-{cle}")) width="60" height="96" aria-hidden="true" {}
-                                    strong { (emote_texte(tr, cle).0) }
-                                    button.btn.play.sm type="button" data-emote=(cle) aria-pressed="false"
-                                        data-play=(tr.shop_try_on) data-stop=(tr.shop_emote_stop) { (tr.shop_try_on) }
-                                }
-                            }
-                        }
-                        @for _ in 0..(if emote { 0 } else if item.is_some() { 5 } else { 6 }) {
-                            div.slot { (c.icon()) span { (tr.shop_badge) } }
-                        }
-                    }
                 }
             }
         }
