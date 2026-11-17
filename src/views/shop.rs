@@ -233,7 +233,7 @@ fn bouton_article(tr: &Tr, a: &Article) -> Markup {
     html! {
         button.equip type="button" data-back=(a.back.unwrap_or("none")) data-src=(a.src) data-thumb=(a.thumb)
             data-name=(a.nom(tr)) data-text=(a.texte(tr)) aria-pressed="false"
-            data-badge=(if a.early { &tr.shop_early_badge } else { &tr.shop_free_client }) data-early=[a.early.then_some("1")]
+            data-badge=(a.badge(tr)) data-early=[a.early.then_some("1")] data-soon=[a.bientot.then_some("1")]
             data-equip=(tr.shop_equip) data-unequip=(tr.shop_unequip) {
             canvas.thumb data-thumb=(a.thumb) width="30" height="48" aria-hidden="true" {}
             span { (a.nom(tr)) }
@@ -250,10 +250,10 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
     let nombre = if cat == Catalogue::Emotes { EMOTES.len() } else { cat.articles().count() };
     // la fiche montre d'abord le premier de la liste
     let (premier, premier_texte, premier_badge) = match cat.articles().next() {
-        Some(a) => (a.nom(tr), a.texte(tr), if a.early { &tr.shop_early_badge } else { &tr.shop_free_client }),
+        Some(a) => (a.nom(tr), a.texte(tr), a.badge(tr)),
         None => {
             let (nom, texte) = emote_texte(tr, EMOTES[0]);
-            (nom, texte, &tr.shop_new)
+            (nom, texte, tr.shop_new.as_str())
         }
     };
     let main = html! {
@@ -320,13 +320,16 @@ struct Article {
     /// Texture utilisée dans l'aperçu 3D (`misty` ou `early`)
     src: &'static str,
     early: bool,
+    /// Pas encore dans Mistly Client : seulement dans l'aperçu du site (badge « Bientôt »)
+    bientot: bool,
 }
 
-const ARTICLES: [Article; 4] = [
-    Article { thumb: "cape", back: Some("cape"), src: "misty", early: false },
-    Article { thumb: "elytra", back: Some("elytra"), src: "misty", early: false },
-    Article { thumb: "early", back: Some("cape"), src: "early", early: true },
-    Article { thumb: "cloudly", back: None, src: "", early: false },
+const ARTICLES: [Article; 5] = [
+    Article { thumb: "cape", back: Some("cape"), src: "misty", early: false, bientot: false },
+    Article { thumb: "elytra", back: Some("elytra"), src: "misty", early: false, bientot: false },
+    Article { thumb: "early", back: Some("cape"), src: "early", early: true, bientot: false },
+    Article { thumb: "cloudly", back: None, src: "", early: false, bientot: false },
+    Article { thumb: "bunny", back: None, src: "", early: false, bientot: true },
 ];
 
 impl Article {
@@ -335,6 +338,7 @@ impl Article {
             "cape" => &tr.shop_item_cape,
             "elytra" => &tr.shop_item_elytra,
             "early" => &tr.shop_early_t,
+            "bunny" => &tr.shop_bunny_t,
             _ => &tr.shop_cloudly_t,
         }
     }
@@ -343,7 +347,18 @@ impl Article {
             "cape" => &tr.shop_cape_p,
             "elytra" => &tr.shop_elytra_p,
             "early" => &tr.shop_early_p,
+            "bunny" => &tr.shop_bunny_p,
             _ => &tr.shop_cloudly_p,
+        }
+    }
+    /// Le badge de l'article : premiers joueurs, bientôt, ou gratuit avec Mistly Client.
+    fn badge<'a>(&self, tr: &'a Tr) -> &'a str {
+        if self.early {
+            &tr.shop_early_badge
+        } else if self.bientot {
+            &tr.shop_badge
+        } else {
+            &tr.shop_free_client
         }
     }
 }

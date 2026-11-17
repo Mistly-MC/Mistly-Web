@@ -374,6 +374,8 @@
       viewer.nameTag = name
         ? new sv.NameTagObject(name, { font: "48px Silkscreen", height: 2.4, margin: [4, 8, 2, 8], textStyle: "#eaf1ff", backgroundStyle: "rgba(10,15,29,.55)" })
         : null;
+      // (un pseudo recréé reprend sa hauteur normale : on le remonte au-dessus du chapeau)
+      placerPseudo();   // setName ne sert qu'après le chargement de l'aperçu (loadPlayer)
     };
 
     // ---- Emotes (aperçu de celles qui arrivent sur Mistly Client) ----
@@ -399,7 +401,7 @@
         s.body.rotation.x = -0.06 * ouvert + 0.08 * serre;
         s.head.rotation.x = -0.12 * ouvert + 0.18 * serre;
         s.head.rotation.z = 0.28 * berce;
-        s.head.rotation.y = tourne * serre;   // à deux : la tête tournée, posée sur l'épaule de l'autre
+        s.head.rotation.y = tourne * serre;   // à deux : la tête tournée (négatif : vers sa droite)
         p.rotation.z = 0.07 * berce;
       },
       // Salut : la main droite levée qui s'agite
@@ -488,15 +490,16 @@
     // ceux de l'autre autour de la taille
     // Un bras ne porte qu'à 10 pixels de l'épaule : pour que les mains arrivent dans le dos de
     // l'autre, les deux se rapprochent et se décalent un peu de côté, la tête de chacun passant à
-    // côté de celle de l'autre, tournée vers son épaule, comme dans un vrai câlin.
+    // côté de celle de l'autre. Les deux tournent la tête vers leur droite, du côté où ils sont
+    // décalés : les visages regardent chacun ailleurs, joue contre joue, comme dans un vrai câlin.
     const calinADeux = (joueur, temps) => {
       joueur.position.set(-3.3, 0, 2.1);
       joueur.rotation.y = Math.PI / 2;
-      POSES.hug(joueur, temps, { autour: 0.45, leve: 1.7, tourne: 0.45 });
+      POSES.hug(joueur, temps, { autour: 0.45, leve: 1.7, tourne: -0.45 });
       ami.visible = true;
       ami.position.set(3.3, 0, -2.1);
       ami.rotation.y = -Math.PI / 2;
-      POSES.hug(ami, temps, { autour: 0.5, leve: 1.2, tourne: 0.45 });
+      POSES.hug(ami, temps, { autour: 0.5, leve: 1.2, tourne: -0.45 });
     };
     const EMOTES = Object.fromEntries(Object.entries(POSES).map(([cle, pose]) => [cle, class extends sv.PlayerAnimation {
       animate(joueur) {
@@ -634,46 +637,75 @@
       if (back.mode === "elytra") setBack(ownCape ? "cape" : "none", "own");
       else setBack("elytra", ownCape && back.source === "own" ? "own" : "misty");
     });
-    // Cloudly : le petit nuage du mod au-dessus de la tête, avec les mêmes cubes que dans le jeu
-    // (CloudHatLayer de Mistly Client, en pixels de modèle ; y vers le bas dans le jeu, vers le
-    // haut ici). Les cubes sont faits avec les classes du modèle 3D du joueur.
+    // Chapeaux, en cubes posés sur la tête du joueur 3D. Les cubes sont faits avec les classes du
+    // modèle 3D du joueur (pixels de modèle, y vers le haut, la tête va de 0 à 8).
     const tete = viewer.playerObject.skin.head;
     const cubeModele = tete.innerLayer;
+    const cube = (l, h, p, couleur, x, y, z, lueur = 0x7d8fb8, intensite = 0.55) => {
+      const matiere = new cubeModele.material.constructor({ color: couleur, emissive: lueur, emissiveIntensity: intensite });
+      const c = new cubeModele.constructor(new cubeModele.geometry.constructor(l, h, p), matiere);
+      c.position.set(x, y, z);
+      return c;
+    };
+    // un groupe vide (même classe, sans forme) : ce qu'on y met bouge ensemble
+    const groupe = (x, y, z, enfants) => {
+      const g = new cubeModele.constructor();
+      g.position.set(x, y, z);
+      enfants.forEach(e => g.add(e));
+      return g;
+    };
+    // Cloudly : les mêmes cubes que CloudHatLayer de Mistly Client (là-bas, y vers le bas)
     const CUBES_NUAGE = [
       [-5, -12.5, -4, 10, 3, 8, 0xf2f6ff], [-3, -15, -3, 6, 3, 6, 0xffffff], [0, -14, 0.5, 4, 2, 4, 0xffffff],
       [-7, -12, -3, 3, 2, 6, 0xe4ecfb], [4, -12, -2.5, 3, 2, 5, 0xe4ecfb],
     ];
-    const nuage = CUBES_NUAGE.map(([x, y, z, l, h, p, couleur]) => {
-      const matiere = new cubeModele.material.constructor({ color: couleur, emissive: 0x7d8fb8, emissiveIntensity: 0.55 });
-      const cube = new cubeModele.constructor(new cubeModele.geometry.constructor(l, h, p), matiere);
-      cube.position.set(x + l / 2, -(y + h / 2), z + p / 2);
-      cube.userData.y = cube.position.y;
-      cube.visible = false;
-      tete.add(cube);
-      return cube;
-    });
-    let chapeauPorte = false, flotte = 0;
-    // le nuage flotte doucement, comme en jeu
+    // Oreilles de lapin : deux oreilles blanches à l'intérieur rose, un peu écartées, posées sur la tête
+    const oreille = cote => {
+      const o = groupe(cote * 2.4, 8, 0.3, [
+        cube(2.6, 8, 1.4, 0xf5f5f8, 0, 4, 0, 0x50505a, 0.35),
+        cube(1.2, 6, 0.3, 0xf3a3bd, 0, 3.6, 0.82, 0x5a3040, 0.3),
+      ]);
+      o.rotation.z = -cote * 0.17;
+      return o;
+    };
+    const CHAPEAUX = {
+      cloudly: CUBES_NUAGE.map(([x, y, z, l, h, p, couleur]) => cube(l, h, p, couleur, x + l / 2, -(y + h / 2), z + p / 2)),
+      bunny: [oreille(-1), oreille(1)],
+    };
+    Object.values(CHAPEAUX).flat().forEach(c => { c.userData.y = c.position.y; c.visible = false; tete.add(c); });
+    let chapeauPorte = null, flotte = 0;
+    // le nuage flotte doucement, comme en jeu ; les oreilles frémissent
     const flotter = maintenant => {
-      nuage.forEach(c => { c.position.y = c.userData.y + Math.sin(maintenant / 1000 * 1.6) * 0.45; });
+      const t = maintenant / 1000;
+      if (chapeauPorte === "cloudly") CHAPEAUX.cloudly.forEach(c => { c.position.y = c.userData.y + Math.sin(t * 1.6) * 0.45; });
+      if (chapeauPorte === "bunny") CHAPEAUX.bunny.forEach((o, i) => { o.rotation.z = (i ? -0.17 : 0.17) + Math.sin(t * 2.2 + i * 1.3) * 0.06; });
       flotte = chapeauPorte && !reduce ? requestAnimationFrame(flotter) : 0;
     };
-    const porterChapeau = on => {
-      chapeauPorte = on;
-      nuage.forEach(c => { c.visible = on; });
+    // le pseudo au-dessus de la tête monte au-dessus du chapeau porté
+    const HAUTEUR_CHAPEAU = { cloudly: 7, bunny: 9 };
+    const placerPseudo = () => {
+      viewer.nameTagYOffset = (viewer.playerObject.ears.visible ? 25 : 20) + (HAUTEUR_CHAPEAU[chapeauPorte] || 0);
+      if (viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset;
+    };
+    // porte un chapeau (sa clé, comme « cloudly »), ou aucun (null)
+    const porterChapeau = cle => {
+      chapeauPorte = cle;
+      placerPseudo();
+      Object.entries(CHAPEAUX).forEach(([k, cubes]) => cubes.forEach(c => { c.visible = k === cle; }));
       equipButtons.filter(b => b.dataset.back === "none").forEach(b => {
+        const on = b.dataset.thumb === cle;
         b.setAttribute("aria-pressed", String(on));
         if (!b.querySelector(".thumb")) b.textContent = on ? b.dataset.unequip : b.dataset.equip;
         b.closest(".item")?.classList.toggle("equipped", on);
       });
-      if (on && !flotte) flotte = requestAnimationFrame(flotter);
+      if (cle && !flotte) flotte = requestAnimationFrame(flotter);
     };
     const featName = document.getElementById("feat-name"), featText = document.getElementById("feat-text");
     equipButtons.forEach(b => b.addEventListener("click", () => {
       const src = b.dataset.src || "misty";
-      const hat = b.dataset.back === "none";   // Cloudly : un chapeau, porté par-dessus la cape
-      const on = hat ? chapeauPorte : back.mode === b.dataset.back && back.source === src;
-      if (hat) porterChapeau(!on);
+      const hat = b.dataset.back === "none";   // un chapeau : porté en plus de la cape
+      const on = hat ? chapeauPorte === b.dataset.thumb : back.mode === b.dataset.back && back.source === src;
+      if (hat) porterChapeau(on ? null : b.dataset.thumb);
       else setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
       // Vitrine : le nom et la description de l'article choisi
       if (!on && featName && b.dataset.name) {
@@ -681,7 +713,7 @@
         featText.textContent = b.dataset.text;
         const badge = document.getElementById("feat-badge");
         badge.textContent = b.dataset.badge;
-        badge.className = "badge " + (b.dataset.early ? "early" : "free");
+        badge.className = "badge" + (b.dataset.early ? " early" : b.dataset.soon ? "" : " free");
       }
     }));
     // Une emote demandée par la boutique (tendances, catalogue) : jouée dans l'aperçu, avec son
@@ -769,6 +801,16 @@
         rows.forEach((row, y) => [...row].forEach((ch, x) => {
           if (ch !== "#") return;
           g.fillStyle = y >= 4 ? "#b9cdf5" : "#f2f6ff";
+          g.fillRect(ox + x * px, oy + y * px, px, px);
+        }));
+      } else if (c.dataset.thumb === "bunny") {
+        // Oreilles de lapin : deux oreilles blanches, l'intérieur rose
+        const rows = [".##....##.", "#pp#..#pp#", "#pp#..#pp#", "#pp#..#pp#", "#pp#..#pp#", "#pp#..#pp#", ".##....##.", ".##....##."];
+        const px = Math.floor(c.width / 12);
+        const ox = (c.width - 10 * px) / 2, oy = (c.height - rows.length * px) / 2;
+        rows.forEach((row, y) => [...row].forEach((ch, x) => {
+          if (ch === ".") return;
+          g.fillStyle = ch === "p" ? "#f3a3bd" : "#f5f5f8";
           g.fillRect(ox + x * px, oy + y * px, px, px);
         }));
       } else {

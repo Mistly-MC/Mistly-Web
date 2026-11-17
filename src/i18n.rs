@@ -398,6 +398,8 @@ traductions! {
     pub shop_capes_lead: String,
     pub shop_hats_lead: String,
     pub shop_back: String,
+    pub shop_bunny_t: String,
+    pub shop_bunny_p: String,
     pub shop_own_cape: String,
     pub shop_elytra: String,
     pub shop_rotate: String,
