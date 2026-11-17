@@ -127,6 +127,7 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                                 div.pick role="group" aria-label=(tr.shop_collection) {
                                     @for a in &ARTICLES { (bouton_article(tr, a)) }
                                 }
+                                (reglages(tr, preview))
                                 div.try {
                                     strong { (tr.shop_try) }
                                     p { (tr.shop_try_p) }
@@ -188,6 +189,7 @@ pub enum Catalogue {
     Emotes,
     Capes,
     Hats,
+    Pets,
 }
 
 impl Catalogue {
@@ -196,6 +198,7 @@ impl Catalogue {
             "emotes" => Some(Self::Emotes),
             "capes" => Some(Self::Capes),
             "hats" => Some(Self::Hats),
+            "pets" => Some(Self::Pets),
             _ => None,
         }
     }
@@ -205,6 +208,7 @@ impl Catalogue {
             Self::Emotes => "emotes",
             Self::Capes => "capes",
             Self::Hats => "hats",
+            Self::Pets => "pets",
         }
     }
 
@@ -214,6 +218,7 @@ impl Catalogue {
             Self::Emotes => (&tr.shop_cat_emotes, &tr.shop_emotes_lead),
             Self::Capes => (&tr.shop_cat_capes, &tr.shop_capes_lead),
             Self::Hats => (&tr.shop_cat_hats, &tr.shop_hats_lead),
+            Self::Pets => (&tr.shop_cat_pets, &tr.shop_pets_lead),
         }
     }
 
@@ -223,8 +228,26 @@ impl Catalogue {
             // les élytres se mettent avec le bouton « Élytres » de l'aperçu, pas dans la liste
             Self::Capes => a.back == Some("cape"),
             Self::Hats => a.back.is_none(),
+            Self::Pets => a.back == Some("pet"),
             Self::Emotes => false,
         })
+    }
+}
+
+/// Réglages de l'article porté, montrés par site.js quand ils servent : la taille du chapeau
+/// (entre 60 et 140 %), et le pseudo dont le Minime prend le skin (le sien par défaut).
+fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
+    html! {
+        div.reglage #reglage-taille hidden {
+            label for="taille-chapeau" { (tr.shop_size) }
+            input #taille-chapeau type="range" min="0.6" max="1.4" step="0.05" value="1";
+            output #taille-valeur for="taille-chapeau" { "100 %" }
+        }
+        div.reglage #reglage-minime hidden {
+            label for="minime-nom" { (tr.shop_minime_name) }
+            input #minime-nom type="text" value=(player.unwrap_or("")) placeholder="Steve" maxlength="16"
+                autocomplete="off" autocapitalize="off" spellcheck="false";
+        }
     }
 }
 
@@ -286,6 +309,7 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
                                 @for a in cat.articles() { (bouton_article(tr, a)) }
                             }
                         }
+                        (reglages(tr, player))
                         div.try {
                             strong { (tr.shop_try) }
                             p { (tr.shop_try_p) }
@@ -315,7 +339,7 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
 struct Article {
     /// Vignette dessinée par site.js
     thumb: &'static str,
-    /// Porté dans le dos (`cape` ou `elytra`) ; aucun pour un chapeau
+    /// Porté dans le dos (`cape` ou `elytra`), sur l'épaule (`pet`) ; aucun pour un chapeau
     back: Option<&'static str>,
     /// Texture utilisée dans l'aperçu 3D (`misty` ou `early`)
     src: &'static str,
@@ -324,12 +348,13 @@ struct Article {
     bientot: bool,
 }
 
-const ARTICLES: [Article; 5] = [
+const ARTICLES: [Article; 6] = [
     Article { thumb: "cape", back: Some("cape"), src: "misty", early: false, bientot: false },
     Article { thumb: "elytra", back: Some("elytra"), src: "misty", early: false, bientot: false },
     Article { thumb: "early", back: Some("cape"), src: "early", early: true, bientot: false },
     Article { thumb: "cloudly", back: None, src: "", early: false, bientot: false },
     Article { thumb: "bunny", back: None, src: "", early: false, bientot: true },
+    Article { thumb: "minime", back: Some("pet"), src: "", early: false, bientot: true },
 ];
 
 impl Article {
@@ -339,6 +364,7 @@ impl Article {
             "elytra" => &tr.shop_item_elytra,
             "early" => &tr.shop_early_t,
             "bunny" => &tr.shop_bunny_t,
+            "minime" => &tr.shop_minime_t,
             _ => &tr.shop_cloudly_t,
         }
     }
@@ -348,6 +374,7 @@ impl Article {
             "elytra" => &tr.shop_elytra_p,
             "early" => &tr.shop_early_p,
             "bunny" => &tr.shop_bunny_p,
+            "minime" => &tr.shop_minime_p,
             _ => &tr.shop_cloudly_p,
         }
     }
@@ -435,11 +462,12 @@ fn collection(p: &Page) -> Markup {
                 div.cells.c3 {
                     @for c in bientot {
                         @let (titre, texte) = c.text(tr);
-                        // Chapeaux, capes et emotes ont déjà leur page : la carte l'ouvre, sans « Bientôt »
+                        // Chapeaux, capes, compagnons et emotes ont déjà leur page : la carte l'ouvre, sans « Bientôt »
                         @let page = match c {
                             Category::Headwear => Some(Catalogue::Hats),
                             Category::Capes => Some(Catalogue::Capes),
                             Category::Emotes => Some(Catalogue::Emotes),
+                            Category::Pets => Some(Catalogue::Pets),
                             _ => None,
                         };
                         @let corps = html! {

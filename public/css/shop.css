@@ -285,3 +285,12 @@ a.soon-card{text-decoration:none}
 /* Pages de catalogue : l'aperçu 3D prend toute la hauteur de la ligne (plus de bande grise dessous) */
 .emotes-page .vitrine{align-items:stretch}
 .emotes-page .vitrine .stage{height:auto;min-height:clamp(460px,62vh,600px)}
+
+/* Réglages de l'article porté : taille du chapeau, pseudo du Minime */
+.reglage{display:flex;align-items:center;gap:12px;margin-top:16px;font-size:13px;color:var(--muted)}
+.reglage[hidden]{display:none}
+.reglage label{flex:none;font-weight:600;color:var(--text-2)}
+.reglage input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
+.reglage output{flex:none;min-width:46px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text)}
+.reglage input[type=text]{flex:1;min-width:0;padding:8px 11px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);font:inherit;font-size:13.5px}
+.reglage input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}

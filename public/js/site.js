@@ -553,6 +553,10 @@
       if (e.key !== "Shift" || e.repeat || avantMaj !== null || e.target.closest?.("input, textarea, [contenteditable]")) return;
       avantMaj = animActuelle;
       setAnim("crouch");
+      // accroupi tout de suite et immobile (pas l'animation qui se baisse et se relève en boucle)
+      viewer.animation.runOnce = true;
+      viewer.animation.progress = 0.125;
+      viewer.animation.paused = false;
     });
     addEventListener("keyup", e => { if (e.key === "Shift") relacherMaj(); });
     addEventListener("blur", relacherMaj);
@@ -651,7 +655,7 @@
       capeBtn?.setAttribute("aria-pressed", String(mode === "cape" && source === "own" && !!ownCape));
       elytraBtn?.setAttribute("aria-pressed", String(mode === "elytra"));
       equipButtons.forEach(b => {
-        if (b.dataset.back === "none") return;   // un chapeau : porté à part (voir porterChapeau)
+        if (b.dataset.back === "none" || b.dataset.back === "pet") return;   // chapeau, compagnon : portés à part
         const on = source === (b.dataset.src || "misty") && b.dataset.back === mode;
         b.setAttribute("aria-pressed", String(on));
         // Les boutons de la vitrine gardent leur vignette et leur nom ; ceux du studio disent Équiper / Retirer
@@ -745,11 +749,19 @@
       }))
       .then(modele => { modele.visible = false; tete.add(modele); return modele; });
     let chapeauPorte = null, flotte = 0;
+    // Taille du chapeau porté (le curseur « Taille », entre 60 et 140 %) : le chapeau grandit ou
+    // rapetisse à partir du haut de la tête (y = 8), où il est posé
+    let tailleChapeau = 1;
+    const ajusterTaille = m => {
+      m.scale.setScalar(tailleChapeau);
+      m.userData.y = 8 * (1 - tailleChapeau);
+      m.position.y = m.userData.y;
+    };
     // le nuage flotte doucement, comme en jeu ; les oreilles frémissent
     const flotter = maintenant => {
       const t = maintenant / 1000;
       chapeaux[chapeauPorte]?.then(m => {
-        if (chapeauPorte === "cloudly") m.position.y = Math.sin(t * 1.6) * 0.45;
+        if (chapeauPorte === "cloudly") m.position.y = m.userData.y + Math.sin(t * 1.6) * 0.45 * tailleChapeau;
         if (chapeauPorte === "bunny") ["ear_left", "ear_right"].forEach((n, i) => {
           const o = m.userData.nommes[n];
           if (o) o.rotation.z = o.userData.repos + Math.sin(t * 2.2 + i * 1.3) * 0.05;
@@ -760,16 +772,25 @@
     // le pseudo au-dessus de la tête monte au-dessus du chapeau porté
     const HAUTEUR_CHAPEAU = { cloudly: 10, bunny: 13 };
     const placerPseudo = () => {
-      viewer.nameTagYOffset = (viewer.playerObject.ears.visible ? 25 : 20) + (HAUTEUR_CHAPEAU[chapeauPorte] || 0);
+      viewer.nameTagYOffset = (viewer.playerObject.ears.visible ? 25 : 20) + (HAUTEUR_CHAPEAU[chapeauPorte] || 0) * tailleChapeau;
       if (viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset;
     };
+    const reglageTaille = document.getElementById("reglage-taille");
+    const curseurTaille = document.getElementById("taille-chapeau");
+    curseurTaille?.addEventListener("input", () => {
+      tailleChapeau = Math.min(1.4, Math.max(0.6, Number(curseurTaille.value) || 1));
+      document.getElementById("taille-valeur").textContent = `${Math.round(tailleChapeau * 100)} %`;
+      Object.values(chapeaux).forEach(p => p.then(ajusterTaille));
+      placerPseudo();
+    });
     // porte un chapeau (sa clé, comme « cloudly »), ou aucun (null)
     const porterChapeau = cle => {
       chapeauPorte = cle;
       placerPseudo();
+      if (reglageTaille) reglageTaille.hidden = !cle;
       // le modèle se charge la première fois qu'on le porte
       Object.entries(chapeaux).forEach(([k, p]) => p.then(m => { m.visible = k === chapeauPorte; }));
-      if (cle) chargerChapeau(cle).then(m => { m.visible = chapeauPorte === cle; }).catch(() => {});
+      if (cle) chargerChapeau(cle).then(m => { ajusterTaille(m); m.visible = chapeauPorte === cle; }).catch(() => {});
       equipButtons.filter(b => b.dataset.back === "none").forEach(b => {
         const on = b.dataset.thumb === cle;
         b.setAttribute("aria-pressed", String(on));
@@ -778,12 +799,103 @@
       });
       if (cle && !flotte) flotte = requestAnimationFrame(flotter);
     };
+
+    // Minime : un petit joueur assis sur l'épaule gauche, avec le skin du pseudo choisi (le sien
+    // par défaut). Il est accroché au corps du joueur, donc il suit quand celui-ci s'accroupit.
+    const ECHELLE_MINIME = 0.38;
+    const minime = new sv.PlayerObject();
+    minime.visible = false;
+    minime.backEquipment = null;
+    minime.scale.setScalar(ECHELLE_MINIME);
+    const corps = viewer.playerObject.skin.body;
+    corps.add(minime);
+    // l'épaule gauche (côté +x) : le haut du corps, au-dessus du bras ; le Minime s'assoit dessus,
+    // ses hanches à cette hauteur, un peu en arrière pour que ses jambes pendent devant
+    const placerMinime = () => {
+      const haut = corps.innerLayer.position.y + 6;
+      const hanches = (minime.skin.position.y + minime.skin.leftLeg.position.y) * ECHELLE_MINIME;
+      minime.position.set(6, haut - hanches + 0.4, -0.6);
+    };
+    let minimePorte = false, minimeNom = null, bouge = 0;
+    const habillerMinime = async nom => {
+      if (!nom || nom === minimeNom) return;
+      minimeNom = nom;
+      const info = await fetch(`/player/${nom}`).then(r => r.ok ? r.json() : null).catch(() => null);
+      const image = new Image();
+      image.onload = () => {
+        if (minimeNom !== nom || !viewer.skinTexture) return;
+        const c = document.createElement("canvas");
+        c.width = 64; c.height = 64;
+        const g = c.getContext("2d");
+        g.drawImage(image, 0, 0, 64, image.height === 32 ? 32 : 64);
+        // ancien skin (64 × 32, comme celui de Notch) : le bras et la jambe gauches n'existaient pas,
+        // on les recopie en miroir depuis les droits, comme le fait skinview3d pour le joueur
+        if (image.height === 32) {
+          g.save();
+          g.scale(-1, 1);
+          const copie = (sx, sy, l, h, dx, dy) => g.drawImage(c, sx, sy, l, h, -dx, dy, -l, h);
+          copie(4, 16, 4, 4, 20, 48); copie(8, 16, 4, 4, 24, 48); copie(0, 20, 4, 12, 24, 52); copie(4, 20, 4, 12, 20, 52);
+          copie(8, 20, 4, 12, 16, 52); copie(12, 20, 4, 12, 28, 52); copie(44, 16, 4, 4, 36, 48); copie(48, 16, 4, 4, 40, 48);
+          copie(40, 20, 4, 12, 40, 52); copie(44, 20, 4, 12, 36, 52); copie(48, 20, 4, 12, 32, 52); copie(52, 20, 4, 12, 44, 52);
+          g.restore();
+          // la couche « chapeau » de ces skins est souvent pleine (noire) : sans pixel transparent, on l'efface
+          const chapeau = g.getImageData(32, 0, 32, 16).data;
+          let transparent = false;
+          for (let i = 3; i < chapeau.length; i += 4) if (chapeau[i] < 128) { transparent = true; break; }
+          if (!transparent) g.clearRect(32, 0, 32, 16);
+        }
+        const modele = viewer.skinTexture;
+        const tex = new modele.constructor(c);
+        tex.magFilter = modele.magFilter;
+        tex.minFilter = modele.minFilter;
+        tex.colorSpace = modele.colorSpace;
+        tex.needsUpdate = true;
+        minime.skin.map = tex;
+        minime.skin.modelType = info?.slim ? "slim" : "default";
+      };
+      image.src = `/skin/${nom}`;
+    };
+    // assis, les jambes en avant ; il fait coucou de son bras extérieur, l'autre posé
+    const animerMinime = maintenant => {
+      const t = maintenant / 1000, s = minime.skin;
+      s.rightLeg.rotation.x = s.leftLeg.rotation.x = -Math.PI / 2;
+      s.rightLeg.rotation.z = 0.12; s.leftLeg.rotation.z = -0.12;
+      s.leftArm.rotation.z = 2.5 + Math.sin(t * 6) * 0.3;
+      s.rightArm.rotation.x = -0.4;
+      s.rightArm.rotation.z = 0.15;
+      s.head.rotation.y = Math.sin(t * 0.8) * 0.25;
+      bouge = minimePorte && !reduce ? requestAnimationFrame(animerMinime) : 0;
+    };
+    const reglageMinime = document.getElementById("reglage-minime");
+    const champMinime = document.getElementById("minime-nom");
+    const porterMinime = on => {
+      minimePorte = on;
+      if (reglageMinime) reglageMinime.hidden = !on;
+      if (on) {
+        const nom = champMinime?.value.trim().match(/^[A-Za-z0-9_]{3,16}$/)?.[0] || stage.dataset.name || "MHF_Steve";
+        habillerMinime(nom);
+        placerMinime();
+        if (!bouge) bouge = requestAnimationFrame(animerMinime);
+      }
+      minime.visible = on;
+      equipButtons.filter(b => b.dataset.back === "pet").forEach(b => b.setAttribute("aria-pressed", String(on)));
+    };
+    let attenteMinime;
+    champMinime?.addEventListener("input", () => {
+      clearTimeout(attenteMinime);
+      attenteMinime = setTimeout(() => {
+        const nom = champMinime.value.trim();
+        if (/^[A-Za-z0-9_]{3,16}$/.test(nom)) habillerMinime(nom);
+      }, 450);
+    });
     const featName = document.getElementById("feat-name"), featText = document.getElementById("feat-text");
     equipButtons.forEach(b => b.addEventListener("click", () => {
       const src = b.dataset.src || "misty";
       const hat = b.dataset.back === "none";   // un chapeau : porté en plus de la cape
-      const on = hat ? chapeauPorte === b.dataset.thumb : back.mode === b.dataset.back && back.source === src;
+      const pet = b.dataset.back === "pet";    // un compagnon : sur l'épaule, en plus du reste
+      const on = hat ? chapeauPorte === b.dataset.thumb : pet ? minimePorte : back.mode === b.dataset.back && back.source === src;
       if (hat) porterChapeau(on ? null : b.dataset.thumb);
+      else if (pet) porterMinime(!on);
       else setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
       // Vitrine : le nom et la description de l'article choisi
       if (!on && featName && b.dataset.name) {
@@ -872,6 +984,7 @@
       g.imageSmoothingEnabled = false;
       if (c.dataset.thumb === "cape") g.drawImage(misty, 1, 1, 10, 16, 0, 0, c.width, c.height);
       else if (c.dataset.thumb === "early") g.drawImage(early, 1, 1, 10, 16, 0, 0, c.width, c.height);
+      else if (c.dataset.thumb === "minime") dessinerEmote(c, "wave");   // un petit joueur qui fait coucou
       else if (c.dataset.thumb === "cloudly") {
         // Cloudly : un petit nuage en pixels, centré
         const rows = ["...####...", "..######..", ".########.", "##########", "##########", ".########."];
