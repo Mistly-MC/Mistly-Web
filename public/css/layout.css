@@ -161,3 +161,44 @@ body:not(:has(.hero,.docs-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
 .mc-head::after{content:"";position:absolute;inset:0;background:inherit;background-position:calc(var(--s) * -5) calc(var(--s) * -1);box-shadow:none}
 .fcredit .author:hover .mc-head{animation:head-bob .5s ease}
 @keyframes head-bob{40%{transform:rotate(-8deg) scale(1.08)}80%{transform:rotate(4deg)}}
+
+/* Menu de la documentation (survol de « Docs ») : cartes à la une + deux colonnes de liens */
+.navdd{position:relative;display:flex}
+.navdd-btn .ic{width:13px;height:13px;opacity:.6;transition:transform .2s}
+.navdd:hover .navdd-btn,.navdd:focus-within .navdd-btn{color:var(--text)}
+.navdd:hover .navdd-btn .ic,.navdd:focus-within .navdd-btn .ic{transform:rotate(180deg)}
+.navdd:hover .navdd-btn::after,.navdd:focus-within .navdd-btn::after{content:"";position:absolute;left:10px;right:10px;bottom:-11px;height:2px;background:var(--text)}
+.mega{position:absolute;top:calc(100% + 19px);left:50%;z-index:60;display:grid;grid-template-columns:250px 210px 170px;gap:10px 26px;width:max-content;padding:12px 22px 14px 12px;
+  background:var(--bg-2);border:1px solid rgb(var(--fg-rgb) / .14);box-shadow:0 30px 80px -20px rgb(0 0 0 / .85);
+  opacity:0;visibility:hidden;transform:translate(-50%,-6px);transition:opacity .18s ease,transform .22s ease,visibility 0s .22s}
+/* Un pont invisible entre le lien et le menu, pour que la souris ne le referme pas en chemin */
+.mega::before{content:"";position:absolute;left:0;right:0;top:-20px;height:20px}
+.navdd:hover .mega,.navdd:focus-within .mega{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .18s ease,transform .22s ease}
+.mega-feat{display:flex;flex-direction:column;gap:10px}
+.feat{position:relative;display:flex;flex-direction:column;gap:4px;min-height:118px;padding:14px 16px 26px;overflow:hidden;color:#fff;border:1px solid rgb(0 0 0 / .45);
+  background:linear-gradient(115deg,rgb(255 255 255 / .1) 0 52%,transparent 52%),var(--c);transition:filter .15s,transform .15s}
+.feat:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.feat.f-client{--c:#2f5bd3}
+.feat.f-horizon{--c:#7a3fd0}
+.feat .k{font-family:var(--pixel);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgb(255 255 255 / .75)}
+.feat strong{font-size:15px;font-weight:650;letter-spacing:-.01em}
+.feat .d{font-size:12.5px;line-height:1.4;color:rgb(255 255 255 / .82);max-width:220px}
+/* Des collines en gros pixels, en bas de la carte */
+.feat i{position:absolute;right:0;bottom:0;width:130px;height:22px;opacity:.28;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 3h4V2h3v1h2V1h5v1h3v1h2V0h4v2h3v2H0z'/%3E%3C/svg%3E") right bottom/100% 100% no-repeat}
+.mega-col{display:flex;flex-direction:column;padding-top:4px}
+.mega-t{margin:2px 0 8px;font-family:var(--pixel);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8fb0ff}
+.mega-col a{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13.5px;font-weight:500;color:var(--text-2);white-space:nowrap;transition:color .12s,transform .12s}
+.mega-col a .ic{width:15px;height:15px;flex:none;color:var(--dim);transition:color .12s}
+.mega-col a:hover{color:var(--text);transform:translateX(2px)}
+.mega-col a:hover .ic{color:var(--text)}
+.mega-col a span{overflow:hidden;text-overflow:ellipsis}
+.mega-col .mega-all{margin-top:6px;padding-top:10px;border-top:1px dashed var(--line-2);font-size:12.5px;color:var(--muted)}
+.mega-col .mega-all .ic{width:12px;height:12px;order:2}
+:root[data-theme="light"] .mega-t{color:var(--accent)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .mega-t{color:var(--accent)}}
+.navdd-btn{position:relative}
+.links .mega a{border-radius:0;background:none}
+.links .mega .feat{background:linear-gradient(115deg,rgb(255 255 255 / .1) 0 52%,transparent 52%),var(--c)}
+.links .mega .feat{align-items:flex-start;justify-content:flex-start;white-space:normal;text-align:left;color:#fff;padding:14px 16px 26px}
+.links .mega .feat:hover{color:#fff}

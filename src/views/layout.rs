@@ -183,6 +183,61 @@ fn telechargement(p: &Page) -> Markup {
     }
 }
 
+/// Le menu de la documentation, ouvert au survol du lien « Docs » (ou au clavier) : deux pages à
+/// la une en cartes, les pages les plus lues, puis les liens vers le reste du site.
+fn docs_menu(p: &Page) -> Markup {
+    let tr = p.tr;
+    let docs = crate::docs::get(p.lang);
+    let titre = |slug: &str| docs.find(slug).map_or(slug.to_string(), |i| docs.pages[i].title.clone());
+    let pages: [(&str, Markup); 7] = [
+        ("installation", icons::download()),
+        ("first-launch", icons::bolt()),
+        ("profiles", icons::layers()),
+        ("mods-and-content", icons::package()),
+        ("modpacks", icons::archive()),
+        ("skins", icons::shirt()),
+        ("troubleshooting", icons::alert()),
+    ];
+    html! {
+        div.navdd {
+            a.navdd-btn href="/docs" aria-current=[p.path.starts_with("/docs").then_some("page")] aria-haspopup="true" {
+                (tr.nav_docs) (icons::chevron())
+            }
+            div.mega {
+                div.mega-feat {
+                    a.feat.f-client href="/docs/mistly-client" {
+                        span.k { (tr.mega_new) }
+                        strong { "Mistly Client" }
+                        span.d { (tr.mega_client_p) }
+                        i aria-hidden="true" {}
+                    }
+                    a.feat.f-horizon href="/docs/horizon" {
+                        span.k { (tr.mega_new) }
+                        strong { "Horizon" }
+                        span.d { (tr.mega_horizon_p) }
+                        i aria-hidden="true" {}
+                    }
+                }
+                div.mega-col {
+                    span.mega-t { (tr.docs_label) }
+                    @for (slug, ic) in pages {
+                        a href=(format!("/docs/{slug}")) { (ic) span { (titre(slug)) } }
+                    }
+                    a.mega-all href="/docs" { (tr.mega_all) (icons::arrow_right()) }
+                }
+                div.mega-col {
+                    span.mega-t { "Mistly" }
+                    a href="/patch-notes" { (icons::notes()) span { (tr.nav_patch_notes) } }
+                    a href="/status" { (icons::globe()) span { (tr.nav_status) } }
+                    a href="/shop" { (icons::bag()) span { (tr.nav_shop) } }
+                    a href=(DISCORD_URL) target="_blank" rel="noopener" { (icons::discord()) span { "Discord" } }
+                    a href=(p.github_url()) target="_blank" rel="noopener" { (icons::github()) span { "GitHub" } }
+                }
+            }
+        }
+    }
+}
+
 fn nav(p: &Page) -> Markup {
     let tr = p.tr;
     let on_notes = p.path.starts_with("/patch-notes");
@@ -194,7 +249,7 @@ fn nav(p: &Page) -> Markup {
                     a href="/#features" { (tr.nav_features) }
                     a href="/#loaders" { (tr.nav_loaders) }
                     a href="/#faq" { (tr.nav_faq) }
-                    a href="/docs" aria-current=[p.path.starts_with("/docs").then_some("page")] { (tr.nav_docs) }
+                    (docs_menu(p))
                     a href="/shop" aria-current=[p.path.starts_with("/shop").then_some("page")] { (tr.nav_shop) }
                     a href="/patch-notes" aria-current=[on_notes.then_some("page")] {
                         (tr.nav_patch_notes)

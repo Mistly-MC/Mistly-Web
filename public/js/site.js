@@ -224,7 +224,71 @@
     addEventListener("resize", () => { if (!dlx.hidden) layout(); });
   }
 
-  // La souris laisse une traînée de caractères ASCII qui ondulent puis s'effacent
+  // Au-dessus du texte, la souris brouille les lettres elles-mêmes : celles sous le curseur
+  // deviennent des caractères ASCII qui changent, puis se remettent en place une à une.
+  const brouille = (() => {
+    const SIGNES = "#%@&*+=-:/\\<>[]{}?!$~^";
+    const EXCLUS = "input,textarea,select,script,style,code.bar,pre.ascii-name,pre.ascii-noise,.dlx,[contenteditable],[data-no-scramble],canvas,svg";
+    const actifs = new Map();   // nœud de texte -> { orig, ecrit, fin: Float64Array }
+    let tourne = false;
+    const caret = (x, y) => {
+      if (document.caretPositionFromPoint) {
+        const c = document.caretPositionFromPoint(x, y);
+        return c && { node: c.offsetNode, off: c.offset };
+      }
+      const r = document.caretRangeFromPoint?.(x, y);
+      return r && { node: r.startContainer, off: r.startOffset };
+    };
+    // Le point est-il vraiment sur une lettre (et pas dans le vide à côté d'une ligne) ?
+    const surLettre = (node, off, x, y) => {
+      const r = document.createRange();
+      for (const i of [off, off - 1]) {
+        if (i < 0 || i >= node.length) continue;
+        r.setStart(node, i); r.setEnd(node, i + 1);
+        const b = r.getBoundingClientRect();
+        if (b.width && x >= b.left - 2 && x <= b.right + 2 && y >= b.top - 1 && y <= b.bottom + 1) return i;
+      }
+      return -1;
+    };
+    const boucle = now => {
+      for (const [node, e] of actifs) {
+        // Le texte a été changé par ailleurs (compteur, traduction…) : on l'adopte tel quel
+        if (!node.isConnected || node.data !== e.ecrit) { actifs.delete(node); continue; }
+        let txt = "", vivant = false;
+        for (let i = 0; i < e.orig.length; i++) {
+          if (e.fin[i] > now) {
+            vivant = true;
+            txt += SIGNES[(Math.random() * SIGNES.length) | 0];
+          } else txt += e.orig[i];
+        }
+        node.data = e.ecrit = txt;
+        if (!vivant) actifs.delete(node);
+      }
+      if (actifs.size) setTimeout(() => requestAnimationFrame(boucle), 45);
+      else tourne = false;
+    };
+    return (x, y) => {
+      if (!getSelection().isCollapsed) return false;
+      const c = caret(x, y);
+      if (!c || c.node.nodeType !== 3) return false;
+      const node = c.node, parent = node.parentElement;
+      if (!parent || parent.closest(EXCLUS)) return false;
+      const i = surLettre(node, c.off, x, y);
+      if (i < 0) return false;
+      let e = actifs.get(node);
+      if (!e) { e = { orig: node.data, ecrit: node.data, fin: new Float64Array(node.length) }; actifs.set(node, e); }
+      const now = performance.now();
+      for (let k = Math.max(0, i - 2); k <= Math.min(e.orig.length - 1, i + 2); k++) {
+        if (/\s/.test(e.orig[k])) continue;
+        // Les lettres au centre restent brouillées plus longtemps
+        e.fin[k] = Math.max(e.fin[k], now + 160 + (2 - Math.abs(k - i)) * 90 + Math.random() * 120);
+      }
+      if (!tourne) { tourne = true; requestAnimationFrame(boucle); }
+      return true;
+    };
+  })();
+
+  // Ailleurs, la souris laisse une traînée de caractères ASCII qui ondulent puis s'effacent
   const trail = document.querySelector(".cursor-ascii");
   if (trail && !reduce && matchMedia("(hover: hover) and (pointer: fine)").matches) {
     const g = trail.getContext("2d");
@@ -278,10 +342,20 @@
       if (alive || mx !== px) requestAnimationFrame(frame);
       else running = false;
     };
+    let attente = false, dernier = null;
     addEventListener("pointermove", e => {
-      if (px < -900) { px = e.clientX; py = e.clientY; }
-      mx = e.clientX; my = e.clientY;
-      if (!running) { running = true; requestAnimationFrame(frame); }
+      dernier = e;
+      if (attente) return;
+      attente = true;
+      requestAnimationFrame(() => {
+        attente = false;
+        const x = dernier.clientX, y = dernier.clientY;
+        // Sur du texte : on brouille les lettres, sans traînée derrière
+        if (brouille(x, y)) { px = mx = x; py = my = y; return; }
+        if (px < -900) { px = x; py = y; }
+        mx = x; my = y;
+        if (!running) { running = true; requestAnimationFrame(frame); }
+      });
     }, { passive: true });
     // En défilant, la traînée reste collée à la page : on l'efface
     addEventListener("scroll", () => heat.fill(0), { passive: true });
