@@ -248,6 +248,14 @@ fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
             input #minime-nom type="text" value=(player.unwrap_or("")) placeholder="Steve" maxlength="16"
                 autocomplete="off" autocapitalize="off" spellcheck="false";
         }
+        // l'épaule où il s'assoit (droite : à droite quand on regarde le joueur)
+        div.reglage #reglage-epaule hidden {
+            span.etiquette { (tr.shop_shoulder) }
+            div.seg.epaules role="group" aria-label=(tr.shop_shoulder) {
+                button type="button" data-epaule="left" aria-pressed="false" { (tr.shop_shoulder_left) }
+                button type="button" data-epaule="right" aria-pressed="true" { (tr.shop_shoulder_right) }
+            }
+        }
     }
 }
 

@@ -294,3 +294,6 @@ a.soon-card{text-decoration:none}
 .reglage output{flex:none;min-width:46px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--text)}
 .reglage input[type=text]{flex:1;min-width:0;padding:8px 11px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);font:inherit;font-size:13.5px}
 .reglage input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+.reglage .etiquette{flex:none;font-weight:600;color:var(--text-2)}
+.reglage .seg.epaules{flex:1;display:flex;backdrop-filter:none;-webkit-backdrop-filter:none}
+.reglage .seg.epaules button{flex:1}

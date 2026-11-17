@@ -811,10 +811,12 @@
     corps.add(minime);
     // l'épaule gauche (côté +x) : le haut du corps, au-dessus du bras ; le Minime s'assoit dessus,
     // ses hanches à cette hauteur, un peu en arrière pour que ses jambes pendent devant
+    // épaule : 1 à droite quand on regarde le joueur (son épaule gauche, côté +x), -1 de l'autre côté
+    let epaule = 1;
     const placerMinime = () => {
       const haut = corps.innerLayer.position.y + 6;
       const hanches = (minime.skin.position.y + minime.skin.leftLeg.position.y) * ECHELLE_MINIME;
-      minime.position.set(6, haut - hanches + 0.4, -0.6);
+      minime.position.set(6 * epaule, haut - hanches + 0.4, -0.6);
     };
     let minimePorte = false, minimeNom = null, bouge = 0;
     const habillerMinime = async nom => {
@@ -856,21 +858,43 @@
       image.src = `/skin/${nom}`;
     };
     // assis, les jambes en avant ; il fait coucou de son bras extérieur, l'autre posé
-    const animerMinime = maintenant => {
+    // assis à califourchon sur l'épaule : les jambes écartées pendent devant ; le bras du côté
+    // extérieur se lève et fait coucou, l'autre se pose vers la tête du joueur. (Pour skinview3d,
+    // une rotation.z positive écarte le bras ou la jambe gauche, une négative le droit.)
+    const poserMinime = maintenant => {
       const t = maintenant / 1000, s = minime.skin;
-      s.rightLeg.rotation.x = s.leftLeg.rotation.x = -Math.PI / 2;
-      s.rightLeg.rotation.z = 0.12; s.leftLeg.rotation.z = -0.12;
-      s.leftArm.rotation.z = 2.5 + Math.sin(t * 6) * 0.3;
-      s.rightArm.rotation.x = -0.4;
-      s.rightArm.rotation.z = 0.15;
-      s.head.rotation.y = Math.sin(t * 0.8) * 0.25;
+      s.rightLeg.rotation.x = s.leftLeg.rotation.x = -1.25;
+      s.rightLeg.rotation.z = -0.38; s.leftLeg.rotation.z = 0.38;
+      const coucou = 2.25 + Math.sin(t * 7) * 0.45;
+      const [leve, pose] = epaule > 0 ? [s.leftArm, s.rightArm] : [s.rightArm, s.leftArm];
+      leve.rotation.x = 0;
+      leve.rotation.z = epaule * coucou;
+      pose.rotation.x = -0.35;
+      pose.rotation.z = -epaule * 1.1;
+      s.head.rotation.y = Math.sin(t * 0.8) * 0.25 - epaule * 0.15;
+      s.head.rotation.z = epaule * 0.08;
+    };
+    const animerMinime = maintenant => {
+      poserMinime(maintenant);
       bouge = minimePorte && !reduce ? requestAnimationFrame(animerMinime) : 0;
     };
     const reglageMinime = document.getElementById("reglage-minime");
+    const reglageEpaule = document.getElementById("reglage-epaule");
+    const boutonsEpaule = [...document.querySelectorAll("[data-epaule]")];
+    boutonsEpaule.forEach(b => b.addEventListener("click", () => {
+      epaule = b.dataset.epaule === "left" ? -1 : 1;
+      press(boutonsEpaule, b);
+      // l'autre bras redescend avant que la pose ne change de côté
+      minime.skin.leftArm.rotation.set(0, 0, 0);
+      minime.skin.rightArm.rotation.set(0, 0, 0);
+      placerMinime();
+      poserMinime(performance.now());
+    }));
     const champMinime = document.getElementById("minime-nom");
     const porterMinime = on => {
       minimePorte = on;
       if (reglageMinime) reglageMinime.hidden = !on;
+      if (reglageEpaule) reglageEpaule.hidden = !on;
       if (on) {
         const nom = champMinime?.value.trim().match(/^[A-Za-z0-9_]{3,16}$/)?.[0] || stage.dataset.name || "MHF_Steve";
         habillerMinime(nom);
