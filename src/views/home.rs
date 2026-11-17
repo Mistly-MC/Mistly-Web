@@ -201,7 +201,7 @@ fn zones(dir: &str) -> Vec<Zone> {
     let horizon = if dir == "fr" { (623, 713) } else { (625, 715) };
     let mut v = vec![
         z(14, 14, 78, 78, "home", &[]),
-        z(104, 26, 216, 66, "home", &[]),
+        z(105, 27, 217, 66, "home", &[]),
         z(14, 642, 78, 706, "settings", &[]),
         z(90, 642, 472, 706, "versions", &[]),
         z(1102, 642, 1166, 706, "skin", &[]),
@@ -236,18 +236,21 @@ fn galerie(p: &Page) -> Markup {
                 (titre(&tr.prev_label, None))
                 p.blk-lead { (tr.prev_hint) }
                 div.sim data-sim {
-                    div.frame.sim-screen {
-                        @for (i, (nom, t, d)) in ecrans.iter().enumerate() {
-                            div.sim-view data-view=(nom) data-t=(t) data-p=(d) hidden[i > 0] {
-                                (capture(p, nom, t, if i == 0 { "eager" } else { "lazy" }))
+                    div.frame {
+                        // les zones se placent sur la capture elle-même, pas sur le cadre (qui a une marge)
+                        div.sim-screen {
+                            @for (i, (nom, t, d)) in ecrans.iter().enumerate() {
+                                div.sim-view data-view=(nom) data-t=(t) data-p=(d) hidden[i > 0] {
+                                    (capture(p, nom, t, if i == 0 { "eager" } else { "lazy" }))
+                                }
                             }
-                        }
-                        @for zone in zones(p.lang.screens_dir()) {
-                            @let (x0, y0, x1, y1) = zone.r;
-                            @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
-                            button.sim-hot type="button" data-go=(zone.va) data-on=(zone.sur.join(" ")) aria-label=(t) title=(t)
-                                hidden[!zone.sur.is_empty() && !zone.sur.contains(&"home")]
-                                style=(format!("left:{};top:{};width:{};height:{}", pct(x0, 1180), pct(y0, 720), pct(x1 - x0, 1180), pct(y1 - y0, 720))) {}
+                            @for zone in zones(p.lang.screens_dir()) {
+                                @let (x0, y0, x1, y1) = zone.r;
+                                @let t = ecrans.iter().find(|e| e.0 == zone.va).map(|e| e.1).unwrap_or_default();
+                                button.sim-hot type="button" data-go=(zone.va) data-on=(zone.sur.join(" ")) aria-label=(t) title=(t)
+                                    hidden[!zone.sur.is_empty() && !zone.sur.contains(&"home")]
+                                    style=(format!("left:{};top:{};width:{};height:{}", pct(x0, 1180), pct(y0, 720), pct(x1 - x0, 1180), pct(y1 - y0, 720))) {}
+                            }
                         }
                     }
                     div.sim-bar {
