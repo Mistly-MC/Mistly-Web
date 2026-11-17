@@ -13,6 +13,12 @@ pub fn date(tr: &Tr, iso: Option<&str>) -> String {
     if tr.date_order == "ymd" {
         // chinois et japonais : « 2026年11月16日 » (le mois porte déjà son 月)
         format!("{}年{month}{}日", d.year(), d.day())
+    } else if tr.date_order == "ko" {
+        // coréen : « 2026년 11월 16일 »
+        format!("{}년 {month} {}일", d.year(), d.day())
+    } else if tr.date_order == "dmy." {
+        // allemand : « 16. November 2026 »
+        format!("{}. {month} {}", d.day(), d.year())
     } else if tr.date_order == "mdy" {
         format!("{month} {}, {}", d.day(), d.year())
     } else {
@@ -26,7 +32,14 @@ pub fn jour(tr: &Tr, d: time::Date, annee: bool) -> String {
     if tr.date_order == "ymd" {
         return if annee { format!("{}年{month}{}日", d.year(), d.day()) } else { format!("{month}{}日", d.day()) };
     }
-    let base = if tr.date_order == "mdy" { format!("{month} {}", d.day()) } else { format!("{} {month}", d.day()) };
+    if tr.date_order == "ko" {
+        return if annee { format!("{}년 {month} {}일", d.year(), d.day()) } else { format!("{month} {}일", d.day()) };
+    }
+    let base = match tr.date_order.as_str() {
+        "mdy" => format!("{month} {}", d.day()),
+        "dmy." => format!("{}. {month}", d.day()),
+        _ => format!("{} {month}", d.day()),
+    };
     if annee {
         if tr.date_order == "mdy" { format!("{base}, {}", d.year()) } else { format!("{base} {}", d.year()) }
     } else {

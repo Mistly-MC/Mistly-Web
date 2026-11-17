@@ -127,48 +127,78 @@ fn nom_ou_uuid(nom: Option<&str>, uuid: &str) -> String {
 
 // ---------- Squelette ----------
 
+impl Onglet {
+    /// Le chemin et la commande affichés dans l'invite en haut de chaque page.
+    fn invite(self) -> (&'static str, &'static str) {
+        match self {
+            Onglet::Accueil => ("~", "mistly status --live"),
+            Onglet::Joueurs => ("~/players", "mistly players ls"),
+            Onglet::Cosmetiques => ("~/cosmetics", "mistly cosmetics rules"),
+            Onglet::Rapports => ("~/reports", "mistly reports"),
+            Onglet::Journal => ("~/log", "tail -n 200 journal.log"),
+            Onglet::Base => ("~/database", "vim joueurs.json"),
+        }
+    }
+}
+
 fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Markup) -> Markup {
     let v = ASSET_VERSION.as_str();
-    let lien = |o: Onglet, href: &str, ic: Markup, texte: &str| {
-        html! {
-            a href=(href) aria-current=[(onglet == Some(o)).then_some("page")] { (ic) span { (texte) } }
-        }
-    };
+    let liens = [
+        (Onglet::Accueil, "/admin", "vue d'ensemble"),
+        (Onglet::Joueurs, "/admin/players", "joueurs"),
+        (Onglet::Cosmetiques, "/admin/cosmetics", "cosmétiques"),
+        (Onglet::Rapports, "/admin/reports", "rapports"),
+        (Onglet::Journal, "/admin/log", "journal"),
+        (Onglet::Base, "/admin/database", "base de données"),
+    ];
     html! {
         (DOCTYPE)
-        html lang="fr" {
+        // Toujours sombre : c'est un terminal
+        html lang="fr" data-theme="dark" {
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 meta name="robots" content="noindex, nofollow";
+                meta name="color-scheme" content="dark";
                 title { (titre) " · Mistly Admin" }
                 link rel="icon" href="/assets/icone.png";
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/admin.css?v={v}"));
                 script src=(format!("/js/admin.js?v={v}")) defer {}
             }
-            body.admin {
-                @if onglet.is_some() {
+            body.admin.login-page[onglet.is_none()] {
+                canvas.adm-bg aria-hidden="true" {}
+                @if let Some(o) = onglet {
                     aside.side {
-                        a.brand href="/admin" { img src="/assets/icone.png" alt="" width="26" height="26"; span { "MISTLY" } em { "admin" } }
-                        nav {
-                            (lien(Onglet::Accueil, "/admin", icons::grid(), "Vue d'ensemble"))
-                            (lien(Onglet::Joueurs, "/admin/players", icons::user(), "Joueurs"))
-                            (lien(Onglet::Cosmetiques, "/admin/cosmetics", icons::bag(), "Cosmétiques"))
-                            (lien(Onglet::Rapports, "/admin/reports", icons::notes(), "Rapports de logs"))
-                            (lien(Onglet::Journal, "/admin/log", icons::layers(), "Journal"))
-                            (lien(Onglet::Base, "/admin/database", icons::package(), "Base de données"))
+                        a.brand href="/admin" { img src="/assets/icone.png" alt="" width="24" height="24"; span { "MISTLY" } em { "admin" } }
+                        div.host { i {} span { "admin@mistly.cc" } }
+                        nav.tree aria-label="Tableau de bord" {
+                            span.root { "~/admin" }
+                            @for (cible, href, texte) in &liens {
+                                a href=(href) aria-current=[(o == *cible).then_some("page")] {
+                                    span.br aria-hidden="true" { "──" }
+                                    span.t { (texte) }
+                                }
+                            }
                         }
                         div.side-foot {
-                            a href="/" target="_blank" rel="noopener" { "Voir le site" (icons::external()) }
-                            form method="post" action="/admin/logout" { button.linkish type="submit" { "Se déconnecter" } }
+                            div.uptime { span { "session" } code #uptime { "00:00:00" } }
+                            a href="/" target="_blank" rel="noopener" { "voir le site" (icons::external()) }
+                            form method="post" action="/admin/logout" { button.exit type="submit" { "[ exit ]" } }
                         }
                     }
                 }
                 main.content {
+                    @if let Some(o) = onglet {
+                        @let (chemin, commande) = o.invite();
+                        div.prompt aria-hidden="true" {
+                            span.u { "admin@mistly" } span.d { ":" } span.p { (chemin) } span.d { "$ " }
+                            span.c { (commande) } i.cursor {}
+                        }
+                    }
                     @if let Some(f) = flash {
-                        @if let Some(m) = f.ok { div.flash.ok role="status" { (icons::check()) span { (m) } } }
-                        @if let Some(m) = f.err { div.flash.err role="alert" { span { "!" } span { (m) } } }
+                        @if let Some(m) = f.ok { div.flash.ok role="status" { span.k { "[ OK ]" } span { (m) } } }
+                        @if let Some(m) = f.err { div.flash.err role="alert" { span.k { "[FAIL]" } span { (m) } } }
                     }
                     (corps)
                 }
@@ -186,21 +216,54 @@ fn entete(titre: &str, sous: Option<&str>) -> Markup {
     }
 }
 
+/// Une barre en caractères : `██████░░░░` (sur `largeur` cases).
+fn jauge(n: u64, max: u64, largeur: usize) -> String {
+    let plein = ((n as f64 / max.max(1) as f64) * largeur as f64).round() as usize;
+    let plein = plein.min(largeur).max(usize::from(n > 0));
+    "█".repeat(plein) + &"░".repeat(largeur - plein)
+}
+
+/// Une courbe en caractères : `▁▂▄▇█▅▃`.
+fn courbe(valeurs: &[u64]) -> String {
+    const NIVEAUX: [char; 8] = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+    let max = valeurs.iter().copied().max().unwrap_or(0).max(1);
+    valeurs.iter().map(|&v| NIVEAUX[((v * 7 + max / 2) / max) as usize]).collect()
+}
+
 // ---------- Connexion ----------
 
+/// La connexion, comme une session SSH : les lignes s'écrivent l'une après l'autre (admin.js),
+/// puis l'invite du mot de passe. Sans JavaScript, tout est affiché d'un coup.
 pub fn connexion(erreur: Option<&str>) -> Markup {
     shell(
         "Connexion",
         None,
         None,
         html! {
-            div.login {
-                form.panel method="post" action="/admin/login" {
-                    div.login-head { img src="/assets/icone.png" alt="" width="40" height="40"; div { strong { "Mistly Admin" } span { "Tableau de bord de l'équipe" } } }
-                    @if let Some(e) = erreur { p.flash.err role="alert" { span { "!" } span { (e) } } }
-                    label for="pw" { "Mot de passe" }
-                    input #pw type="password" name="password" autocomplete="current-password" required autofocus;
-                    button.btn.play type="submit" { "Se connecter" }
+            div.ssh-wrap {
+                section.ssh #ssh data-error=[erreur.map(|_| "1")] aria-label="Connexion au tableau de bord" {
+                    div.ssh-bar {
+                        span.dots aria-hidden="true" { i {} i {} i {} }
+                        span.ssh-title { "admin@mistly.cc — ssh — 80×24" }
+                    }
+                    div.ssh-body {
+                        pre.ssh-banner aria-hidden="true" { (super::layout::BANNER) }
+                        div.ssh-lines {
+                            p.l.cmd { span.ps { "~ $" } " " span.typed { "ssh admin@mistly.cc" } }
+                            p.l.dim { "Connecting to mistly.cc port 22…" }
+                            p.l.dim { "Connection established." }
+                            p.l { span.ok { "✓" } " Mistly control panel · accès réservé à l'équipe" }
+                            p.l.dim { "Chaque connexion est enregistrée." }
+                            @if let Some(e) = erreur { p.l.err { "Permission denied — " (e) } }
+                        }
+                        form.ssh-form method="post" action="/admin/login" {
+                            label for="pw" { "admin@mistly.cc's password:" }
+                            input #pw type="password" name="password" autocomplete="current-password" required autofocus spellcheck="false";
+                            button.ssh-go type="submit" { "↵ connexion" }
+                        }
+                        p.ssh-hint { "Entrée pour se connecter" }
+                        div.ssh-out aria-live="polite" {}
+                    }
                 }
             }
         },
@@ -306,7 +369,7 @@ fn telemetrie_bloc(t: &Value) -> Markup {
                 h3 { (titre) }
                 @if l.is_empty() { p.empty { "—" } }
                 @for (k, n) in l.iter().take(8) {
-                    div.bar { span.k { (k) } span.track { i style=(format!("width:{}%", n * 100 / max)) {} } span.n { (n) } }
+                    div.bar { span.k { (k) } code.track { (jauge(*n, max, 18)) } span.n { (n) } }
                 }
             }
         }
@@ -319,10 +382,10 @@ fn telemetrie_bloc(t: &Value) -> Markup {
             div { strong { (t["reports"].as_u64().unwrap_or(0)) } span { "rapports de logs" } }
         }
         @if jours.len() >= 2 {
-            div.spark title="Installations actives par jour" {
-                @for (j, n) in &jours {
-                    i style=(format!("height:{}%", (n * 100 / max).max(2))) title=(format!("{j} : {n}")) {}
-                }
+            div.spark title=(format!("Installations actives par jour (max {max})")) {
+                span.k { "installs/jour" }
+                code { (courbe(&jours.iter().map(|j| j.1).collect::<Vec<_>>())) }
+                span.k { (jours.first().map_or("", |j| j.0.as_str())) " → " (jours.last().map_or("", |j| j.0.as_str())) }
             }
         }
         div.grid3 {
@@ -429,7 +492,7 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
             form method="post" action=(action) {
                 input type="hidden" name="action" value=(act);
                 input type="hidden" name="cosmetic" value=(cos);
-                button.btn.sm class=(classe) type="submit" { (texte) }
+                button class=(format!("btn sm {classe}")) type="submit" { (texte) }
             }
         }
     };

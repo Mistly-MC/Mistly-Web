@@ -153,9 +153,8 @@ fn majuscule(t: &str) -> String {
 /// 2267 → « 2 267 » en français, « 2,267 » en anglais.
 fn milliers(p: &Page, n: u64) -> String {
     let sep = match p.lang.code() {
-        "en" => ",",
-        "es" | "it" | "pt" => ".",
-        "zh" | "ja" => ",",
+        "en" | "zh" | "ja" | "ko" => ",",
+        "es" | "it" | "pt" | "de" | "nl" | "tr" | "id" => ".",
         _ => "\u{202f}",
     };
     let chiffres = n.to_string();

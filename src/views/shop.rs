@@ -109,9 +109,11 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                         }
                     }
                 }
-                (collection(p))
-                // L'essayage : le studio 3D, ouvert seulement quand on clique sur un cosmétique
-                dialog.tryon #tryon aria-labelledby="feat-name" {
+                // L'essayage : le studio 3D, dans la page, déplié seulement quand on clique sur un
+                // cosmétique (ou ouvert d'office après une saisie de pseudo refusée)
+                section.tryon #tryon aria-labelledby="feat-name" hidden[!invalid] {
+                  div.tryon-in {
+                    div.col.tryon-box {
                     button.tryon-close type="button" data-close aria-label=(tr.shop_close) { "✕" }
                         div.vitrine {
                             (stage(p, preview.unwrap_or("MHF_Steve"), preview, false))
@@ -139,7 +141,10 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                                 }
                             }
                         }
+                    }
+                  }
                 }
+                (collection(p))
             }
         }
         ShopView::Studio { player } => html! {
@@ -292,7 +297,6 @@ fn stage(p: &Page, skin: &str, name: Option<&str>, studio: bool) -> Markup {
                 }
             }
             div.halo aria-hidden="true" {}
-            div.circle aria-hidden="true" { span {} span {} span {} }
             div.motes aria-hidden="true" { @for _ in 0..10 { i {} } }
             canvas #skin3d role="img" aria-label=(tr.shop_preview) {}
             div.stage-bar {

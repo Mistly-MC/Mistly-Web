@@ -688,19 +688,30 @@
     });
   }
 
-  // Boutique : un clic sur un cosmétique ouvre l'essayage (studio 3D) avec cet article porté
+  // Boutique : un clic sur un cosmétique déplie l'essayage (studio 3D) dans la page, avec cet article porté
   const tryon = document.getElementById("tryon");
-  if (tryon && tryon.showModal) {
+  if (tryon) {
+    const ouvrir = () => {
+      if (!tryon.hidden && tryon.classList.contains("open")) return;
+      tryon.hidden = false;
+      requestAnimationFrame(() => requestAnimationFrame(() => tryon.classList.add("open")));
+    };
+    const fermer = () => {
+      tryon.classList.remove("open");
+      setTimeout(() => { if (!tryon.classList.contains("open")) tryon.hidden = true; }, 460);
+    };
+    if (!tryon.hidden) ouvrir();
     document.querySelectorAll("[data-try]").forEach(card => card.addEventListener("click", () => {
-      tryon.showModal();
+      ouvrir();
+      const haut = tryon.getBoundingClientRect().top + scrollY - 90;
+      scrollTo({ top: haut, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       stageReady.then(() => {
         const b = tryon.querySelector(`.equip[data-thumb="${card.dataset.try}"]`);
         if (b && b.getAttribute("aria-pressed") !== "true") b.click();
       });
     }));
-    tryon.querySelector("[data-close]")?.addEventListener("click", () => tryon.close());
-    // Un clic à côté de la fenêtre la ferme
-    tryon.addEventListener("click", e => { if (e.target === tryon) tryon.close(); });
+    tryon.querySelector("[data-close]")?.addEventListener("click", fermer);
+    addEventListener("keydown", e => { if (e.key === "Escape" && tryon.classList.contains("open")) fermer(); });
   }
 
   // ---------- Documentation ----------

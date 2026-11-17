@@ -2,6 +2,120 @@
 // filtre du journal d'un rapport et vérification du JSON de la base.
 (() => {
   "use strict";
+  const calme = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Fond : une brume de caractères qui dérive lentement (plus présente sur la page de connexion)
+  const bg = document.querySelector(".adm-bg");
+  if (bg) {
+    const g = bg.getContext("2d");
+    const login = document.body.classList.contains("login-page");
+    const RAMP = " .·:-=+*#%@";
+    const CW = 9, CH = 16;
+    let cols = 0, rows = 0, dpr = 1;
+    const size = () => {
+      dpr = Math.min(devicePixelRatio || 1, 2);
+      bg.width = innerWidth * dpr; bg.height = innerHeight * dpr;
+      cols = Math.ceil(innerWidth / CW) + 1; rows = Math.ceil(innerHeight / CH) + 1;
+    };
+    size();
+    addEventListener("resize", size);
+    const hash = (x, y) => { const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return h - Math.floor(h); };
+    const noise = (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+      const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+      const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+      return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+    };
+    const fbm = (x, y) => noise(x, y) * .55 + noise(x * 2.1, y * 2.1) * .3 + noise(x * 4.3, y * 4.3) * .15;
+    let mx = -1e4, my = -1e4;
+    addEventListener("pointermove", e => { mx = e.clientX; my = e.clientY; });
+    const draw = (t) => {
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, innerWidth, innerHeight);
+      g.font = "12px 'Geist Mono', ui-monospace, monospace";
+      g.textBaseline = "top";
+      const s = t / 1000;
+      for (let y = 0; y < rows; y++) {
+        // Plus dense vers le bas, comme une mer de nuages
+        const bas = login ? .35 + (y / rows) * .8 : .35 + (y / rows) * .5;
+        for (let x = 0; x < cols; x++) {
+          let n = fbm(x * .055 + s * .05, y * .1 - s * .018) * bas;
+          const dx = x * CW - mx, dy = y * CH - my, dd = dx * dx + dy * dy;
+          if (dd < 22000) n += (1 - dd / 22000) * .35;
+          if (n < .22) continue;
+          const k = Math.min(RAMP.length - 1, Math.floor((n - .22) * RAMP.length * 2.2));
+          g.fillStyle = `rgba(206,218,245,${Math.min(.42, (n - .2) * (login ? .9 : .6))})`;
+          g.fillText(RAMP[k], x * CW, y * CH);
+        }
+      }
+    };
+    if (calme) draw(0);
+    else {
+      let last = 0;
+      const loop = (t) => {
+        if (!document.hidden && t - last > 66) { draw(t); last = t; }
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+  }
+
+  // Durée de la session (depuis la connexion, gardée pour l'onglet)
+  const uptime = document.getElementById("uptime");
+  if (uptime) {
+    let debut = Number(sessionStorage.getItem("adm-start")) || Date.now();
+    try { sessionStorage.setItem("adm-start", debut); } catch {}
+    const pad = n => String(n).padStart(2, "0");
+    const tic = () => {
+      const s = Math.floor((Date.now() - debut) / 1000);
+      uptime.textContent = `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+    };
+    tic(); setInterval(tic, 1000);
+  }
+
+  // Connexion : la session SSH s'écrit ligne après ligne, puis l'invite du mot de passe
+  const ssh = document.getElementById("ssh");
+  if (ssh) {
+    const pw = document.getElementById("pw");
+    const form = ssh.querySelector(".ssh-form");
+    const out = ssh.querySelector(".ssh-out");
+    const lignes = [...ssh.querySelectorAll(".ssh-lines .l")];
+    const attendre = ms => new Promise(r => setTimeout(r, ms));
+    const erreur = ssh.dataset.error === "1";
+    if (erreur) ssh.classList.add("denied");
+    if (!calme && !erreur) {
+      ssh.classList.add("typing");
+      (async () => {
+        const typed = lignes[0].querySelector(".typed");
+        const texte = typed.textContent;
+        typed.textContent = ""; typed.classList.add("run");
+        lignes[0].classList.add("on");
+        await attendre(350);
+        for (const c of texte) { typed.textContent += c; await attendre(38 + Math.random() * 45); }
+        await attendre(260); typed.classList.remove("run");
+        for (const l of lignes.slice(1)) { await attendre(l.classList.contains("dim") ? 280 : 180); l.classList.add("on"); }
+        await attendre(200);
+        ssh.classList.remove("typing");
+        pw.focus();
+      })();
+    } else pw.focus();
+
+    // À l'envoi : « Authenticating » et une barre de progression, puis l'envoi réel
+    let envoye = false;
+    form.addEventListener("submit", async e => {
+      if (envoye || calme) return;
+      e.preventDefault();
+      envoye = true;
+      const l = document.createElement("p");
+      l.className = "l";
+      l.innerHTML = 'Authenticating <span class="prog"></span>';
+      out.append(l);
+      const prog = l.querySelector(".prog");
+      for (let i = 0; i <= 16; i++) { prog.textContent = "[" + "#".repeat(i) + ".".repeat(16 - i) + "]"; await attendre(22); }
+      try { sessionStorage.setItem("adm-start", Date.now()); } catch {}
+      form.submit();
+    });
+  }
 
   // Têtes : visage + calque du chapeau, depuis le skin relayé par le site (/skin/<pseudo>).
   const skins = new Map();
@@ -69,7 +183,12 @@
         const r = await fetch("/admin/online.json", { cache: "no-store" });
         if (!r.ok) return;
         const d = await r.json();
-        const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+        const set = (id, v) => {
+          const e = document.getElementById(id);
+          if (!e || e.textContent === String(v)) return;
+          e.textContent = v;
+          e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump");
+        };
         set("n-launchers", d.launchers);
         set("n-client", d.players.length);
         if (!d.players.length) {

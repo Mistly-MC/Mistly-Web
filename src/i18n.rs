@@ -14,10 +14,19 @@ pub enum Lang {
     Pt,
     Zh,
     Ja,
+    De,
+    Nl,
+    Pl,
+    Tr,
+    Uk,
+    Ko,
+    Id,
 }
 
 impl Lang {
-    pub const ALL: [Lang; 8] = [Lang::Fr, Lang::En, Lang::Es, Lang::Pt, Lang::It, Lang::Ru, Lang::Zh, Lang::Ja];
+    pub const ALL: [Lang; 15] = [
+        Lang::Fr, Lang::En, Lang::De, Lang::Es, Lang::Pt, Lang::It, Lang::Nl, Lang::Pl, Lang::Tr, Lang::Ru, Lang::Uk, Lang::Zh, Lang::Ja, Lang::Ko, Lang::Id,
+    ];
 
     pub fn code(self) -> &'static str {
         match self {
@@ -29,6 +38,13 @@ impl Lang {
             Lang::Pt => "pt",
             Lang::Zh => "zh",
             Lang::Ja => "ja",
+            Lang::De => "de",
+            Lang::Nl => "nl",
+            Lang::Pl => "pl",
+            Lang::Tr => "tr",
+            Lang::Uk => "uk",
+            Lang::Ko => "ko",
+            Lang::Id => "id",
         }
     }
 
@@ -271,6 +287,7 @@ traductions! {
     pub ft_about_p: String,
     pub ft_disclaimer: String,
     pub ft_made: String,
+    pub ft_credit: String,
     pub ft_top: String,
     pub ft_legal_t: String,
     pub legal_notice: String,
@@ -465,18 +482,31 @@ fn parse(code: &str, src: &str) -> Tr {
     tr
 }
 
-static TRANSLATIONS: LazyLock<[Tr; 8]> = LazyLock::new(|| {
-    [
-        parse("fr", include_str!("../locales/fr.toml")),
-        parse("en", include_str!("../locales/en.toml")),
-        parse("es", include_str!("../locales/es.toml")),
-        parse("pt", include_str!("../locales/pt.toml")),
-        parse("it", include_str!("../locales/it.toml")),
-        parse("ru", include_str!("../locales/ru.toml")),
-        parse("zh", include_str!("../locales/zh.toml")),
-        parse("ja", include_str!("../locales/ja.toml")),
-    ]
+static TRANSLATIONS: LazyLock<[Tr; 15]> = LazyLock::new(|| {
+    // Dans l'ordre de `Lang::ALL`
+    Lang::ALL.map(|l| parse(l.code(), source(l)))
 });
+
+/// Le fichier de traduction d'une langue, intégré au binaire.
+fn source(l: Lang) -> &'static str {
+    match l {
+        Lang::Fr => include_str!("../locales/fr.toml"),
+        Lang::En => include_str!("../locales/en.toml"),
+        Lang::Es => include_str!("../locales/es.toml"),
+        Lang::Pt => include_str!("../locales/pt.toml"),
+        Lang::It => include_str!("../locales/it.toml"),
+        Lang::Ru => include_str!("../locales/ru.toml"),
+        Lang::Zh => include_str!("../locales/zh.toml"),
+        Lang::Ja => include_str!("../locales/ja.toml"),
+        Lang::De => include_str!("../locales/de.toml"),
+        Lang::Nl => include_str!("../locales/nl.toml"),
+        Lang::Pl => include_str!("../locales/pl.toml"),
+        Lang::Tr => include_str!("../locales/tr.toml"),
+        Lang::Uk => include_str!("../locales/uk.toml"),
+        Lang::Ko => include_str!("../locales/ko.toml"),
+        Lang::Id => include_str!("../locales/id.toml"),
+    }
+}
 
 /// Force le chargement des traductions (appelé au démarrage pour échouer tôt).
 pub fn init() {

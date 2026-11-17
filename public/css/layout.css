@@ -150,3 +150,14 @@ body:not(:has(.hero,.docs-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
   :root:not([data-theme="dark"]) .page-sky .scene{filter:saturate(.45) brightness(3.1) contrast(.72)}
   :root:not([data-theme="dark"]) .ascii-name{background-image:linear-gradient(100deg,#9aa6c4 0%,#9aa6c4 38%,#1c2a55 48%,#9aa6c4 58%,#9aa6c4 100%)}
 }
+
+/* Crédits : « Fait en France par … » avec la tête Minecraft de chaque auteur */
+.fcredit{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px;padding:18px 22px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.fcredit>svg{width:20px;height:auto;border-radius:2px;box-shadow:0 0 0 1px rgb(var(--fg-rgb) / .12)}
+.fcredit .author{display:inline-flex;align-items:center;gap:8px;padding:4px 11px 4px 4px;border:1px solid var(--line-2);background:rgb(var(--fg-rgb) / .03);color:var(--text);font-weight:500;transition:border-color .2s,background .2s,transform .2s}
+.fcredit .author:hover{border-color:rgb(var(--fg-rgb) / .35);background:rgb(var(--fg-rgb) / .07);transform:translateY(-1px)}
+/* La tête : le visage (8×8 à x=8,y=8 dans le skin 64×64) puis le chapeau (x=40) par-dessus */
+.mc-head{--s:24px;position:relative;flex:none;width:var(--s);height:var(--s);background:var(--skin) calc(var(--s) * -1) calc(var(--s) * -1) / calc(var(--s) * 8) auto no-repeat;image-rendering:pixelated;box-shadow:0 2px 8px rgb(0 0 0 / .35)}
+.mc-head::after{content:"";position:absolute;inset:0;background:inherit;background-position:calc(var(--s) * -5) calc(var(--s) * -1);box-shadow:none}
+.fcredit .author:hover .mc-head{animation:head-bob .5s ease}
+@keyframes head-bob{40%{transform:rotate(-8deg) scale(1.08)}80%{transform:rotate(4deg)}}

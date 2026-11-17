@@ -136,7 +136,7 @@ mod tests {
 
     #[test]
     fn other_languages_get_english() {
-        for lang in [Lang::Es, Lang::It, Lang::Ru, Lang::Pt, Lang::Zh, Lang::Ja] {
+        for lang in Lang::ALL.into_iter().filter(|l| !matches!(l, Lang::Fr | Lang::En)) {
             assert_eq!(get(lang, Kind::Privacy).lang_dir, "en");
         }
     }

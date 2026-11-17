@@ -259,6 +259,31 @@ fn lang_menu(p: &Page) -> Markup {
     }
 }
 
+/// Les auteurs du site, avec la tête de leur skin Minecraft (découpée par le CSS dans le skin
+/// servi par `/skin/<pseudo>`, donc toujours à jour).
+const AUTEURS: [&str; 2] = ["EnderMythex", "xtheox_x"];
+
+fn credits(p: &Page) -> Markup {
+    let auteur = |nom: &str| {
+        html! {
+            span.author {
+                span.mc-head style=(format!("--skin:url(/skin/{nom})")) aria-hidden="true" {}
+                span { (nom) }
+            }
+        }
+    };
+    // « Made in France by {0} and {1} » : l'ordre des mots dépend de la langue
+    let texte = &p.tr.ft_credit;
+    let (avant, reste) = texte.split_once("{0}").unwrap_or((texte, ""));
+    let (milieu, apres) = reste.split_once("{1}").unwrap_or((reste, ""));
+    html! {
+        div.fcredit {
+            (icons::flag("fr"))
+            span { (avant) } (auteur(AUTEURS[0])) span { (milieu) } (auteur(AUTEURS[1])) span { (apres) }
+        }
+    }
+}
+
 fn footer(p: &Page) -> Markup {
     let tr = p.tr;
     html! {
@@ -320,6 +345,7 @@ fn footer(p: &Page) -> Markup {
                         }
                     }
                 }
+                (credits(p))
                 div.fbottom {
                     span.made { (icons::rust()) (tr.ft_made) }
                     span.fb-right {
