@@ -316,6 +316,7 @@ shop_emotes_lead = "Mistly Client'a gelecek emote'lara ilk bakış. Birine tıkl
 shop_partner = "Bir oyuncuyla"
 shop_capes_lead = "Mistly pelerinleri ve elitraları. Birine tıkla ve skininde giy."
 shop_hats_lead = "Başının üstünde süzülen şapkalar. Birine tıkla ve skininde dene."
+shop_back = "Geri"
 shop_item_cape = "Mistly pelerini"
 shop_item_elytra = "Mistly elytrası"
 shop_equip = "Kuşan"

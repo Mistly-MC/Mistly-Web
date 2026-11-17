@@ -143,11 +143,7 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
         ShopView::Studio { player } => html! {
             section.studio {
                 div.wrap {
-                    nav.crumbs aria-label="Breadcrumb" {
-                        a href="/shop" { (icons::bag()) (tr.shop_label) }
-                        span { "/" }
-                        span { (player) }
-                    }
+                    (haut_de_page(tr, player))
                     div.studio-grid {
                         (stage(p, player, Some(player), true))
                         (locker(p, player))
@@ -168,6 +164,22 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
         },
         main,
     )
+}
+
+/// Haut des pages de la boutique (studio, catalogues) : un bouton pour revenir en arrière, puis le
+/// fil d'Ariane jusqu'à `ici`.
+fn haut_de_page(tr: &Tr, ici: &str) -> Markup {
+    html! {
+        div.page-top {
+            // revient à la page d'avant si elle est sur le site (voir site.js), sinon à la boutique
+            a.back-btn href="/shop" data-retour { (icons::arrow_right()) span { (tr.shop_back) } }
+            nav.crumbs aria-label="Breadcrumb" {
+                a href="/shop" { (icons::bag()) (tr.shop_label) }
+                span { "/" }
+                span { (ici) }
+            }
+        }
+    }
 }
 
 /// Une page de catalogue de la boutique (`/shop/<slug>`), ouverte depuis sa carte.
@@ -205,10 +217,11 @@ impl Catalogue {
         }
     }
 
-    /// Les articles Mistly de la page (capes et élytres, ou chapeaux).
+    /// Les articles Mistly de la page (capes, ou chapeaux).
     fn articles(self) -> impl Iterator<Item = &'static Article> {
         ARTICLES.iter().filter(move |a| match self {
-            Self::Capes => a.back.is_some(),
+            // les élytres se mettent avec le bouton « Élytres » de l'aperçu, pas dans la liste
+            Self::Capes => a.back == Some("cape"),
             Self::Hats => a.back.is_none(),
             Self::Emotes => false,
         })
@@ -246,11 +259,7 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
     let main = html! {
         section.studio.emotes-page data-catalogue=(cat.slug()) {
             div.wrap {
-                nav.crumbs aria-label="Breadcrumb" {
-                    a href="/shop" { (icons::bag()) (tr.shop_label) }
-                    span { "/" }
-                    span { (titre) }
-                }
+                (haut_de_page(tr, titre))
                 header.emotes-head {
                     h1 { (titre) sup { "(" (nombre) ")" } }
                     p { (intro) }

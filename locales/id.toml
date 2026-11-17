@@ -316,6 +316,7 @@ shop_emotes_lead = "Sekilas emote yang akan hadir di Mistly Client. Klik salah s
 shop_partner = "Pada pemain"
 shop_capes_lead = "Jubah dan elytra Mistly. Klik salah satunya untuk memakainya di skinmu."
 shop_hats_lead = "Topi yang melayang di atas kepalamu. Klik salah satunya untuk mencobanya di skinmu."
+shop_back = "Kembali"
 shop_item_cape = "Jubah Mistly"
 shop_item_elytra = "Elytra Mistly"
 shop_equip = "Pakai"

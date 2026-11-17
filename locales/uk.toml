@@ -316,6 +316,7 @@ shop_emotes_lead = "Перший погляд на емоції, що з'явл�
 shop_partner = "З гравцем"
 shop_capes_lead = "Плащі та елітри Mistly. Натисни на будь-який, щоб одягнути його на свій скін."
 shop_hats_lead = "Капелюхи, що ширяють над головою. Натисни на будь-який, щоб приміряти його на свій скін."
+shop_back = "Назад"
 shop_item_cape = "Плащ Mistly"
 shop_item_elytra = "Елітри Mistly"
 shop_equip = "Вдягнути"

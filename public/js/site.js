@@ -386,7 +386,7 @@
       // Câlin : les bras s'ouvrent, se referment devant (sur le joueur en face), on se berce,
       // la tête penchée, puis les bras se rouvrent et retombent
       // (autour : à quel point les bras se referment ; leve : à quelle hauteur ils passent)
-      hug: (p, temps, { autour = 0.8, leve = 1.35 } = {}) => {
+      hug: (p, temps, { autour = 0.8, leve = 1.35, tourne = 0 } = {}) => {
         const t = temps % 6, s = p.skin;
         const ouvert = Math.max(fenetre(t, 0, 0.6, 0.6, 1.2), fenetre(t, 4.6, 5.2, 5.2, 5.9));
         const serre = fenetre(t, 0.6, 1.2, 4.6, 5.2);
@@ -399,6 +399,7 @@
         s.body.rotation.x = -0.06 * ouvert + 0.08 * serre;
         s.head.rotation.x = -0.12 * ouvert + 0.18 * serre;
         s.head.rotation.z = 0.28 * berce;
+        s.head.rotation.y = tourne * serre;   // à deux : la tête tournée, posée sur l'épaule de l'autre
         p.rotation.z = 0.07 * berce;
       },
       // Salut : la main droite levée qui s'agite
@@ -483,16 +484,19 @@
       };
       img.src = "/skin/MHF_Alex";
     };
-    // les deux face à face, vus de profil ; les bras de l'un passent sur les épaules de l'autre,
+    // les deux face à face, vus de profil ; les bras de l'un passent par-dessus les épaules de l'autre,
     // ceux de l'autre autour de la taille
+    // Un bras ne porte qu'à 10 pixels de l'épaule : pour que les mains arrivent dans le dos de
+    // l'autre, les deux se rapprochent et se décalent un peu de côté, la tête de chacun passant à
+    // côté de celle de l'autre, tournée vers son épaule, comme dans un vrai câlin.
     const calinADeux = (joueur, temps) => {
-      joueur.position.x = -4.4;
+      joueur.position.set(-3.3, 0, 2.1);
       joueur.rotation.y = Math.PI / 2;
-      POSES.hug(joueur, temps, { autour: 0.4, leve: 1.5 });
+      POSES.hug(joueur, temps, { autour: 0.45, leve: 1.7, tourne: 0.45 });
       ami.visible = true;
-      ami.position.x = 4.4;
+      ami.position.set(3.3, 0, -2.1);
       ami.rotation.y = -Math.PI / 2;
-      POSES.hug(ami, temps, { autour: 0.5, leve: 1.1 });
+      POSES.hug(ami, temps, { autour: 0.5, leve: 1.2, tourne: 0.45 });
     };
     const EMOTES = Object.fromEntries(Object.entries(POSES).map(([cle, pose]) => [cle, class extends sv.PlayerAnimation {
       animate(joueur) {
@@ -893,6 +897,14 @@
       }, 450);
     });
   }
+
+  // Bouton « Retour » des pages de la boutique : la page d'avant si elle est sur le site
+  // (en gardant sa position), sinon le lien vers la boutique
+  document.querySelectorAll("[data-retour]").forEach(a => a.addEventListener("click", e => {
+    let avant = null;
+    try { avant = document.referrer ? new URL(document.referrer).origin : null; } catch {}
+    if (avant === location.origin && history.length > 1) { e.preventDefault(); history.back(); }
+  }));
 
   // Boutique : un clic sur un cosmétique déplie l'essayage (studio 3D) dans la page, avec cet article porté
   const tryon = document.getElementById("tryon");

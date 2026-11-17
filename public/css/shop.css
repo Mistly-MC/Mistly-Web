@@ -279,3 +279,15 @@ a.soon-card{text-decoration:none}
 
 /* Un bouton de l'aperçu caché (comme « Sur un joueur » hors du câlin) reste caché */
 .toggle[hidden]{display:none}
+
+/* Haut des pages de la boutique : bouton Retour, puis le fil d'Ariane */
+.page-top{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;margin-bottom:18px}
+.page-top .crumbs{margin:0}
+.back-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 9px;border-radius:9px;border:1px solid var(--line-2);background:rgb(var(--fg-rgb) / .02);font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .15s,border-color .15s,background .15s}
+.back-btn:hover{color:var(--text);border-color:rgb(var(--fg-rgb) / .3);background:rgb(var(--fg-rgb) / .05)}
+.back-btn .ic{width:14px;height:14px;transform:rotate(180deg);transition:transform .15s}
+.back-btn:hover .ic{transform:rotate(180deg) translateX(2px)}
+
+/* Pages de catalogue : l'aperçu 3D prend toute la hauteur de la ligne (plus de bande grise dessous) */
+.emotes-page .vitrine{align-items:stretch}
+.emotes-page .vitrine .stage{height:auto;min-height:clamp(460px,62vh,600px)}

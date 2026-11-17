@@ -316,6 +316,7 @@ shop_emotes_lead = "Un'anteprima delle emote in arrivo su Mistly Client. Clicca 
 shop_partner = "Su un giocatore"
 shop_capes_lead = "I mantelli e le elitre di Mistly. Clicca su uno per indossarlo sulla tua skin."
 shop_hats_lead = "Cappelli che fluttuano sopra la tua testa. Clicca su uno per provarlo sulla tua skin."
+shop_back = "Indietro"
 shop_item_cape = "Mantello Mistly"
 shop_item_elytra = "Elitre Mistly"
 shop_equip = "Equipaggia"
