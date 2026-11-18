@@ -732,6 +732,7 @@
         obj.rotation.order = "ZYX";
         obj.rotation.set(...angles(g.rotation));
         obj.userData.repos = obj.rotation.z;
+        obj.userData.reposY = obj.rotation.y;
         nommes[g.name] = obj;
         for (const enfant of entree.children || []) { const n = noeud(enfant, g.origin || [0, 0, 0]); if (n) obj.add(n); }
         return obj;
@@ -754,9 +755,9 @@
       }))
       .then(modele => { modele.visible = false; tete.add(modele); return modele; });
     let chapeauPorte = null, flotte = 0;
-    // Taille du chapeau porté (le curseur « Taille », de 60 % à 100 %, sa taille d'origine) : il
-    // rapetisse à partir du haut de la tête (y = 8), où il est posé
-    let tailleChapeau = 1;
+    // Taille du chapeau porté (le curseur « Taille », de 60 % à 100 %, sa taille d'origine ; 80 % par
+    // défaut) : il rapetisse à partir du haut de la tête (y = 8), où il est posé
+    let tailleChapeau = 0.8;
     const ajusterTaille = m => {
       m.scale.setScalar(tailleChapeau);
       m.userData.y = 8 * (1 - tailleChapeau);
@@ -923,14 +924,58 @@
         if (/^[A-Za-z0-9_]{3,16}$/.test(nom)) habillerMinime(nom);
       }, 450);
     });
+    // Ailes de brume : un modèle Blockbench (public/models/mist_wings.bbmodel) accroché au corps, il
+    // suit donc le joueur quand il s'accroupit. Portées en plus de la cape, un peu derrière elle. Elles
+    // battent doucement, plus vite et plus fort pendant le vol.
+    let ailesPortees = false, ailes = null, battement = 0;
+    const chargerAiles = () => ailes ??= fetch(`/models/mist_wings.bbmodel?v=${versionSite}`)
+      .then(r => r.json())
+      .then(m => new Promise((ok, ko) => {
+        const image = new Image();
+        image.onload = () => ok(construireModele(m, image));
+        image.onerror = ko;
+        image.src = m.textures[0].source;
+      }))
+      .then(modele => {
+        // le modèle est fait autour du cou (y = 24) ; le corps de skinview3d a son origine en son milieu (y = 18)
+        modele.position.set(0, 6, -1.5);
+        modele.visible = ailesPortees;
+        corps.add(modele);
+        return modele;
+      });
+    const battre = maintenant => {
+      const t = maintenant / 1000, vol = animActuelle === "fly";
+      const vitesse = vol ? 5 : 1.6, ampleur = vol ? 0.7 : 0.3;
+      ailes?.then(m => {
+        for (const nom of ["wing_left", "wing_right"]) {
+          const aile = m.userData.nommes[nom], bout = m.userData.nommes[nom + "_tip"];
+          if (aile) aile.rotation.y = aile.userData.reposY * (1 + ampleur * Math.sin(t * vitesse));
+          if (bout) bout.rotation.z = bout.userData.repos * (1 + ampleur * 0.8 * Math.sin(t * vitesse - 0.6));
+        }
+      });
+      battement = ailesPortees && !reduce ? requestAnimationFrame(battre) : 0;
+    };
+    const porterAiles = on => {
+      ailesPortees = on;
+      if (on) chargerAiles().then(m => { m.visible = ailesPortees; }).catch(() => {});
+      else ailes?.then(m => { m.visible = false; });
+      if (on && !battement && !reduce) battement = requestAnimationFrame(battre);
+      equipButtons.filter(b => b.dataset.back === "wings").forEach(b => {
+        b.setAttribute("aria-pressed", String(on));
+        if (!b.querySelector(".thumb")) b.textContent = on ? b.dataset.unequip : b.dataset.equip;
+        b.closest(".item")?.classList.toggle("equipped", on);
+      });
+    };
     const featName = document.getElementById("feat-name"), featText = document.getElementById("feat-text");
     equipButtons.forEach(b => b.addEventListener("click", () => {
       const src = b.dataset.src || "misty";
       const hat = b.dataset.back === "none";   // un chapeau : porté en plus de la cape
       const pet = b.dataset.back === "pet";    // un compagnon : sur l'épaule, en plus du reste
-      const on = hat ? chapeauPorte === b.dataset.thumb : pet ? minimePorte : back.mode === b.dataset.back && back.source === src;
+      const ailesBtn = b.dataset.back === "wings";   // des ailes : en plus de la cape
+      const on = hat ? chapeauPorte === b.dataset.thumb : pet ? minimePorte : ailesBtn ? ailesPortees : back.mode === b.dataset.back && back.source === src;
       if (hat) porterChapeau(on ? null : b.dataset.thumb);
       else if (pet) porterMinime(!on);
+      else if (ailesBtn) porterAiles(!on);
       else setBack(on ? (ownCape ? "cape" : "none") : b.dataset.back, on ? "own" : src);
       // Vitrine : le nom et la description de l'article choisi
       if (!on && featName && b.dataset.name) {
@@ -1036,6 +1081,17 @@
         rows.forEach((row, y) => [...row].forEach((ch, x) => {
           if (ch !== "#") return;
           g.fillStyle = y >= 4 ? "#b9cdf5" : "#f2f6ff";
+          g.fillRect(ox + x * px, oy + y * px, px, px);
+        }));
+      } else if (c.dataset.thumb === "wings") {
+        // Ailes de brume : deux ailes déployées, de l'indigo au blanc de la brume
+        const rows = ["#........#", "##......##", "###....###", "####..####", "##########", ".########.", ".###..###.", "..##..##..", "..#....#.."];
+        const tons = ["#2a3480", "#33459e", "#3f5cc4", "#4f74e0", "#5d8cf2", "#7fb0ff", "#a9d6ff", "#cfeeff", "#effaff"];
+        const px = Math.floor(c.width / 12);
+        const ox = (c.width - 10 * px) / 2, oy = (c.height - rows.length * px) / 2;
+        rows.forEach((row, y) => [...row].forEach((ch, x) => {
+          if (ch !== "#") return;
+          g.fillStyle = tons[y];
           g.fillRect(ox + x * px, oy + y * px, px, px);
         }));
       } else if (c.dataset.thumb === "bunny") {

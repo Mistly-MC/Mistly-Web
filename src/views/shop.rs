@@ -176,11 +176,11 @@ impl Catalogue {
         }
     }
 
-    /// Les articles Mistly de la page (capes, ou chapeaux).
+    /// Les articles Mistly de la page (ailes et capes, chapeaux, ou compagnons).
     fn articles(self) -> impl Iterator<Item = &'static Article> {
         ARTICLES.iter().filter(move |a| match self {
             // les élytres se mettent avec le bouton « Élytres » de l'aperçu, pas dans la liste
-            Self::Capes => a.back == Some("cape"),
+            Self::Capes => matches!(a.back, Some("cape" | "wings")),
             Self::Hats => a.back.is_none(),
             Self::Pets => a.back == Some("pet"),
             Self::Emotes => false,
@@ -189,15 +189,15 @@ impl Catalogue {
 }
 
 /// Réglages de l'article porté, montrés par site.js quand ils servent : la taille du chapeau
-/// (de 60 % à 100 %, la taille d'origine, par défaut), le pseudo dont le Minime prend le skin (le
+/// (de 60 % à 100 %, la taille d'origine ; 80 % par défaut), le pseudo dont le Minime prend le skin (le
 /// sien par défaut) et l'épaule où il s'assoit ; pour les emotes à deux, le skin de l'autre joueur
 /// et, sur le dos, ce que fait le porteur.
 fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
     html! {
         div.reglage #reglage-taille hidden {
             label for="taille-chapeau" { (tr.shop_size) }
-            input #taille-chapeau type="range" min="0.6" max="1" step="0.05" value="1";
-            output #taille-valeur for="taille-chapeau" { "100 %" }
+            input #taille-chapeau type="range" min="0.6" max="1" step="0.05" value="0.8";
+            output #taille-valeur for="taille-chapeau" { "80 %" }
         }
         div.reglage #reglage-minime hidden {
             label for="minime-nom" { (tr.shop_minime_name) }
@@ -318,7 +318,8 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
 struct Article {
     /// Vignette dessinée par site.js
     thumb: &'static str,
-    /// Porté dans le dos (`cape` ou `elytra`), sur l'épaule (`pet`) ; aucun pour un chapeau
+    /// Porté dans le dos (`cape`, `elytra`, ou `wings` en plus de la cape), sur l'épaule (`pet`) ;
+    /// aucun pour un chapeau
     back: Option<&'static str>,
     /// Texture utilisée dans l'aperçu 3D (`misty` ou `early`)
     src: &'static str,
@@ -327,9 +328,11 @@ struct Article {
     bientot: bool,
 }
 
-const ARTICLES: [Article; 6] = [
+const ARTICLES: [Article; 7] = [
     Article { thumb: "cape", back: Some("cape"), src: "misty", early: false, bientot: false },
     Article { thumb: "elytra", back: Some("elytra"), src: "misty", early: false, bientot: false },
+    // Ailes de brume : portées en plus de la cape (public/models/mist_wings.bbmodel)
+    Article { thumb: "wings", back: Some("wings"), src: "", early: false, bientot: true },
     Article { thumb: "early", back: Some("cape"), src: "early", early: true, bientot: false },
     Article { thumb: "cloudly", back: None, src: "", early: false, bientot: false },
     Article { thumb: "bunny", back: None, src: "", early: false, bientot: true },
@@ -344,6 +347,7 @@ impl Article {
             "early" => &tr.shop_early_t,
             "bunny" => &tr.shop_bunny_t,
             "minime" => &tr.shop_minime_t,
+            "wings" => &tr.shop_wings_t,
             _ => &tr.shop_cloudly_t,
         }
     }
@@ -354,6 +358,7 @@ impl Article {
             "early" => &tr.shop_early_p,
             "bunny" => &tr.shop_bunny_p,
             "minime" => &tr.shop_minime_p,
+            "wings" => &tr.shop_wings_p,
             _ => &tr.shop_cloudly_p,
         }
     }

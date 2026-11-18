@@ -201,6 +201,8 @@ traductions! {
     pub shop_early_p: String,
     pub shop_cloudly_t: String,
     pub shop_cloudly_p: String,
+    pub shop_wings_t: String,
+    pub shop_wings_p: String,
     pub shop_coming_t: String,
     pub shop_collection: String,
     pub shop_early_badge: String,
