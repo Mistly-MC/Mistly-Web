@@ -379,83 +379,59 @@
     };
 
     // ---- Emotes (aperçu de celles qui arrivent sur Mistly Client) ----
-    // Chacune pose le joueur selon le temps écoulé (en secondes), en boucle. Pour skinview3d, une
-    // rotation.z positive rapproche le bras droit du corps (et éloigne le gauche).
-    const lisse = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
-    // 0 → 1 entre a et b, puis 1 → 0 entre c et d
-    const fenetre = (t, a, b, c, d) => lisse((t - a) / (b - a)) * (1 - lisse((t - c) / (d - c)));
-    const POSES = {
-      // Câlin : les bras s'ouvrent, se referment devant (sur le joueur en face), on se berce,
-      // la tête penchée, puis les bras se rouvrent et retombent
-      // (autour : à quel point les bras se referment ; leve : à quelle hauteur ils passent)
-      hug: (p, temps, { autour = 0.8, leve = 1.35, tourne = 0 } = {}) => {
-        const t = temps % 6, s = p.skin;
-        const ouvert = Math.max(fenetre(t, 0, 0.6, 0.6, 1.2), fenetre(t, 4.6, 5.2, 5.2, 5.9));
-        const serre = fenetre(t, 0.6, 1.2, 4.6, 5.2);
-        const berce = Math.sin((t - 1.2) * Math.PI / 0.9) * serre;
-        const presse = 0.08 * Math.sin(t * 5) * serre;
-        s.rightArm.rotation.x = -0.3 * ouvert - leve * serre;
-        s.leftArm.rotation.x = -0.3 * ouvert - leve * serre;
-        s.rightArm.rotation.z = -1.25 * ouvert + (autour + presse) * serre;
-        s.leftArm.rotation.z = 1.25 * ouvert - (autour + presse) * serre;
-        s.body.rotation.x = -0.06 * ouvert + 0.08 * serre;
-        s.head.rotation.x = -0.12 * ouvert + 0.18 * serre;
-        s.head.rotation.z = 0.28 * berce;
-        s.head.rotation.y = tourne * serre;   // à deux : la tête tournée (négatif : vers sa droite)
-        p.rotation.z = 0.07 * berce;
-      },
-      // Salut : la main droite levée qui s'agite
-      wave: (p, temps) => {
-        const t = temps % 2.4, s = p.skin, k = fenetre(t, 0, 0.35, 2.0, 2.4);
-        s.rightArm.rotation.z = -(2.55 + 0.35 * Math.sin(t * 9)) * k;
-        s.rightArm.rotation.x = -0.15 * k;
-        s.head.rotation.z = -0.12 * k;
-        s.leftArm.rotation.z = 0.08 * k;
-      },
-      // Applaudir : les mains se rejoignent devant, en rythme, avec un petit rebond
-      clap: (p, temps) => {
-        const t = temps % 2, s = p.skin, k = fenetre(t, 0, 0.25, 1.75, 2);
-        const tape = Math.abs(Math.sin(t * Math.PI * 3));
-        s.rightArm.rotation.x = -1.15 * k;
-        s.leftArm.rotation.x = -1.15 * k;
-        s.rightArm.rotation.z = (0.2 + 0.38 * tape) * k;
-        s.leftArm.rotation.z = -(0.2 + 0.38 * tape) * k;
-        s.head.rotation.x = -0.1 * k;
-        p.position.y = 0.5 * tape * k;
-      },
-      // Danse : bras qui montent l'un après l'autre, hanches qui tournent, petits sauts
-      dance: (p, temps) => {
-        const t = temps % 2.4, s = p.skin, w = t * Math.PI * 2 / 1.2, k = fenetre(t, 0, 0.2, 2.2, 2.4);
-        s.rightArm.rotation.z = -(1.3 + 1.0 * Math.sin(w)) * k;
-        s.leftArm.rotation.z = (1.3 - 1.0 * Math.sin(w)) * k;
-        s.rightLeg.rotation.x = 0.35 * Math.sin(w * 2) * k;
-        s.leftLeg.rotation.x = -0.35 * Math.sin(w * 2) * k;
-        s.head.rotation.z = 0.2 * Math.sin(w) * k;
-        p.rotation.y = 0.35 * Math.sin(w) * k;
-        p.position.y = 0.9 * Math.abs(Math.sin(w * 2)) * k;
-      },
-      // Victoire : les deux bras en l'air et des sauts de joie
-      cheer: (p, temps) => {
-        const t = temps % 2.4, s = p.skin, k = fenetre(t, 0, 0.25, 2.1, 2.4);
-        const saut = Math.max(0, Math.sin(t * Math.PI * 2 / 0.8));
-        s.rightArm.rotation.z = -(2.75 - 0.25 * saut) * k;
-        s.leftArm.rotation.z = (2.75 - 0.25 * saut) * k;
-        s.rightLeg.rotation.z = -0.12 * saut * k;
-        s.leftLeg.rotation.z = 0.12 * saut * k;
-        s.head.rotation.x = -0.25 * k;
-        p.position.y = 3 * saut * k;
-      },
-      // Facepalm : la main droite sur le visage, la tête qui tombe et secoue doucement
-      facepalm: (p, temps) => {
-        const t = temps % 3.2, s = p.skin, k = fenetre(t, 0, 0.45, 2.7, 3.2);
-        s.rightArm.rotation.x = -2.25 * k;
-        s.rightArm.rotation.z = 0.55 * k;
-        s.head.rotation.x = 0.35 * k;
-        s.head.rotation.y = 0.18 * Math.sin(t * 4) * k;
-        s.body.rotation.x = 0.1 * k;
-        s.leftArm.rotation.z = 0.05 * k;
-      },
+    // Elles sont animées dans Blockbench : public/models/emotes.bbmodel (format Bedrock), une
+    // animation par emote, plus « hug_duo » (le câlin sur un joueur). Le rig a deux joueurs :
+    // « joueur » (head, body, right_arm…) et « ami » (ami_head, ami_body…), caché par une échelle 0
+    // dans les emotes en solo. Le fichier n'est chargé qu'à la première emote jouée.
+    let emotesBB = null, chargementEmotes = null;
+    const lireEmotes = projet => Object.fromEntries((projet.animations || []).map(a => {
+      const os = {};
+      for (const an of Object.values(a.animators || {})) {
+        if (!an.keyframes?.length) continue;
+        const canaux = os[an.name] ??= {};
+        for (const k of an.keyframes) {
+          const p = k.data_points?.[0];
+          if (p) (canaux[k.channel] ??= []).push({ t: k.time, v: [p.x, p.y, p.z].map(x => parseFloat(x) || 0), interp: k.interpolation });
+        }
+        Object.values(canaux).forEach(c => c.sort((x, y) => x.t - y.t));
+      }
+      return [a.name, { duree: a.length || 1, boucle: a.loop === "loop", os }];
+    }));
+    const chargerEmotes = () => chargementEmotes ??= fetch(`/models/emotes.bbmodel?v=${new URL(document.querySelector('script[src*="site.js"]').src).searchParams.get("v") || ""}`)
+      .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(projet => { emotesBB = lireEmotes(projet); })
+      .catch(() => {});
+    // valeur d'une piste à l'instant t, entre ses images clés (linéaire, palier ou Catmull-Rom,
+    // comme dans Blockbench)
+    const catmull = (p0, p1, p2, p3, u) => 0.5 * (2 * p1 + (p2 - p0) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (3 * p1 - p0 - 3 * p2 + p3) * u * u * u);
+    const valeur = (cles, t, defaut) => {
+      if (!cles?.length) return defaut;
+      const n = cles.length;
+      if (t <= cles[0].t) return cles[0].v;
+      if (t >= cles[n - 1].t) return cles[n - 1].v;
+      let i = 0;
+      while (cles[i + 1].t < t) i++;
+      const a = cles[i], b = cles[i + 1], u = (t - a.t) / (b.t - a.t);
+      if (a.interp === "step") return a.v;
+      if (a.interp === "catmullrom" || b.interp === "catmullrom") {
+        const p0 = (cles[i - 1] || a).v, p3 = (cles[i + 2] || b).v;
+        return a.v.map((x, c) => catmull(p0[c], x, b.v[c], p3[c], u));
+      }
+      return a.v.map((x, c) => x + (b.v[c] - x) * u);
     };
+    // Blockbench → skinview3d : le rig regarde vers -z, le joueur du site vers +z (demi-tour autour
+    // de y), d'où x et z inversés. Les rotations sont en degrés, dans l'ordre ZYX de Blockbench.
+    const ZERO = [0, 0, 0], UN = [1, 1, 1], DEG = Math.PI / 180;
+    const poserOs = (objet, os, t) => {
+      const r = valeur(os?.rotation, t, ZERO), p = valeur(os?.position, t, ZERO);
+      objet.rotation.order = "ZYX";
+      objet.rotation.set(-r[0] * DEG, r[1] * DEG, -r[2] * DEG);
+      const base = objet.userData.repos ??= objet.position.clone();
+      objet.position.set(base.x - p[0], base.y + p[1], base.z - p[2]);
+    };
+    const PARTIES = [["head", "head"], ["body", "body"], ["right_arm", "rightArm"], ["left_arm", "leftArm"], ["right_leg", "rightLeg"], ["left_leg", "leftLeg"]];
+    // remet un joueur dans l'ordre de rotation habituel (pour les autres animations)
+    const ordreNormal = p => [p, ...PARTIES.map(([, cle]) => p.skin[cle])].forEach(o => { o.rotation.order = "XYZ"; });
     // Pour essayer le câlin sur quelqu'un : un deuxième joueur (skin d'Alex) en face, qui rend le
     // câlin. Le bouton « Sur un joueur » de l'aperçu le montre ou le cache.
     const ami = new sv.PlayerObject();
@@ -486,58 +462,26 @@
       };
       img.src = "/skin/MHF_Alex";
     };
-    // les deux face à face, vus de profil ; les bras de l'un passent par-dessus les épaules de l'autre,
-    // ceux de l'autre autour de la taille
-    // Un bras ne porte qu'à 10 pixels de l'épaule : pour que les mains arrivent dans le dos de
-    // l'autre, les deux se rapprochent et se décalent un peu de côté, la tête de chacun passant à
-    // côté de celle de l'autre. Les deux tournent la tête vers leur droite, du côté où ils sont
-    // décalés : les visages regardent chacun ailleurs, joue contre joue, comme dans un vrai câlin.
-    const calinADeux = (joueur, temps) => {
-      joueur.position.set(-3.3, 0, 2.1);
-      joueur.rotation.y = Math.PI / 2;
-      POSES.hug(joueur, temps, { autour: 0.45, leve: 1.7, tourne: -0.45 });
-      ami.visible = true;
-      ami.position.set(3.3, 0, -2.1);
-      ami.rotation.y = -Math.PI / 2;
-      POSES.hug(ami, temps, { autour: 0.5, leve: 1.2, tourne: -0.45 });
+    // Joue une animation du .bbmodel sur le joueur (et l'ami, s'il a une échelle non nulle)
+    const jouerEmote = (anim, joueur, t) => {
+      poserOs(joueur, anim.os.joueur, t);
+      PARTIES.forEach(([nom, cle]) => poserOs(joueur.skin[cle], anim.os[nom], t));
+      ami.visible = valeur(anim.os.ami?.scale, t, ZERO)[0] > 0.01;
+      if (!ami.visible) return;
+      const e = valeur(anim.os.ami.scale, t, UN);
+      ami.scale.set(e[0], e[1], e[2]);
+      poserOs(ami, anim.os.ami, t);
+      PARTIES.forEach(([nom, cle]) => poserOs(ami.skin[cle], anim.os["ami_" + nom], t));
     };
-    POSES.piggyback = () => {};   // se joue à deux : voir surLeDos
-    // Sur le dos : on court en portant un ami sur son dos (comme une course à dos). Le porteur
-    // court, penché en avant, les bras en arrière qui tiennent les jambes de l'ami ; l'ami est assis
-    // plus haut derrière lui, penché, les bras autour de son cou et les jambes autour de sa taille,
-    // et rebondit avec lui à chaque foulée.
-    const surLeDos = (joueur, temps) => {
-      const w = temps * Math.PI * 2 / 0.7;   // une foulée toutes les 0,35 s
-      const rebond = Math.abs(Math.sin(w)) * 1.1;
-      const s = joueur.skin;
-      joueur.rotation.x = 0.18;               // penché en avant
-      joueur.position.set(0, rebond, 0);
-      s.rightLeg.rotation.x = Math.sin(w) * 1.0;
-      s.leftLeg.rotation.x = -Math.sin(w) * 1.0;
-      s.rightArm.rotation.x = s.leftArm.rotation.x = 0.75 + Math.sin(w * 2) * 0.05;
-      s.rightArm.rotation.z = -0.35;
-      s.leftArm.rotation.z = 0.35;
-      s.head.rotation.x = -0.18;             // regarde devant malgré la pente
-      ami.visible = true;
-      const a = ami.skin;
-      ami.rotation.set(0.28, 0, 0);
-      ami.position.set(0, 8.5 + rebond * 1.15, -5.2);   // assis haut sur le dos : sa tête dépasse au-dessus
-      a.rightLeg.rotation.x = a.leftLeg.rotation.x = -1.35;   // jambes autour de la taille
-      a.rightLeg.rotation.z = -0.55;
-      a.leftLeg.rotation.z = 0.55;
-      a.rightArm.rotation.x = a.leftArm.rotation.x = -1.75;   // bras autour du cou
-      a.rightArm.rotation.z = 0.45;
-      a.leftArm.rotation.z = -0.45;
-      a.head.rotation.x = -0.35;
-      a.head.rotation.y = Math.sin(w * 0.5) * 0.12;
-      // le pseudo passe au-dessus de la tête de l'ami (remis en place au changement d'animation)
-      if (viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset + 11;
-    };
-    const EMOTES = Object.fromEntries(Object.entries(POSES).map(([cle, pose]) => [cle, class extends sv.PlayerAnimation {
+    const NOMS_EMOTES = ["hug", "wave", "clap", "dance", "cheer", "facepalm", "piggyback"];
+    const EMOTES = Object.fromEntries(NOMS_EMOTES.map(cle => [cle, class extends sv.PlayerAnimation {
       animate(joueur) {
-        if (cle === "hug" && avecAmi) calinADeux(joueur, this.progress);
-        else if (cle === "piggyback") surLeDos(joueur, this.progress);
-        else pose(joueur, this.progress);
+        // « Sur un joueur » : le câlin à deux
+        const anim = emotesBB?.[cle === "hug" && avecAmi ? "hug_duo" : cle];
+        if (!anim) return;
+        jouerEmote(anim, joueur, anim.boucle ? this.progress % anim.duree : Math.min(this.progress, anim.duree));
+        // sur le dos : le pseudo passe au-dessus de la tête de l'ami (remis en place au changement d'animation)
+        if (cle === "piggyback" && viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset + 11;
       }
     }]));
     // pose figée (mouvements réduits) : le moment le plus parlant de chaque emote
@@ -556,6 +500,10 @@
       ami.visible = false;
       ami.resetJoints();
       ami.rotation.set(0, 0, 0);
+      ami.scale.set(1, 1, 1);
+      ordreNormal(viewer.playerObject);
+      ordreNormal(ami);
+      if (key in EMOTES) chargerEmotes();
       if (key === "hug" || key === "piggyback") habillerAmi();
       if (amiBtn) amiBtn.hidden = key !== "hug";
       viewer.animation = Anim ? new Anim() : null;
