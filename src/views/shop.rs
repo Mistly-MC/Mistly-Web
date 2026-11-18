@@ -369,13 +369,43 @@ fn emote_texte<'a>(tr: &'a Tr, cle: &str) -> (&'a str, &'a str) {
     }
 }
 
+/// Image de présentation d'un article ou d'une emote, rendue sur le skin EnderMythex
+/// (public/assets/presentation, 600 × 475, le personnage sans le titre), s'il y en a une.
+fn presentation(cle: &str) -> Option<&'static str> {
+    Some(match cle {
+        "cape" => "cape-mistly",
+        "early" => "cape-early",
+        "elytra" => "elytres-mistly",
+        "cloudly" => "cloudly",
+        "bunny" => "oreilles-de-lapin",
+        "minime" => "minime",
+        "emote-hug" => "calin",
+        "emote-cheer" => "victoire",
+        "emote-wave" => "salut",
+        _ => return None,
+    })
+}
+
+/// Le visuel d'une carte : son image de présentation, sinon sa vignette en pixels (site.js).
+fn art_carte(cle: &str, l: u32, h: u32) -> Markup {
+    html! {
+        @if let Some(image) = presentation(cle) {
+            span.item-art.photo {
+                img src=(format!("/assets/presentation/{image}.jpg?v={}", layout::ASSET_VERSION.as_str())) alt="" width="600" height="475" loading="lazy";
+            }
+        } @else {
+            span.item-art.emote[cle.starts_with("emote-")] { canvas.thumb data-thumb=(cle) width=(l) height=(h) aria-hidden="true" {} }
+        }
+    }
+}
+
 /// Carte d'une emote (tendances, catalogue) : un clic la joue dans l'essayage.
 fn carte_emote(tr: &Tr, cle: &str, nouveau: bool) -> Markup {
     let (nom, texte) = emote_texte(tr, cle);
     let badge = if nouveau { &tr.shop_new } else { &tr.shop_badge };
     html! {
         button.item-card.reveal type="button" data-try=(cle) data-carte-emote="" data-name=(nom) data-text=(texte) data-badge=(tr.shop_badge) {
-            span.item-art.emote { canvas.thumb data-thumb=(format!("emote-{cle}")) width="90" height="144" aria-hidden="true" {} }
+            (art_carte(&format!("emote-{cle}"), 90, 144))
             span.item-body {
                 strong { (nom) }
                 span.desc { (texte) }
@@ -404,7 +434,7 @@ fn collection(p: &Page) -> Markup {
                     (carte_emote(tr, "hug", true))
                     @for a in ARTICLES.iter().filter(|a| TENDANCES.contains(&a.thumb)) {
                         button.item-card.reveal type="button" data-try=(a.thumb) {
-                            span.item-art { canvas.thumb data-thumb=(a.thumb) width="60" height="96" aria-hidden="true" {} }
+                            (art_carte(a.thumb, 60, 96))
                             span.item-body {
                                 strong { (a.nom(tr)) }
                                 span.desc { (a.texte(tr)) }
