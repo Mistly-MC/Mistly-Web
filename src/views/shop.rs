@@ -190,7 +190,8 @@ impl Catalogue {
 
 /// Réglages de l'article porté, montrés par site.js quand ils servent : la taille du chapeau
 /// (de 60 % à 100 %, la taille d'origine, par défaut), le pseudo dont le Minime prend le skin (le
-/// sien par défaut) et l'épaule où il s'assoit.
+/// sien par défaut) et l'épaule où il s'assoit ; pour les emotes à deux, le skin de l'autre joueur
+/// et, sur le dos, ce que fait le porteur.
 fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
     html! {
         div.reglage #reglage-taille hidden {
@@ -209,6 +210,21 @@ fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
             div.seg.epaules role="group" aria-label=(tr.shop_shoulder) {
                 button type="button" data-epaule="left" aria-pressed="false" { (tr.shop_shoulder_left) }
                 button type="button" data-epaule="right" aria-pressed="true" { (tr.shop_shoulder_right) }
+            }
+        }
+        // Câlin et sur le dos : le pseudo dont l'autre joueur prend le skin (Alex par défaut)
+        div.reglage #reglage-ami hidden {
+            label for="ami-nom" { (tr.shop_partner_name) }
+            input #ami-nom type="text" placeholder="Alex" maxlength="16"
+                autocomplete="off" autocapitalize="off" spellcheck="false";
+        }
+        // Sur le dos : ce que fait le porteur
+        div.reglage #reglage-porteur hidden {
+            span.etiquette { (tr.shop_carrier) }
+            div.seg.allures role="group" aria-label=(tr.shop_carrier) {
+                @for (cle, nom) in [("idle", &tr.shop_anim_idle), ("walk", &tr.shop_anim_walk), ("run", &tr.shop_anim_run), ("crouch", &tr.shop_anim_crouch)] {
+                    button type="button" data-allure=(cle) aria-pressed=(if cle == "run" { "true" } else { "false" }) { (nom) }
+                }
             }
         }
     }
@@ -515,6 +531,8 @@ fn stage(p: &Page, skin: &str, name: Option<&str>, studio: bool) -> Markup {
                 div.toggles {
                     button.toggle #reload type="button" title=(tr.shop_reload_hint) aria-label=(tr.shop_reload_hint) { (icons::refresh()) span { (tr.shop_reload) } }
                     button.toggle type="button" data-toggle="rotate" aria-pressed="true" { (icons::orbit()) span { (tr.shop_rotate) } }
+                    // le pseudo au-dessus de la tête : affiché ou caché
+                    button.toggle type="button" data-toggle="name" aria-pressed="true" { (icons::tag()) span { (tr.shop_show_name) } }
                 }
             }
             div.halo aria-hidden="true" {}

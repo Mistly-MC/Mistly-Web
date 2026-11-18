@@ -369,11 +369,19 @@
     viewer.autoRotateSpeed = 0.7;
     const press = (buttons, active) => buttons.forEach(b => b.setAttribute("aria-pressed", String(b === active)));
 
-    // Pseudo au-dessus de la tête, comme en jeu
+    // Pseudo au-dessus de la tête, comme en jeu (le bouton « Pseudo » le cache ou le montre)
+    let pseudoVisible = true;
+    const nameBtn = stage.querySelector('[data-toggle="name"]');
+    nameBtn?.addEventListener("click", () => {
+      pseudoVisible = !pseudoVisible;
+      nameBtn.setAttribute("aria-pressed", String(pseudoVisible));
+      if (viewer.nameTag) viewer.nameTag.visible = pseudoVisible;
+    });
     const setName = name => {
       viewer.nameTag = name
         ? new sv.NameTagObject(name, { font: "48px Silkscreen", height: 2.4, margin: [4, 8, 2, 8], textStyle: "#eaf1ff", backgroundStyle: "rgba(10,15,29,.55)" })
         : null;
+      if (viewer.nameTag) viewer.nameTag.visible = pseudoVisible;
       // (un pseudo recréé reprend sa hauteur normale : on le remonte au-dessus du chapeau)
       placerPseudo();   // setName ne sert qu'après le chargement de l'aperçu (loadPlayer)
     };
@@ -438,29 +446,42 @@
     ami.visible = false;
     ami.backEquipment = null;
     viewer.playerWrapper.add(ami);
-    let avecAmi = true, amiHabille = false;
-    const habillerAmi = () => {
-      if (amiHabille || !viewer.skinTexture) return;
-      amiHabille = true;
-      // en attendant (ou si le skin d'Alex ne charge pas) : le même skin que le joueur
-      ami.skin.map = viewer.skinTexture;
-      const img = new Image();
-      img.onload = () => {
-        if (img.width !== 64 || img.height !== 64) return;
-        const c = document.createElement("canvas");
-        c.width = c.height = 64;
-        c.getContext("2d").drawImage(img, 0, 0);
-        // même genre de texture que celle du joueur (pixels nets, mêmes couleurs)
-        const modele = viewer.skinTexture;
-        const tex = new modele.constructor(c);
-        tex.magFilter = modele.magFilter;
-        tex.minFilter = modele.minFilter;
-        tex.colorSpace = modele.colorSpace;
-        tex.needsUpdate = true;
-        ami.skin.map = tex;
-        ami.skin.modelType = "slim";
+    let avecAmi = true, amiNom = null;
+    // Son skin : celui du pseudo tapé dans « Skin de l'autre joueur », Alex sinon
+    const champAmi = document.getElementById("ami-nom");
+    const habillerAmi = async () => {
+      if (!viewer.skinTexture) return;
+      const nom = champAmi?.value.trim().match(/^[A-Za-z0-9_]{3,16}$/)?.[0] || "MHF_Alex";
+      if (nom === amiNom) return;
+      // en attendant (ou si son skin ne charge pas) : le même skin que le joueur
+      if (amiNom === null) ami.skin.map = viewer.skinTexture;
+      amiNom = nom;
+      const info = nom === "MHF_Alex" ? { slim: true } : await fetch(`/player/${nom}`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+      const image = new Image();
+      image.onload = () => {
+        if (amiNom !== nom) return;
+        ami.skin.map = textureDeSkin(image);
+        ami.skin.modelType = info?.slim ? "slim" : "default";
       };
-      img.src = "/skin/MHF_Alex";
+      image.src = `/skin/${nom}`;
+    };
+    let attenteAmi;
+    champAmi?.addEventListener("input", () => {
+      clearTimeout(attenteAmi);
+      attenteAmi = setTimeout(habillerAmi, 450);
+    });
+    // Sur le dos : le porteur reste sur place, marche, court ou s'accroupit (une animation chacun)
+    let allure = "run";
+    const boutonsAllure = [...document.querySelectorAll("[data-allure]")];
+    boutonsAllure.forEach(b => b.addEventListener("click", () => {
+      allure = b.dataset.allure;
+      boutonsAllure.forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    }));
+    // les réglages des emotes à deux, montrés seulement quand ils servent
+    const reglageAmi = document.getElementById("reglage-ami"), reglagePorteur = document.getElementById("reglage-porteur");
+    const majReglagesEmote = key => {
+      if (reglageAmi) reglageAmi.hidden = !(key === "piggyback" || (key === "hug" && avecAmi));
+      if (reglagePorteur) reglagePorteur.hidden = key !== "piggyback";
     };
     // Joue une animation du .bbmodel sur le joueur (et l'ami, s'il a une échelle non nulle)
     const jouerEmote = (anim, joueur, t) => {
@@ -477,7 +498,8 @@
     const EMOTES = Object.fromEntries(NOMS_EMOTES.map(cle => [cle, class extends sv.PlayerAnimation {
       animate(joueur) {
         // « Sur un joueur » : le câlin à deux
-        const anim = emotesBB?.[cle === "hug" && avecAmi ? "hug_duo" : cle];
+        const nom = cle === "hug" && avecAmi ? "hug_duo" : cle === "piggyback" && allure !== "run" ? "piggyback_" + allure : cle;
+        const anim = emotesBB?.[nom];
         if (!anim) return;
         jouerEmote(anim, joueur, anim.boucle ? this.progress % anim.duree : Math.min(this.progress, anim.duree));
         // sur le dos : le pseudo passe au-dessus de la tête de l'ami (remis en place au changement d'animation)
@@ -506,6 +528,7 @@
       if (key in EMOTES) chargerEmotes();
       if (key === "hug" || key === "piggyback") habillerAmi();
       if (amiBtn) amiBtn.hidden = key !== "hug";
+      majReglagesEmote(key);
       viewer.animation = Anim ? new Anim() : null;
       if (viewer.animation) { viewer.animation.speed = SPEED[key] ?? 1; viewer.animation.paused = reduce; }
       // animations figées (mouvements réduits) : une emote s'affiche quand même, dans sa pose
@@ -545,6 +568,7 @@
     amiBtn?.addEventListener("click", () => {
       avecAmi = !avecAmi;
       amiBtn.setAttribute("aria-pressed", String(avecAmi));
+      majReglagesEmote(animActuelle);
       if (!avecAmi) {
         ami.visible = false;
         viewer.playerObject.position.set(0, 0, 0);
@@ -808,37 +832,42 @@
       const image = new Image();
       image.onload = () => {
         if (minimeNom !== nom || !viewer.skinTexture) return;
-        const c = document.createElement("canvas");
-        c.width = 64; c.height = 64;
-        const g = c.getContext("2d");
-        g.drawImage(image, 0, 0, 64, image.height === 32 ? 32 : 64);
-        // ancien skin (64 × 32, comme celui de Notch) : le bras et la jambe gauches n'existaient pas,
-        // on les recopie en miroir depuis les droits, comme le fait skinview3d pour le joueur
-        if (image.height === 32) {
-          g.save();
-          g.scale(-1, 1);
-          const copie = (sx, sy, l, h, dx, dy) => g.drawImage(c, sx, sy, l, h, -dx, dy, -l, h);
-          copie(4, 16, 4, 4, 20, 48); copie(8, 16, 4, 4, 24, 48); copie(0, 20, 4, 12, 24, 52); copie(4, 20, 4, 12, 20, 52);
-          copie(8, 20, 4, 12, 16, 52); copie(12, 20, 4, 12, 28, 52); copie(44, 16, 4, 4, 36, 48); copie(48, 16, 4, 4, 40, 48);
-          copie(40, 20, 4, 12, 40, 52); copie(44, 20, 4, 12, 36, 52); copie(48, 20, 4, 12, 32, 52); copie(52, 20, 4, 12, 44, 52);
-          g.restore();
-          // la couche « chapeau » de ces skins est souvent pleine (noire) : sans pixel transparent, on l'efface
-          const chapeau = g.getImageData(32, 0, 32, 16).data;
-          let transparent = false;
-          for (let i = 3; i < chapeau.length; i += 4) if (chapeau[i] < 128) { transparent = true; break; }
-          if (!transparent) g.clearRect(32, 0, 32, 16);
-        }
-        const modele = viewer.skinTexture;
-        const tex = new modele.constructor(c);
-        tex.magFilter = modele.magFilter;
-        tex.minFilter = modele.minFilter;
-        tex.colorSpace = modele.colorSpace;
-        tex.needsUpdate = true;
-        minime.skin.map = tex;
+        minime.skin.map = textureDeSkin(image);
         minime.skin.modelType = info?.slim ? "slim" : "default";
       };
       image.src = `/skin/${nom}`;
     };
+    // Texture d'un skin chargé (image), prête pour un PlayerObject : même genre que celle du joueur
+    // (pixels nets, mêmes couleurs). Les anciens skins 64 × 32 sont convertis.
+    function textureDeSkin(image) {
+      const c = document.createElement("canvas");
+      c.width = 64; c.height = 64;
+      const g = c.getContext("2d");
+      g.drawImage(image, 0, 0, 64, image.height === 32 ? 32 : 64);
+      // ancien skin (64 × 32, comme celui de Notch) : le bras et la jambe gauches n'existaient pas,
+      // on les recopie en miroir depuis les droits, comme le fait skinview3d pour le joueur
+      if (image.height === 32) {
+        g.save();
+        g.scale(-1, 1);
+        const copie = (sx, sy, l, h, dx, dy) => g.drawImage(c, sx, sy, l, h, -dx, dy, -l, h);
+        copie(4, 16, 4, 4, 20, 48); copie(8, 16, 4, 4, 24, 48); copie(0, 20, 4, 12, 24, 52); copie(4, 20, 4, 12, 20, 52);
+        copie(8, 20, 4, 12, 16, 52); copie(12, 20, 4, 12, 28, 52); copie(44, 16, 4, 4, 36, 48); copie(48, 16, 4, 4, 40, 48);
+        copie(40, 20, 4, 12, 40, 52); copie(44, 20, 4, 12, 36, 52); copie(48, 20, 4, 12, 32, 52); copie(52, 20, 4, 12, 44, 52);
+        g.restore();
+        // la couche « chapeau » de ces skins est souvent pleine (noire) : sans pixel transparent, on l'efface
+        const chapeau = g.getImageData(32, 0, 32, 16).data;
+        let transparent = false;
+        for (let i = 3; i < chapeau.length; i += 4) if (chapeau[i] < 128) { transparent = true; break; }
+        if (!transparent) g.clearRect(32, 0, 32, 16);
+      }
+      const modele = viewer.skinTexture;
+      const tex = new modele.constructor(c);
+      tex.magFilter = modele.magFilter;
+      tex.minFilter = modele.minFilter;
+      tex.colorSpace = modele.colorSpace;
+      tex.needsUpdate = true;
+      return tex;
+    }
     // assis, les jambes en avant ; il fait coucou de son bras extérieur, l'autre posé
     // assis à califourchon sur l'épaule : les jambes écartées pendent devant, les bras posés
     // dessus. (Pour skinview3d, une rotation.z positive écarte le bras ou la jambe gauche, une
