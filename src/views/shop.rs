@@ -355,7 +355,7 @@ impl Article {
 
 /// Les emotes du catalogue, dans l'ordre affiché. Un aperçu sur le site : elles ne sont pas
 /// encore dans Mistly Client. Leurs animations et leurs vignettes sont dans `site.js`.
-const EMOTES: [&str; 6] = ["hug", "wave", "clap", "dance", "cheer", "facepalm"];
+const EMOTES: [&str; 7] = ["hug", "piggyback", "wave", "clap", "dance", "cheer", "facepalm"];
 
 /// Nom et description d'une emote.
 fn emote_texte<'a>(tr: &'a Tr, cle: &str) -> (&'a str, &'a str) {
@@ -365,6 +365,7 @@ fn emote_texte<'a>(tr: &'a Tr, cle: &str) -> (&'a str, &'a str) {
         "clap" => (&tr.shop_emote_clap, &tr.shop_emote_clap_p),
         "dance" => (&tr.shop_emote_dance, &tr.shop_emote_dance_p),
         "cheer" => (&tr.shop_emote_cheer, &tr.shop_emote_cheer_p),
+        "piggyback" => (&tr.shop_emote_piggyback, &tr.shop_emote_piggyback_p),
         _ => (&tr.shop_emote_facepalm, &tr.shop_emote_facepalm_p),
     }
 }
@@ -382,6 +383,7 @@ fn presentation(cle: &str) -> Option<&'static str> {
         "emote-hug" => "calin",
         "emote-cheer" => "victoire",
         "emote-wave" => "salut",
+        "emote-piggyback" => "piggyback",
         _ => return None,
     })
 }

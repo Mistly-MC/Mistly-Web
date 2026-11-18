@@ -1,4 +1,4 @@
-    // Blockbench// Petites améliorations côté navigateur. Tout le contenu est rendu par le serveur Rust :
+// Petites améliorations côté navigateur. Tout le contenu est rendu par le serveur Rust :
 // sans ce script, le site reste entièrement utilisable.
 (() => {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -501,14 +501,47 @@
       ami.rotation.y = -Math.PI / 2;
       POSES.hug(ami, temps, { autour: 0.5, leve: 1.2, tourne: -0.45 });
     };
+    POSES.piggyback = () => {};   // se joue à deux : voir surLeDos
+    // Sur le dos : on court en portant un ami sur son dos (comme une course à dos). Le porteur
+    // court, penché en avant, les bras en arrière qui tiennent les jambes de l'ami ; l'ami est assis
+    // plus haut derrière lui, penché, les bras autour de son cou et les jambes autour de sa taille,
+    // et rebondit avec lui à chaque foulée.
+    const surLeDos = (joueur, temps) => {
+      const w = temps * Math.PI * 2 / 0.7;   // une foulée toutes les 0,35 s
+      const rebond = Math.abs(Math.sin(w)) * 1.1;
+      const s = joueur.skin;
+      joueur.rotation.x = 0.18;               // penché en avant
+      joueur.position.set(0, rebond, 0);
+      s.rightLeg.rotation.x = Math.sin(w) * 1.0;
+      s.leftLeg.rotation.x = -Math.sin(w) * 1.0;
+      s.rightArm.rotation.x = s.leftArm.rotation.x = 0.75 + Math.sin(w * 2) * 0.05;
+      s.rightArm.rotation.z = -0.35;
+      s.leftArm.rotation.z = 0.35;
+      s.head.rotation.x = -0.18;             // regarde devant malgré la pente
+      ami.visible = true;
+      const a = ami.skin;
+      ami.rotation.set(0.28, 0, 0);
+      ami.position.set(0, 8.5 + rebond * 1.15, -5.2);   // assis haut sur le dos : sa tête dépasse au-dessus
+      a.rightLeg.rotation.x = a.leftLeg.rotation.x = -1.35;   // jambes autour de la taille
+      a.rightLeg.rotation.z = -0.55;
+      a.leftLeg.rotation.z = 0.55;
+      a.rightArm.rotation.x = a.leftArm.rotation.x = -1.75;   // bras autour du cou
+      a.rightArm.rotation.z = 0.45;
+      a.leftArm.rotation.z = -0.45;
+      a.head.rotation.x = -0.35;
+      a.head.rotation.y = Math.sin(w * 0.5) * 0.12;
+      // le pseudo passe au-dessus de la tête de l'ami (remis en place au changement d'animation)
+      if (viewer.nameTag) viewer.nameTag.position.y = viewer.nameTagYOffset + 11;
+    };
     const EMOTES = Object.fromEntries(Object.entries(POSES).map(([cle, pose]) => [cle, class extends sv.PlayerAnimation {
       animate(joueur) {
         if (cle === "hug" && avecAmi) calinADeux(joueur, this.progress);
+        else if (cle === "piggyback") surLeDos(joueur, this.progress);
         else pose(joueur, this.progress);
       }
     }]));
     // pose figée (mouvements réduits) : le moment le plus parlant de chaque emote
-    const POSE_FIXE = { hug: 2, wave: 1, clap: 0.35, dance: 0.6, cheer: 0.2, facepalm: 1.5 };
+    const POSE_FIXE = { hug: 2, wave: 1, clap: 0.35, dance: 0.6, cheer: 0.2, facepalm: 1.5, piggyback: 0.1 };
 
     // Animations : repos, marche, course, vol, accroupi, et les emotes
     const ANIMS = { idle: sv.IdleAnimation, walk: sv.WalkingAnimation, run: sv.RunningAnimation, fly: sv.FlyingAnimation, crouch: sv.CrouchAnimation, ...EMOTES };
@@ -523,7 +556,7 @@
       ami.visible = false;
       ami.resetJoints();
       ami.rotation.set(0, 0, 0);
-      if (key === "hug") habillerAmi();
+      if (key === "hug" || key === "piggyback") habillerAmi();
       if (amiBtn) amiBtn.hidden = key !== "hug";
       viewer.animation = Anim ? new Anim() : null;
       if (viewer.animation) { viewer.animation.speed = SPEED[key] ?? 1; viewer.animation.paused = reduce; }
@@ -955,6 +988,7 @@
       dance: { bras: [138, 28], jambes: [22, 0], haut: -1, tete: 8, deco: "note" },
       cheer: { bras: [158, 158], jambes: [10, 10], haut: -4, deco: "etincelles" },
       facepalm: { bras: [-162, 6], tete: 10, deco: "goutte" },
+      piggyback: { bras: [16, 16], jambes: [14, -8], haut: 3, passager: true },
     };
     const COULEURS = { cheveux: "#3b2a1d", peau: "#c08d6b", yeux: "#3a3f9e", haut: "#2fa3a9", bas: "#3f45b3", pieds: "#4c4c55" };
     const dessinerEmote = (c, cle) => {
@@ -970,6 +1004,12 @@
         couleurs.forEach(([de, a, coul]) => { g.fillStyle = coul; g.fillRect(-2, de, 4, a - de); });
         g.restore();
       };
+      // Sur le dos : l'ami (cheveux roux) dépasse au-dessus de la tête du porteur
+      if (pose.passager) {
+        g.fillStyle = "#e3a56d"; g.fillRect(17, y0 - 7, 7, 7);
+        g.fillStyle = "#d77a2e"; g.fillRect(17, y0 - 8, 7, 3); g.fillRect(23, y0 - 6, 1, 4);
+        g.fillStyle = "#3a5f2e"; g.fillRect(19, y0 - 3, 1, 1); g.fillRect(22, y0 - 3, 1, 1);
+      }
       const [jg, jd] = pose.jambes || [0, 0];
       membre(13, y0 + 20, jg, 12, [[0, 9, COULEURS.bas], [9, 12, COULEURS.pieds]]);
       membre(17, y0 + 20, -jd, 12, [[0, 9, COULEURS.bas], [9, 12, COULEURS.pieds]]);
@@ -983,6 +1023,7 @@
       const [bg, bd] = pose.bras;
       membre(9, y0 + 9, bg, 12, [[0, 4, COULEURS.haut], [4, 12, COULEURS.peau]]);
       membre(21, y0 + 9, -bd, 12, [[0, 4, COULEURS.haut], [4, 12, COULEURS.peau]]);
+      if (pose.passager) { g.fillStyle = "#5fae4f"; g.fillRect(8, y0 + 8, 14, 2); g.fillStyle = "#e3a56d"; g.fillRect(8, y0 + 10, 2, 2); g.fillRect(20, y0 + 10, 2, 2); }
       // petit décor qui dit l'émotion
       const px = (x, y, coul) => { g.fillStyle = coul; g.fillRect(x, y, 1, 1); };
       const motif = (lignes, x, y, coul) => lignes.forEach((l, j) => [...l].forEach((ch, i) => ch === "#" && px(x + i, y + j, coul)));

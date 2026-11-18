@@ -408,6 +408,8 @@ traductions! {
     pub shop_shoulder: String,
     pub shop_shoulder_left: String,
     pub shop_shoulder_right: String,
+    pub shop_emote_piggyback: String,
+    pub shop_emote_piggyback_p: String,
     pub shop_own_cape: String,
     pub shop_elytra: String,
     pub shop_rotate: String,
