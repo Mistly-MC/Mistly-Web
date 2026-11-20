@@ -6,7 +6,7 @@ use crate::docs::{DocPage, DocSet, Section};
 use maud::{Markup, PreEscaped, html};
 
 /// Dépôt du site, pour le lien « Modifier cette page ».
-const WEB_REPO: &str = "Misty-MC/Misty-Web";
+const WEB_REPO: &str = "Mistly-MC/Mistly-Web";
 
 /// Accueil de la documentation : toutes les sections et leurs pages.
 pub fn index(p: &Page, set: &DocSet) -> Markup {

@@ -125,6 +125,36 @@ pub async fn patch_notes(
     html_response(StatusCode::OK, markup, lang, remember)
 }
 
+/// `/patch-notes/<tag>` : la page d'une version (`?project=client` pour Mistly Client).
+pub async fn patch_notes_version(
+    State(state): State<Arc<AppState>>,
+    Path(tag): Path<String>,
+    Query(q): Query<PageQuery>,
+    headers: HeaderMap,
+    uri: Uri,
+) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let launcher = state.github.releases().await;
+    let client = state.client_releases.releases().await;
+    let est_client = q.project.as_deref() == Some("client");
+    let projet = patch_notes::Projet {
+        client: est_client,
+        repo: if est_client { state.client_releases.repo() } else { state.github.repo() },
+        launcher: launcher.as_ref().map(|l| l.len()),
+        mod_client: client.as_ref().map(|l| l.len()),
+    };
+    let releases = if est_client { client } else { launcher.clone() };
+    let chemin = uri.path().to_string();
+    let p = page(&state, lang, &chemin, launcher.as_ref().map(|l| l.len()));
+    let Some(list) = releases.as_deref() else {
+        return redirection("/patch-notes");
+    };
+    match list.iter().position(|r| r.tag_name == tag) {
+        Some(i) => html_response(StatusCode::OK, patch_notes::render_version(&p, list, i, &projet), lang, remember),
+        None => html_response(StatusCode::NOT_FOUND, not_found::render(&p), lang, false),
+    }
+}
+
 pub async fn docs_index(
     State(state): State<Arc<AppState>>,
     Query(q): Query<PageQuery>,
@@ -183,6 +213,10 @@ pub async fn privacy(State(state): State<Arc<AppState>>, Query(q): Query<PageQue
 
 pub async fn terms(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
     legal_page(&state, q, &headers, crate::legal::Kind::Terms).await
+}
+
+pub async fn license(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    legal_page(&state, q, &headers, crate::legal::Kind::License).await
 }
 
 /// `/tools` et `/tools/…` : les outils ont été retirés, redirection permanente vers l'accueil.

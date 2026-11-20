@@ -1,5 +1,5 @@
-//! Pages légales : mentions légales (`/legal`), confidentialité (`/privacy`) et conditions
-//! d'utilisation (`/terms`), en Markdown dans `legal/<fr|en>/`, intégrées au binaire.
+//! Pages légales : mentions légales (`/legal`), confidentialité (`/privacy`), conditions
+//! d'utilisation (`/terms`) et licence du launcher et du client (`/license`), en Markdown dans `legal/<fr|en>/`, intégrées au binaire.
 //!
 //! Chaque fichier commence par un en-tête TOML entre `+++` (`title`, `description`, `updated`
 //! au format AAAA-MM-JJ). Elles existent en français et en anglais ; les autres langues
@@ -15,16 +15,19 @@ pub enum Kind {
     Notice,
     Privacy,
     Terms,
+    /// La Misty License 1.0 du launcher et de Mistly Client
+    License,
 }
 
 impl Kind {
-    pub const ALL: [Kind; 3] = [Kind::Notice, Kind::Privacy, Kind::Terms];
+    pub const ALL: [Kind; 4] = [Kind::Notice, Kind::Privacy, Kind::Terms, Kind::License];
 
     pub fn path(self) -> &'static str {
         match self {
             Kind::Notice => "/legal",
             Kind::Privacy => "/privacy",
             Kind::Terms => "/terms",
+            Kind::License => "/license",
         }
     }
 
@@ -34,6 +37,7 @@ impl Kind {
             Kind::Notice => &tr.legal_notice,
             Kind::Privacy => &tr.legal_privacy,
             Kind::Terms => &tr.legal_terms,
+            Kind::License => &tr.legal_license,
         }
     }
 
@@ -42,6 +46,7 @@ impl Kind {
             Kind::Notice => "notice",
             Kind::Privacy => "privacy",
             Kind::Terms => "terms",
+            Kind::License => "license",
         }
     }
 }
@@ -72,9 +77,11 @@ fn source(lang_dir: &str, kind: Kind) -> &'static str {
         ("fr", Kind::Notice) => include_str!("../legal/fr/notice.md"),
         ("fr", Kind::Privacy) => include_str!("../legal/fr/privacy.md"),
         ("fr", Kind::Terms) => include_str!("../legal/fr/terms.md"),
+        ("fr", Kind::License) => include_str!("../legal/fr/license.md"),
         (_, Kind::Notice) => include_str!("../legal/en/notice.md"),
         (_, Kind::Privacy) => include_str!("../legal/en/privacy.md"),
         (_, Kind::Terms) => include_str!("../legal/en/terms.md"),
+        (_, Kind::License) => include_str!("../legal/en/license.md"),
     }
 }
 

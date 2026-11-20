@@ -55,7 +55,7 @@ Le plus rapide : dans la [console](/docs/console), clique sur **Envoyer les logs
 
 ## Signaler un bug
 
-Ouvre une issue sur [GitHub](https://github.com/Misty-MC/Mistly-Launcher/issues) avec :
+Ouvre une issue sur [GitHub](https://github.com/Mistly-MC/Mistly-Launcher/issues) avec :
 
 - la version de Mistly (Paramètres → Dépannage), ou le fichier créé par **Exporter les infos** ;
 - la version de Minecraft et le mod loader ;

@@ -9,13 +9,13 @@
 Rendered server-side in Rust: pages, translations, patch notes and the pixel-art night scene.
 
 [![Website](https://img.shields.io/badge/website-mistly.cc-8ab4f8?style=flat-square)](https://mistly.cc/)
-[![Deployment](https://img.shields.io/github/deployments/Misty-MC/Misty-Web/production?label=deploy&style=flat-square)](https://github.com/Misty-MC/Misty-Web/deployments)
+[![Deployment](https://img.shields.io/github/deployments/Mistly-MC/Mistly-Web/production?label=deploy&style=flat-square)](https://github.com/Mistly-MC/Mistly-Web/deployments)
 [![Rust](https://img.shields.io/badge/written%20in-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 [![axum](https://img.shields.io/badge/server-axum-6f9cff?style=flat-square)](https://github.com/tokio-rs/axum)
 [![Docker](https://img.shields.io/badge/deploy-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](Dockerfile)
 [![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
 
-[**Website**](https://mistly.cc/) · [**Docs**](https://mistly.cc/docs) · [**Patch notes**](https://mistly.cc/patch-notes) · [**Launcher**](https://github.com/Misty-MC/Mistly-Launcher) · [**Releases**](https://github.com/Misty-MC/Mistly-Launcher/releases)
+[**Website**](https://mistly.cc/) · [**Docs**](https://mistly.cc/docs) · [**Patch notes**](https://mistly.cc/patch-notes) · [**Launcher**](https://github.com/Mistly-MC/Mistly-Launcher) · [**Releases**](https://github.com/Mistly-MC/Mistly-Launcher/releases)
 
 <img src="public/assets/screens/en/home.png" alt="Mistly launcher, shown on the website" width="800" />
 

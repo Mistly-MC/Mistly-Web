@@ -1,0 +1,57 @@
++++
+title = "Licence"
+description = "Mistly Launcher et Mistly Client sont libres d’utilisation, de modification et de partage, mais ne peuvent pas être vendus : le texte complet de la Misty License 1.0."
+updated = "2026-11-20"
++++
+
+Mistly Launcher et Mistly Client sont distribués sous la **Misty License 1.0** : tu peux les utiliser, les copier, les modifier, les partager et y contribuer gratuitement, mais pas les vendre. Les versions publiées avant cette licence restent sous licence MIT. Le texte se trouve aussi dans [le dépôt du launcher](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt).
+
+> [!NOTE]
+> Seul le texte anglais ci-dessous fait foi.
+
+## Misty License 1.0
+
+Copyright (c) 2026 Misty-MC and contributors
+
+This license applies to Misty Launcher (https://github.com/Mistly-MC/Mistly-Launcher) and Misty Client (https://github.com/Mistly-MC/Mistly-Client), together "the Software".
+
+### 1. Permissions
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of the Software, to use, copy, modify, merge, publish and distribute the Software and works derived from it, and to contribute changes back to it, subject to the conditions below.
+
+### 2. No sale
+
+You may not sell the Software or any work derived from it. In particular, you may not:
+
+- **a)** sell, rent or lease copies of the Software or of a derived work;
+- **b)** require any payment, subscription or mandatory donation to download, install, unlock or use the Software or a derived work, or any of its features;
+- **c)** include the Software or a derived work in a product, bundle or service that is sold or that requires payment to access.
+
+The following remain allowed: voluntary donations that are not required to get or use the Software; showing the Software in monetized videos, streams or articles; and playing on any server, monetized or not, while using it.
+
+### 3. Derived works
+
+- **a)** The above copyright notice and this license must be included in all copies or substantial portions of the Software and in every derived work.
+- **b)** Derived works must be distributed under this same license.
+- **c)** A derived work must state that it was modified and must not be presented as an official Misty release. This license does not grant the right to use the Misty name or logo for a derived work, other than to state where it comes from.
+
+### 4. Contributions
+
+By submitting a contribution (code, translation, asset or other material) to the official Misty-MC repositories, you agree that it is licensed under this license and that Misty-MC may distribute it as part of the Software under this license or under any later version of it.
+
+### 5. Earlier versions
+
+Versions of the Software published before this license was adopted remain available under the terms they were published with (MIT License).
+
+### 6. Third-party components
+
+Third-party components included in the Software (for example the Silkscreen font, under the SIL Open Font License) remain under their own licenses.
+
+### 7. Termination
+
+Any use of the Software that breaks this license automatically ends the rights it grants to the person who broke it.
+
+### 8. No warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+

@@ -40,7 +40,7 @@ L'interface existe en anglais, français, espagnol, italien, portugais et russe.
 
 ## Licence
 
-Le code de Mistly est public, sous la [licence Misty](https://github.com/Misty-MC/Mistly-Launcher/blob/main/LICENSE.txt) : libre de l'utiliser, de le modifier, de le partager et d'y contribuer, mais il ne peut pas être vendu.
+Le code de Mistly est public, sous la [licence Misty](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt) : libre de l'utiliser, de le modifier, de le partager et d'y contribuer, mais il ne peut pas être vendu.
 
 ## Pour la suite
 

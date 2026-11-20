@@ -25,6 +25,9 @@ static VERIFS: LazyLock<(Option<String>, Option<String>, Option<String>)> = Lazy
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
+/// L'organisation GitHub de Mistly (launcher, client, site).
+pub const GITHUB_ORG_URL: &str = "https://github.com/Mistly-MC";
+
 /// Ajouté aux adresses des CSS et du JS (`?v=`) : change à chaque démarrage du serveur,
 /// donc à chaque déploiement, pour que les navigateurs ne gardent pas d'anciennes versions en cache.
 pub static ASSET_VERSION: LazyLock<String> = LazyLock::new(|| {
@@ -229,7 +232,7 @@ fn docs_menu(p: &Page) -> Markup {
                     a href="/status" { (icons::globe()) span { (tr.nav_status) } }
                     a href="/shop" { (icons::bag()) span { (tr.nav_shop) } }
                     a href=(DISCORD_URL) target="_blank" rel="noopener" { (icons::discord()) span { "Discord" } }
-                    a href=(p.github_url()) target="_blank" rel="noopener" { (icons::github()) span { "GitHub" } }
+                    a href=(GITHUB_ORG_URL) target="_blank" rel="noopener" { (icons::github()) span { "GitHub" } }
                 }
             }
         }
@@ -256,7 +259,7 @@ fn nav(p: &Page) -> Markup {
                 }
                 div.nav-right {
                     a.gh.dc href=(DISCORD_URL) target="_blank" rel="noopener" aria-label="Discord" title="Discord" { (icons::discord()) }
-                    a.gh href=(p.github_url()) target="_blank" rel="noopener" aria-label="GitHub" { (icons::github()) span { "GitHub" } }
+                    a.gh href=(GITHUB_ORG_URL) target="_blank" rel="noopener" aria-label="GitHub" { (icons::github()) span { "GitHub" } }
                     button.theme-toggle type="button" data-theme-toggle aria-label=(tr.nav_theme) title=(tr.nav_theme) {
                         span.moon { (icons::moon()) } span.sun { (icons::sun()) }
                     }
@@ -303,8 +306,10 @@ fn lang_menu(p: &Page) -> Markup {
             summary aria-label=(format!("{} : {}", p.tr.nav_language, p.tr.lang_name)) title=(p.tr.lang_name) { (icons::flag(p.lang.code())) }
             div.menu {
                 @for l in Lang::ALL {
-                    a href=(format!("{}?lang={}", p.path, l.code())) hreflang=(l.code()) aria-current=[(l == p.lang).then_some("true")] {
-                        (icons::flag(l.code())) span { (l.tr().lang_name) }
+                    // le drapeau seul (3 par ligne) ; le nom de la langue en info-bulle et pour les lecteurs d'écran
+                    a href=(format!("{}?lang={}", p.path, l.code())) hreflang=(l.code()) aria-current=[(l == p.lang).then_some("true")]
+                        aria-label=(l.tr().lang_name) title=(l.tr().lang_name) {
+                        (icons::flag(l.code()))
                     }
                 }
             }
@@ -403,7 +408,7 @@ fn footer(p: &Page) -> Markup {
                     span.made { (icons::rust()) (tr.ft_made) }
                     span.fb-right {
                         a href=(DISCORD_URL) target="_blank" rel="noopener" { (icons::discord()) "Discord" }
-                        a href=(p.github_url()) target="_blank" rel="noopener" { (icons::github()) (p.repo) }
+                        a href=(GITHUB_ORG_URL) target="_blank" rel="noopener" { (icons::github()) "Mistly-MC" }
                         a.totop href="#top" { (tr.ft_top) (icons::arrow_up()) }
                     }
                 }

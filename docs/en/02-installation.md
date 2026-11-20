@@ -4,7 +4,7 @@ description = "Installer, portable version or Linux archive: how to install Mist
 section = "start"
 +++
 
-Mistly comes in three forms: an installer and a portable version for Windows, and an archive for Linux. All are available on the [download page](/#download) and in the [GitHub releases](https://github.com/Misty-MC/Mistly-Launcher/releases), and all update themselves.
+Mistly comes in three forms: an installer and a portable version for Windows, and an archive for Linux. All are available on the [download page](/#download) and in the [GitHub releases](https://github.com/Mistly-MC/Mistly-Launcher/releases), and all update themselves.
 
 ## Installer (recommended)
 

@@ -3,8 +3,8 @@
 //! Variables d'environnement :
 //! - `PORT` (3000 par défaut)
 //! - `GITHUB_TOKEN` (facultatif) : évite la limite de l'API GitHub
-//! - `MISTY_REPO` (`Misty-MC/Mistly-Launcher` par défaut) : dépôt dont on affiche les releases
-//! - `CLIENT_REPO` (`Misty-MC/Mistly-Client` par défaut) : dépôt des releases de Mistly Client
+//! - `MISTY_REPO` (`Mistly-MC/Mistly-Launcher` par défaut) : dépôt dont on affiche les releases
+//! - `CLIENT_REPO` (`Mistly-MC/Mistly-Client` par défaut) : dépôt des releases de Mistly Client
 //! - `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION`, `YANDEX_VERIFICATION` (facultatifs) :
 //!   codes de vérification de la Search Console de Google, des Webmaster Tools de Bing et de Yandex
 //! - `INDEXNOW_KEY` (facultatif, 8 à 128 caractères) : annonce les pages à Bing, Yandex… (IndexNow)
@@ -126,13 +126,13 @@ async fn main() {
         github: Arc::new(github::GitHub::new(
             env_or("GITHUB_API", "https://api.github.com"),
             env_or("GITHUB_WEB", "https://github.com"),
-            env_or("MISTY_REPO", "Misty-MC/Mistly-Launcher"),
+            env_or("MISTY_REPO", "Mistly-MC/Mistly-Launcher"),
             std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
         )),
         client_releases: Arc::new(github::GitHub::client(
             env_or("GITHUB_API", "https://api.github.com"),
             env_or("GITHUB_WEB", "https://github.com"),
-            env_or("CLIENT_REPO", "Misty-MC/Mistly-Client"),
+            env_or("CLIENT_REPO", "Mistly-MC/Mistly-Client"),
             std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
         )),
         status: Arc::new(status::Status::new()),
@@ -182,6 +182,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(routes::index))
         .route("/patch-notes", get(routes::patch_notes))
+        .route("/patch-notes/{tag}", get(routes::patch_notes_version))
         .route("/shop", get(routes::shop))
         .route("/shop/{cat}", get(routes::shop_catalogue))
         .route("/skin/{name}", get(routes::skin))
@@ -201,6 +202,7 @@ async fn main() {
         .route("/legal", get(routes::legal_notice))
         .route("/privacy", get(routes::privacy))
         .route("/terms", get(routes::terms))
+        .route("/license", get(routes::license))
         .route("/status.json", get(routes::status_json))
         .route("/api/latest", get(routes::api_latest))
         .route("/download/{kind}", get(routes::download))

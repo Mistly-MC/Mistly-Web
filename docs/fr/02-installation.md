@@ -4,7 +4,7 @@ description = "Installeur, version portable ou archive Linux : comment installer
 section = "start"
 +++
 
-Mistly existe sous trois formes : un installeur et une version portable pour Windows, et une archive pour Linux. Toutes sont disponibles sur la [page de téléchargement](/#download) et dans les [releases GitHub](https://github.com/Misty-MC/Mistly-Launcher/releases), et toutes se mettent à jour toutes seules.
+Mistly existe sous trois formes : un installeur et une version portable pour Windows, et une archive pour Linux. Toutes sont disponibles sur la [page de téléchargement](/#download) et dans les [releases GitHub](https://github.com/Mistly-MC/Mistly-Launcher/releases), et toutes se mettent à jour toutes seules.
 
 ## Installeur (recommandé)
 

@@ -295,10 +295,16 @@
     }, 60_000);
   }
 
-  // Accordéons (FAQ, patch notes) : la hauteur glisse à l'ouverture et à la fermeture
-  document.querySelectorAll(".qa details, details.rel").forEach(d => {
+  // Accordéons (FAQ, patch notes) : la hauteur glisse à l'ouverture et à la fermeture. Dans la
+  // FAQ (details name="faq"), ouvrir une question referme celle qui était ouverte.
+  const accordeons = [...document.querySelectorAll(".qa details, details.rel")];
+  accordeons.forEach(d => {
     const summary = d.querySelector("summary");
-    if (!summary || reduce || !d.animate) return;
+    if (!summary || reduce || !d.animate) return;   // sans animation : le navigateur gère name="faq"
+    // le groupe est géré ici (sinon le navigateur fermerait les autres d'un coup, sans glisser)
+    const groupe = d.getAttribute("name");
+    d.removeAttribute("name");
+    d.dataset.groupe = groupe || "";
     let anim = null;
     const glisser = (de, a, fin) => {
       anim?.cancel();
@@ -306,25 +312,28 @@
       anim = d.animate({ height: [`${de}px`, `${a}px`] }, { duration: 320, easing: "cubic-bezier(.25,.8,.25,1)" });
       anim.onfinish = () => { anim = null; d.style.overflow = ""; fin?.(); };
     };
+    d.fermer = () => {
+      if (!d.open || d.classList.contains("closing")) return;
+      d.classList.add("closing");
+      glisser(d.offsetHeight, summary.offsetHeight, () => { d.open = false; d.classList.remove("closing"); });
+    };
     summary.addEventListener("click", e => {
       e.preventDefault();
+      if (d.open && !d.classList.contains("closing")) { d.fermer(); return; }
+      if (groupe) accordeons.forEach(autre => { if (autre !== d && autre.dataset.groupe === groupe) autre.fermer?.(); });
       const depart = d.offsetHeight;
-      if (d.open && !d.classList.contains("closing")) {
-        d.classList.add("closing");
-        glisser(depart, summary.offsetHeight, () => { d.open = false; d.classList.remove("closing"); });
-      } else {
-        d.classList.remove("closing");
-        d.open = true;
-        glisser(depart, d.scrollHeight);
-      }
+      d.classList.remove("closing");
+      d.open = true;
+      glisser(depart, d.scrollHeight);
     });
   });
 
-  // Patch notes : ouvrir la version visée par l'ancre (ex. /patch-notes#v0.3.1)
+  // Patch notes : les anciens liens vers une version (ex. /patch-notes#v0.3.1) mènent à sa page
   const openFromHash = () => {
     const id = decodeURIComponent(location.hash.slice(1));
     const el = id && document.getElementById(id);
-    if (el && el.tagName === "DETAILS") el.open = true;
+    if (el?.classList.contains("pn-card")) location.replace(el.href);
+    else if (el && el.tagName === "DETAILS") el.open = true;
   };
   openFromHash();
   addEventListener("hashchange", openFromHash);

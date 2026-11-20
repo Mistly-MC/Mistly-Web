@@ -89,14 +89,14 @@ fn hero(p: &Page, linux: bool) -> Markup {
                 }
                 h1 { (tr.hero_title_1) " " span.soft { (tr.hero_title_2) } }
                 div.actions {
+                    // le système du visiteur en blanc, l'autre au milieu, macOS toujours à droite
                     (bouton_principal(p, linux))
                     @if linux {
                         a.btn href="/download/setup" { (icons::windows()) "Windows" }
-                    }
-                    span.btn.os-soon aria-disabled="true" title=(tr.os_macos_p) { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
-                    @if !linux {
+                    } @else {
                         a.btn href="/download/linux" title=(tr.os_linux_p) { (icons::linux()) "Linux" }
                     }
+                    span.btn.os-soon aria-disabled="true" title=(tr.os_macos_p) { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
                 }
             }
             // Le launcher, dans un cadre posé sur le paysage : on peut cliquer ses onglets
@@ -376,11 +376,11 @@ fn download(p: &Page, latest: Option<&Release>, linux: bool) -> Markup {
                         span.txt { (tr.port_p) }
                         @if let Some(m) = meta(Kind::Portable) { span.m { (m) " · .zip" } }
                     }
+                    @if !linux { (carte_linux) }
                     div.dl-card.soon aria-disabled="true" {
                         span.top { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
                         span.txt { (tr.os_macos_p) }
                     }
-                    @if !linux { (carte_linux) }
                     a.dl-card href="/patch-notes" {
                         span.top { (icons::notes()) (tr.notes_t) }
                         span.txt { (tr.notes_p) }
@@ -410,7 +410,8 @@ fn faq(p: &Page) -> Markup {
                 (titre(&tr.faq_title, Some(qa.len())))
                 div.qa {
                     @for (q, a) in qa {
-                        details { summary { span { (q) } (icons::chevron()) } p { (a) } }
+                        // name : une seule question ouverte à la fois (ouvrir l'une ferme l'autre)
+                        details name="faq" { summary { span { (q) } (icons::chevron()) } p { (a) } }
                     }
                 }
             }

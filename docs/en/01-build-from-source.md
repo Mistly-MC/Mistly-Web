@@ -4,7 +4,7 @@ description = "Compile the launcher, run its tests, publish a release, and find 
 section = "dev"
 +++
 
-Mistly's code is public under the [Misty License](https://github.com/Misty-MC/Mistly-Launcher/blob/main/LICENSE.txt): free to use, modify, share and contribute to, but it may not be sold. The code is on [GitHub](https://github.com/Misty-MC/Mistly-Launcher); the Rust project is in the `misty-rust` folder.
+Mistly's code is public under the [Misty License](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt): free to use, modify, share and contribute to, but it may not be sold. The code is on [GitHub](https://github.com/Mistly-MC/Mistly-Launcher); the Rust project is in the `misty-rust` folder.
 
 ## Requirements
 
@@ -66,4 +66,4 @@ cargo test -- --ignored --nocapture
 
 ## Contribute
 
-Bug reports and pull requests are welcome on [GitHub](https://github.com/Misty-MC/Mistly-Launcher). To improve this documentation, use the **Edit this page on GitHub** link at the bottom of each page: the docs live in the [Misty-Web](https://github.com/Misty-MC/Misty-Web) repository, in `docs/<language>/`.
+Bug reports and pull requests are welcome on [GitHub](https://github.com/Mistly-MC/Mistly-Launcher). To improve this documentation, use the **Edit this page on GitHub** link at the bottom of each page: the docs live in the [Misty-Web](https://github.com/Mistly-MC/Mistly-Web) repository, in `docs/<language>/`.

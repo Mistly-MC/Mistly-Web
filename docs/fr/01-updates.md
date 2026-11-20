@@ -4,7 +4,7 @@ description = "Comment Mistly se met à jour tout seul, comment vérifier à la 
 section = "help"
 +++
 
-Mistly se met à jour depuis ses [releases GitHub](https://github.com/Misty-MC/Mistly-Launcher/releases), pour l'installeur comme pour la version portable.
+Mistly se met à jour depuis ses [releases GitHub](https://github.com/Mistly-MC/Mistly-Launcher/releases), pour l'installeur comme pour la version portable.
 
 ## Mises à jour automatiques
 

@@ -6,7 +6,7 @@ section = "play"
 
 Mistly Client est un **mod Fabric** qui amène Mistly dans le jeu, comme le font les clients PvP : un menu principal et un écran de chargement aux couleurs de Mistly, un HUD que tu arranges toi-même, et les cosmétiques de l'[onglet Skin](/docs/skins).
 
-Il n'est pas intégré au launcher : Mistly le télécharge depuis [ses releases GitHub](https://github.com/Misty-MC/Mistly-Client/releases) la première fois qu'une partie en a besoin, et vérifie s'il existe une version plus récente avant de jouer. Une nouvelle version de Mistly Client t'arrive donc sans mise à jour du launcher.
+Il n'est pas intégré au launcher : Mistly le télécharge depuis [ses releases GitHub](https://github.com/Mistly-MC/Mistly-Client/releases) la première fois qu'une partie en a besoin, et vérifie s'il existe une version plus récente avant de jouer. Une nouvelle version de Mistly Client t'arrive donc sans mise à jour du launcher.
 
 ## Versions compatibles
 

@@ -6,7 +6,7 @@ use crate::legal::{Kind, LegalPage};
 use maud::{Markup, PreEscaped, html};
 
 /// Dépôt du site, pour le lien « Modifier cette page ».
-const WEB_REPO: &str = "Misty-MC/Misty-Web";
+const WEB_REPO: &str = "Mistly-MC/Mistly-Web";
 
 pub fn render(p: &Page, d: &LegalPage) -> Markup {
     let tr = p.tr;

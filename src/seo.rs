@@ -37,7 +37,7 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
         "alternateName": ["Mistly MC", "Misty MC"],
         "url": format!("{site}/"),
         "logo": format!("{site}/assets/icone.png"),
-        "sameAs": ["https://github.com/Misty-MC", format!("https://github.com/{repo}")],
+        "sameAs": ["https://github.com/Mistly-MC", format!("https://github.com/{repo}")],
     });
     let website = json!({
         "@type": "WebSite",
@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn sitemap_lists_every_page_in_every_language() {
         let xml = sitemap_xml("https://example.com");
-        let pages = 9 + 3 + docs::get(Lang::En).pages.len();
+        let pages = 9 + crate::legal::Kind::ALL.len() + docs::get(Lang::En).pages.len();
         assert_eq!(xml.matches("<url>").count(), pages * Lang::ALL.len());
         assert!(xml.contains("<loc>https://example.com/docs/installation?lang=fr</loc>"));
         assert!(xml.contains("<loc>https://example.com/privacy?lang=fr</loc>"));
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn jsonld_is_valid_and_names_misty_mc() {
-        let s = home_jsonld("https://example.com", Lang::En.tr(), "Misty-MC/Mistly-Launcher", None);
+        let s = home_jsonld("https://example.com", Lang::En.tr(), "Mistly-MC/Mistly-Launcher", None);
         let v: serde_json::Value = serde_json::from_str(&s).unwrap();
         assert!(v.to_string().contains("Mistly MC"));
         assert!(!s.contains("</"));

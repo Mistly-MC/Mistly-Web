@@ -6,12 +6,12 @@ updated = "2026-11-10"
 
 ## Publisher
 
-The **mistly.cc** website and the Mistly launcher are published by the Mistly team, on a non-professional and non-commercial basis. The source code is public, under the MIT License, in the [Misty-MC](https://github.com/Misty-MC) GitHub organization.
+The **mistly.cc** website and the Mistly launcher are published by the Mistly team, on a non-professional and non-commercial basis. The source code is public, under the MIT License, in the [Mistly-MC](https://github.com/Mistly-MC) GitHub organization.
 
 ## Contact
 
 - **Discord**: [the Mistly server](https://discord.gg/rdQJUgvUh3), the fastest way to reach us;
-- **GitHub**: [report an issue](https://github.com/Misty-MC/Mistly-Launcher/issues) on the launcher's repository.
+- **GitHub**: [report an issue](https://github.com/Mistly-MC/Mistly-Launcher/issues) on the launcher's repository.
 
 ## Hosting
 
@@ -23,7 +23,7 @@ The launcher's files are also published on **GitHub** (GitHub, Inc., 88 Colin P.
 
 ## Intellectual property
 
-The code of the website and of the launcher is released under the [MIT License](https://github.com/Misty-MC/Misty-Web/blob/main/LICENSE): you may reuse it under that license. The "Mistly" name, the logo and the site's visuals remain those of the Mistly team.
+The code of the website and of the launcher is released under the [MIT License](https://github.com/Mistly-MC/Mistly-Web/blob/main/LICENSE): you may reuse it under that license. The "Mistly" name, the logo and the site's visuals remain those of the Mistly team.
 
 The Silkscreen font is distributed under the SIL Open Font License, and skinview3d (3D skin preview) under the MIT License.
 

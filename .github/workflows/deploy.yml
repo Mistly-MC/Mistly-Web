@@ -5,7 +5,7 @@
 #   - COOLIFY_TOKEN    (obligatoire, en secret) : token API Coolify avec les permissions « deploy » et « read »
 #                       (sans « read », le déploiement est lancé mais son résultat n'est pas suivi)
 #   - COOLIFY_URL      (facultatif) : adresse de l'instance Coolify, https://panel.enderr.win par défaut
-#   - COOLIFY_APP_UUID (facultatif, en variable) : UUID de l'application dans Coolify, celle du site par défaut
+#   - COOLIFY_APP_UUID (facultatif, en variable ou en secret) : UUID de l'application dans Coolify, celle du site par défaut
 # Pensez à désactiver l'« Auto Deploy » dans Coolify pour ne pas déployer deux fois.
 name: Deploy
 
@@ -33,8 +33,8 @@ jobs:
       - name: Lancer le déploiement et attendre la fin
         env:
           COOLIFY_URL: ${{ vars.COOLIFY_URL || secrets.COOLIFY_URL || 'https://panel.enderr.win' }}
-          # UUID de l'application du site dans Coolify (pas un secret).
-          COOLIFY_APP_UUID: ${{ vars.COOLIFY_APP_UUID || '68wabiwd7glmjqiizbwfntzo' }}
+          # UUID de l'application du site dans Coolify (variable ou secret).
+          COOLIFY_APP_UUID: ${{ vars.COOLIFY_APP_UUID || secrets.COOLIFY_APP_UUID || '68wabiwd7glmjqiizbwfntzo' }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
           set -euo pipefail
