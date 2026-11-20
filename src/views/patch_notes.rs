@@ -4,7 +4,7 @@
 use super::icons;
 use super::layout::{self, Head, Page};
 use crate::format;
-use crate::github::{self, Release};
+use crate::github::{self, Asset, Kind, Release};
 use crate::markdown;
 use maud::{Markup, PreEscaped, html};
 
@@ -151,6 +151,15 @@ fn points(notes: &str) -> Vec<String> {
         .collect()
 }
 
+/// Les fichiers d'une version, ceux à télécharger d'abord (installeur, zip Windows, archive
+/// Linux), marqués `true` ; puis les autres (sommes de contrôle, signatures…) dans leur ordre.
+fn fichiers_tries(r: &Release) -> Vec<(&Asset, bool)> {
+    let rang = |a: &Asset| [Kind::Setup, Kind::Portable, Kind::Linux].iter().position(|k| k.matches(&a.name));
+    let mut fichiers: Vec<(&Asset, Option<usize>)> = r.assets.iter().map(|a| (a, rang(a))).collect();
+    fichiers.sort_by_key(|(_, rang)| rang.unwrap_or(usize::MAX));
+    fichiers.into_iter().map(|(a, rang)| (a, rang.is_some())).collect()
+}
+
 /// Le badge d'une version : la dernière, une pré-version ou une version stable.
 fn badge(p: &Page, r: &Release, is_latest: bool) -> Markup {
     let tr = p.tr;
@@ -271,8 +280,8 @@ pub fn render_version(p: &Page, list: &[Release], index: usize, projet: &Projet)
                         aside.pn-fichiers {
                             h2 { (tr.pn_files) }
                             div.files {
-                                @for a in &r.assets {
-                                    a.file href=(a.browser_download_url) {
+                                @for (a, principal) in fichiers_tries(r) {
+                                    a.file.principal[principal] href=(a.browser_download_url) {
                                         (icons::download())
                                         span { (a.name) }
                                         span.sz { (format::size(tr, a.size)) }

@@ -123,6 +123,10 @@
 .file{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--line);font-size:14px;transition:border-color .15s,background .15s}
 .file:hover{border-color:var(--line-2);background:var(--panel-2)}
 .file .ic{color:var(--accent)}
+/* Les fichiers à télécharger (installeur, zip Windows, archive Linux) : en tête, contour bleu */
+.file.principal{border-color:rgb(122 168 255 / .55);background:rgb(122 168 255 / .07)}
+.file.principal:hover{border-color:var(--accent);background:rgb(122 168 255 / .12)}
+.file.principal+.file:not(.principal){margin-top:8px}
 .file span:not(.sz){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .file .sz{font-size:12.5px;color:var(--dim)}
 .empty{padding:28px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);color:var(--muted)}
