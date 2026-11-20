@@ -331,7 +331,7 @@
   // Patch notes : les anciens liens vers une version (ex. /patch-notes#v0.3.1) mènent à sa page
   const openFromHash = () => {
     const id = decodeURIComponent(location.hash.slice(1));
-    const el = id && document.getElementById(id);
+    const el = id ? document.getElementById(id) : null;
     if (el?.classList.contains("pn-card")) location.replace(el.href);
     else if (el && el.tagName === "DETAILS") el.open = true;
   };
