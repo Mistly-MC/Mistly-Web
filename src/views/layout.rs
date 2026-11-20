@@ -305,6 +305,7 @@ fn lang_menu(p: &Page) -> Markup {
         details.langdd {
             summary aria-label=(format!("{} : {}", p.tr.nav_language, p.tr.lang_name)) title=(p.tr.lang_name) { (icons::flag(p.lang.code())) }
             div.menu {
+                span.mega-t { (p.tr.nav_language) }
                 @for l in Lang::ALL {
                     // le drapeau seul (3 par ligne) ; le nom de la langue en info-bulle et pour les lecteurs d'écran
                     a href=(format!("{}?lang={}", p.path, l.code())) hreflang=(l.code()) aria-current=[(l == p.lang).then_some("true")]
