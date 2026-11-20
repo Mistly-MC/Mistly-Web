@@ -1084,14 +1084,18 @@
           g.fillRect(ox + x * px, oy + y * px, px, px);
         }));
       } else if (c.dataset.thumb === "wings") {
-        // Ailes de brume : deux ailes déployées, de l'indigo au blanc de la brume
-        const rows = ["#........#", "##......##", "###....###", "####..####", "##########", ".########.", ".###..###.", "..##..##..", "..#....#.."];
-        const tons = ["#2a3480", "#33459e", "#3f5cc4", "#4f74e0", "#5d8cf2", "#7fb0ff", "#a9d6ff", "#cfeeff", "#effaff"];
-        const px = Math.floor(c.width / 12);
-        const ox = (c.width - 10 * px) / 2, oy = (c.height - rows.length * px) / 2;
+        // Ailes de brume : un éventail de plumes pointues au-dessus de chaque épaule et un lobe plus
+        // petit en dessous, comme le modèle (n : contour, f : base foncée, b : bleu, c : pointes claires)
+        const rows = [
+          "c.c.......c.c", "cnc.c...c.cnc", "nbcnc...cncbn", "nbbcn...ncbbn", ".nbbfn.nfbbn.",
+          "..nffn.nffn..", "..nbfn.nfbn..", ".ncbbn.nbbcn.", ".nc.cn.nc.cn.", "..c..c.c..c..",
+        ];
+        const tons = { n: "#0e1246", f: "#1c3a9a", b: "#2f63d8", c: "#79b0ff" };
+        const px = Math.floor(c.width / 15);
+        const ox = (c.width - 13 * px) / 2, oy = (c.height - rows.length * px) / 2;
         rows.forEach((row, y) => [...row].forEach((ch, x) => {
-          if (ch !== "#") return;
-          g.fillStyle = tons[y];
+          if (!tons[ch]) return;
+          g.fillStyle = tons[ch];
           g.fillRect(ox + x * px, oy + y * px, px, px);
         }));
       } else if (c.dataset.thumb === "bunny") {
