@@ -45,7 +45,7 @@ impl Miroir {
             return;
         }
         let mut gardes = Vec::new();
-        for kind in [Kind::Setup, Kind::Portable] {
+        for kind in [Kind::Setup, Kind::Portable, Kind::Linux] {
             let Some(asset) = release.asset(kind) else { continue };
             let Some(nom) = nom_sur(&asset.name) else { continue };
             gardes.push(nom.to_string());

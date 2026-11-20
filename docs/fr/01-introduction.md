@@ -1,10 +1,10 @@
 +++
 title = "Présentation de Mistly"
-description = "Un launcher Minecraft : Java Edition léger pour Windows, écrit en Rust. Ce qu'il fait, et ce qu'il ne fait pas."
+description = "Un launcher Minecraft : Java Edition léger pour Windows et Linux, écrit en Rust. Ce qu'il fait, et ce qu'il ne fait pas."
 section = "start"
 +++
 
-Mistly est un launcher gratuit pour **Minecraft : Java Edition** sur Windows. Il télécharge le jeu depuis les serveurs officiels de Mojang, gère tes profils et tes mods, et lance Minecraft avec les bons réglages. Il est écrit en [Rust](https://www.rust-lang.org/) avec une interface [Slint](https://slint.dev) : un seul fichier `Misty.exe`, rien d'autre à installer.
+Mistly est un launcher gratuit pour **Minecraft : Java Edition** sur Windows et Linux. Il télécharge le jeu depuis les serveurs officiels de Mojang, gère tes profils et tes mods, et lance Minecraft avec les bons réglages. Il est écrit en [Rust](https://www.rust-lang.org/) avec une interface [Slint](https://slint.dev) : un seul programme (`Misty.exe` sous Windows, `Misty` sous Linux), rien d'autre à installer.
 
 ## En une minute
 
@@ -22,7 +22,7 @@ Mistly est un launcher gratuit pour **Minecraft : Java Edition** sur Windows. Il
 
 ## Configuration requise
 
-- Windows 10 ou 11, 64 bits.
+- Windows 10 ou 11, 64 bits, ou Linux x86_64 avec glibc 2.35 ou plus récent (Ubuntu 22.04, Debian 12, Fedora 36…).
 - Une connexion Internet au premier lancement de chaque version (le jeu, les bibliothèques et Java sont téléchargés une seule fois).
 - Un compte Microsoft qui possède Minecraft : Java Edition pour jouer en ligne. Les comptes hors-ligne sont aussi disponibles. Voir [Comptes](/docs/accounts).
 
@@ -36,7 +36,7 @@ L'interface existe en anglais, français, espagnol, italien, portugais et russe.
 
 - **Pas un produit officiel.** Mistly n'est pas affilié à Mojang Studios ni à Microsoft.
 - **Pas un moyen d'avoir Minecraft gratuitement.** Mistly ne contient aucun fichier du jeu. Pour jouer en ligne, il faut un compte qui possède le jeu.
-- **Pas pour macOS ni Linux.** Mistly est une application Windows.
+- **Pas (encore) pour macOS.** Mistly fonctionne sous Windows et Linux.
 
 ## Licence
 

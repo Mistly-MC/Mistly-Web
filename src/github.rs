@@ -57,13 +57,15 @@ pub struct Asset {
     pub download_count: u64,
 }
 
-/// Les deux fichiers publiés à chaque version.
+/// Les fichiers publiés à chaque version.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Kind {
     /// `Misty-Setup-<version>.exe` (ou `Mistly-Setup-…`)
     Setup,
     /// `Misty-<version>.zip`
     Portable,
+    /// `Misty-<version>-linux-x86_64.tar.gz` (depuis 0.4.0)
+    Linux,
 }
 
 impl Kind {
@@ -71,6 +73,7 @@ impl Kind {
         match s {
             "setup" => Some(Kind::Setup),
             "portable" => Some(Kind::Portable),
+            "linux" => Some(Kind::Linux),
             _ => None,
         }
     }
@@ -86,6 +89,7 @@ impl Kind {
                     && !f.starts_with("mistly-setup")
                     && f.ends_with(".zip")
             }
+            Kind::Linux => (f.starts_with("misty-") || f.starts_with("mistly-")) && f.ends_with("-linux-x86_64.tar.gz"),
         }
     }
 }
@@ -461,16 +465,16 @@ fn noms_assets(html: &str, repo: &str, tag: &str) -> Vec<String> {
     noms
 }
 
-/// La version mise en avant : la plus récente stable, sinon la plus récente tout court.
-/// Téléchargements de l'installeur et de la version portable, toutes versions confondues.
+/// Téléchargements de l'installeur, de la version portable et de la version Linux, toutes versions confondues.
 pub fn total_downloads(list: &[Release]) -> u64 {
     list.iter()
         .flat_map(|r| &r.assets)
-        .filter(|a| Kind::Setup.matches(&a.name) || Kind::Portable.matches(&a.name))
+        .filter(|a| [Kind::Setup, Kind::Portable, Kind::Linux].iter().any(|k| k.matches(&a.name)))
         .map(|a| a.download_count)
         .sum()
 }
 
+/// La version mise en avant : la plus récente stable, sinon la plus récente tout court.
 pub fn latest(list: &[Release]) -> Option<&Release> {
     list.iter().find(|r| !r.prerelease).or_else(|| list.first())
 }
@@ -524,6 +528,11 @@ mod tests {
         assert!(!Kind::Setup.matches("Misty-0.3.1.zip"));
         assert!(Kind::Portable.matches("Misty-0.3.1.zip"));
         assert!(!Kind::Portable.matches("Misty-Setup-0.3.1.zip"));
+        assert!(Kind::Linux.matches("Misty-0.4.0-linux-x86_64.tar.gz"));
+        assert!(!Kind::Linux.matches("Misty-0.4.0-linux-x86_64.tar.gz.sha256"));
+        assert!(!Kind::Portable.matches("Misty-0.4.0-linux-x86_64.tar.gz"));
+        assert!(!Kind::Portable.matches("Misty-0.4.0.zip.minisig"));
+        assert_eq!(Kind::from_slug("linux"), Some(Kind::Linux));
     }
 
     /// GitHub injoignable : la première page attend au plus le délai d'une requête, les suivantes

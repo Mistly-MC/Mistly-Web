@@ -252,6 +252,8 @@ async fn main() {
         .layer(CompressionLayer::new().compress_when(
             tower_http::compression::DefaultPredicate::new()
                 .and(NotForContentType::const_new("application/zip"))
+                .and(NotForContentType::const_new("application/gzip"))
+                .and(NotForContentType::const_new("application/x-gzip"))
                 .and(NotForContentType::const_new("application/octet-stream"))
                 .and(NotForContentType::const_new("application/vnd.microsoft.portable-executable"))
                 .and(NotForContentType::const_new("application/x-msdownload")),

@@ -141,7 +141,7 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .qa details:not([open]) p{opacity:0}
 .qa details.closing p{opacity:0}
 
-/* macOS et Linux : pas encore disponibles */
+/* macOS : pas encore disponible */
 .btn.os-soon{cursor:default;color:var(--muted);background:rgb(var(--bg-rgb) / .45);opacity:.85}
 .btn.os-soon:hover{background:rgb(var(--bg-rgb) / .45);border-color:var(--line-2)}
 .btn.os-soon:active{transform:none}

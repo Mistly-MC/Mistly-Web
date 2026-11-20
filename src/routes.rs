@@ -421,6 +421,7 @@ pub async fn api_latest(State(state): State<Arc<AppState>>) -> Response {
         "notes": r.notes(),
         "setupSize": r.asset(Kind::Setup).map(|a| a.size),
         "portableSize": r.asset(Kind::Portable).map(|a| a.size),
+        "linuxSize": r.asset(Kind::Linux).map(|a| a.size),
     }))
     .into_response();
     res.headers_mut().insert(

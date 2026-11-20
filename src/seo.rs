@@ -67,7 +67,7 @@ pub fn home_jsonld(site: &str, tr: &Tr, repo: &str, latest: Option<&Release>) ->
         "applicationSubCategory": "Minecraft launcher",
         "genre": "Minecraft launcher",
         "keywords": KEYWORDS,
-        "operatingSystem": "Windows 10, Windows 11",
+        "operatingSystem": "Windows 10, Windows 11, Linux",
         "downloadUrl": format!("{site}/download/setup"),
         "installUrl": format!("{site}/download/setup"),
         "featureList": [tr.c1_t.clone(), tr.c2_t.clone(), tr.c3_t.clone(), tr.c4_t.clone(), tr.c5_t.clone(), tr.c6_t.clone(), tr.f2_t.clone(), tr.f3_t.clone()],

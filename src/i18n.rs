@@ -158,6 +158,7 @@ traductions! {
     pub dlx_s1: String,
     pub dlx_s2_setup: String,
     pub dlx_s2_port: String,
+    pub dlx_s2_linux: String,
     pub dlx_s3: String,
     pub dlx_retry: String,
     pub dlx_retry_link: String,

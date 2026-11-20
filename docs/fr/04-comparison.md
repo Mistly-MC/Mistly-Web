@@ -26,7 +26,7 @@ Il existe beaucoup de façons de lancer Minecraft : Java Edition. Elles ne font 
 | **Comptes hors-ligne** | Oui | Non | Non | Oui | Non | Non |
 | **Éditeur de packs de textures** | Oui | Non | Non | Non | Non | Non |
 | **Cosmétiques** | Oui, avec Mistly Client (cape, ailes, chapeau, tag) | Oui | Oui | Non | Non | Non |
-| **Windows / macOS / Linux** | Windows | Les trois | Windows, macOS | Non vérifié | Les trois | Les trois |
+| **Windows / macOS / Linux** | Windows, Linux | Les trois | Windows, macOS | Non vérifié | Les trois | Les trois |
 
 **En résumé :**
 

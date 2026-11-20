@@ -190,9 +190,8 @@
       setTimeout(() => { dlx.hidden = true; }, 250);
     };
     const open = href => {
-      const portable = href.includes("portable");
       const s2 = dlx.querySelector(".s2");
-      s2.textContent = portable ? s2.dataset.portable : s2.dataset.setup;
+      s2.textContent = href.includes("linux") ? s2.dataset.linux : href.includes("portable") ? s2.dataset.portable : s2.dataset.setup;
       dlx.querySelector("#dlx-again").href = href;
       dlx.classList.remove("done");
       label.textContent = label.dataset.preparing;

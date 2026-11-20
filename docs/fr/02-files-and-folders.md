@@ -6,13 +6,13 @@ section = "help"
 
 ## Le dossier de données
 
-Tout ce que Mistly télécharge ou crée va dans **`%LOCALAPPDATA%\Misty`**. Colle ce chemin dans la barre d'adresse de l'Explorateur Windows pour l'ouvrir, ou utilise **Paramètres → Ressources → Dossier de Mistly**.
+Tout ce que Mistly télécharge ou crée va dans **`%LOCALAPPDATA%\Misty`** sous Windows et **`~/.local/share/Misty`** sous Linux. Sous Windows, colle ce chemin dans la barre d'adresse de l'Explorateur pour l'ouvrir ; sur les deux systèmes, tu peux utiliser **Paramètres → Ressources → Dossier de Mistly**.
 
 | Fichier / dossier | Contenu |
 |---|---|
-| `data.txt` | Réglages : dernier compte et dernière version, RAM, langue, thème, Rich Presence, dernier profil… |
+| `reglages.json` | Réglages : dernier compte et dernière version, RAM, langue, thème, Rich Presence, dernier profil… (avant 0.4.0 : `data.txt`, converti automatiquement) |
 | `listpseudo.txt` | Comptes hors-ligne |
-| `msa.json` | Comptes Microsoft connectés |
+| `msa.json` | Comptes Microsoft connectés (les noms seulement : les jetons de connexion sont gardés dans le Gestionnaire d'identification de Windows, ou dans le trousseau sous Linux) |
 | `instances\<id>\` | Un dossier par [profil](/docs/profiles) |
 | `versions\`, `libraries\`, `assets\`, Java | L'installation de Minecraft, partagée par tous les profils |
 | `logs\misty\` | Le journal de Mistly (`launcher.log`) et un fichier de log pour chacune des 10 dernières parties |

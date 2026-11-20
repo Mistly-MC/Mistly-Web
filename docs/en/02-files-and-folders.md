@@ -6,13 +6,13 @@ section = "help"
 
 ## The data folder
 
-Everything Mistly downloads or creates goes to **`%LOCALAPPDATA%\Misty`**. Paste this path into the Windows Explorer address bar to open it, or use **Settings → Resources → Mistly folder**.
+Everything Mistly downloads or creates goes to **`%LOCALAPPDATA%\Misty`** on Windows and **`~/.local/share/Misty`** on Linux. On Windows, paste this path into the Explorer address bar to open it; on both systems you can use **Settings → Resources → Mistly folder**.
 
 | File / folder | Content |
 |---|---|
-| `data.txt` | Settings: last account and version, RAM, language, theme, Rich Presence, last profile… |
+| `reglages.json` | Settings: last account and version, RAM, language, theme, Rich Presence, last profile… (before 0.4.0: `data.txt`, converted automatically) |
 | `listpseudo.txt` | Offline accounts |
-| `msa.json` | Signed-in Microsoft accounts |
+| `msa.json` | Signed-in Microsoft accounts (names only: the sign-in tokens are kept in the Windows Credential Manager, or in the keyring on Linux) |
 | `instances\<id>\` | One folder per [profile](/docs/profiles) |
 | `versions\`, `libraries\`, `assets\`, Java | The Minecraft installation, shared by every profile |
 | `logs\misty\` | Mistly's own log (`launcher.log`) and a log file for each of the last 10 games |

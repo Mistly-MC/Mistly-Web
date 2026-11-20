@@ -77,7 +77,7 @@ fn hero(p: &Page) -> Markup {
                 div.actions {
                     a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
                     span.btn.os-soon aria-disabled="true" title=(tr.os_macos_p) { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
-                    span.btn.os-soon aria-disabled="true" title=(tr.os_linux_p) { (icons::linux()) "Linux" span.badge { (tr.os_soon) } }
+                    a.btn href="/download/linux" title=(tr.os_linux_p) { (icons::linux()) "Linux" }
                 }
             }
             // Le launcher, dans un cadre posé sur le paysage : on peut cliquer ses onglets
@@ -275,7 +275,7 @@ fn pile(p: &Page) -> Markup {
     let lignes: [(&str, Vec<(&str, Option<&str>)>); 4] = [
         (&tr.stack_loaders, LOADERS.iter().map(|l| (*l, None)).collect()),
         (&tr.load_sources, vec![("Modrinth", Some("#1bd96a")), ("CurseForge", Some("#f16436"))]),
-        (&tr.stack_system, vec![("Windows 10", None), ("Windows 11", None), ("Java auto", None)]),
+        (&tr.stack_system, vec![("Windows 10", None), ("Windows 11", None), ("Linux x86_64", None), ("Java auto", None)]),
         (&tr.stack_langs, langues.iter().map(|l| (*l, None)).collect()),
     ];
     html! {
@@ -352,9 +352,10 @@ fn download(p: &Page, latest: Option<&Release>) -> Markup {
                         span.top { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
                         span.txt { (tr.os_macos_p) }
                     }
-                    div.dl-card.soon aria-disabled="true" {
-                        span.top { (icons::linux()) "Linux" span.badge { (tr.os_soon) } }
+                    a.dl-card href="/download/linux" {
+                        span.top { (icons::linux()) "Linux" }
                         span.txt { (tr.os_linux_p) }
+                        @if let Some(m) = meta(Kind::Linux) { span.m { (m) " · .tar.gz" } }
                     }
                     a.dl-card href="/patch-notes" {
                         span.top { (icons::notes()) (tr.notes_t) }

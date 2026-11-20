@@ -168,7 +168,7 @@ fn telechargement(p: &Page) -> Markup {
                 }
                 ol.dlx-steps {
                     li { span.n { "01" } (tr.dlx_s1) }
-                    li { span.n { "02" } span.s2 data-setup=(tr.dlx_s2_setup) data-portable=(tr.dlx_s2_port) { (tr.dlx_s2_setup) } }
+                    li { span.n { "02" } span.s2 data-setup=(tr.dlx_s2_setup) data-portable=(tr.dlx_s2_port) data-linux=(tr.dlx_s2_linux) { (tr.dlx_s2_setup) } }
                     li { span.n { "03" } (tr.dlx_s3) }
                 }
                 div.dlx-actions {
