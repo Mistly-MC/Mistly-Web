@@ -77,14 +77,19 @@ pub fn render(p: &Page, releases: Option<&[Release]>, filter: Filter, projet: &P
         }
         section.sec #versions {
             div.wrap.versions {
-                // Deux projets publiés séparément : le launcher, et Mistly Client (le mod en jeu)
-                nav.projects aria-label=(tr.pn_project) {
-                    a href="/patch-notes#versions" aria-current=[(!projet.client).then_some("page")] {
-                        "Launcher" @if let Some(n) = projet.launcher { span { (n) } }
+                // Une barre : le projet à gauche (le launcher, ou Mistly Client, le mod en jeu,
+                // publiés séparément), les filtres à droite, sur un fond de caractères ASCII
+                div.pn-barre {
+                    pre.ascii-noise aria-hidden="true" {}
+                    nav.projects aria-label=(tr.pn_project) {
+                        a href="/patch-notes#versions" aria-current=[(!projet.client).then_some("page")] {
+                            "Launcher" @if let Some(n) = projet.launcher { span { (n) } }
+                        }
+                        a href="/patch-notes?project=client#versions" aria-current=[projet.client.then_some("page")] {
+                            "Mistly Client" @if let Some(n) = projet.mod_client { span { (n) } }
+                        }
                     }
-                    a href="/patch-notes?project=client#versions" aria-current=[projet.client.then_some("page")] {
-                        "Mistly Client" @if let Some(n) = projet.mod_client { span { (n) } }
-                    }
+                    @if let Some(list) = releases { (filtres(p, list, filter, projet)) }
                 }
                 @match releases {
                     None => { p.empty { (tr.pn_unavailable) } }
@@ -158,26 +163,31 @@ fn badge(p: &Page, r: &Release, is_latest: bool) -> Markup {
     }
 }
 
-fn list_view(p: &Page, list: &[Release], filter: Filter, projet: &Projet) -> Markup {
+/// Les filtres (toutes, stables, pré-versions), avec le nombre de versions de chacun.
+fn filtres(p: &Page, list: &[Release], filter: Filter, projet: &Projet) -> Markup {
     let tr = p.tr;
-    let latest_tag = github::latest(list).map(|r| r.tag_name.as_str());
     let stable = list.iter().filter(|r| !r.prerelease).count();
     let chips = [
         (Filter::All, &tr.pn_filter_all, list.len()),
         (Filter::Stable, &tr.pn_filter_stable, stable),
         (Filter::Pre, &tr.pn_filter_pre, list.len() - stable),
     ];
-    let shown: Vec<&Release> = list.iter().filter(|r| filter.keeps(r)).collect();
     html! {
-        div.toolbar {
-            nav.chips aria-label=(tr.pn_label) {
-                @for (f, label, n) in chips {
-                    a href=(format!("/patch-notes?filter={}{}#versions", f.slug(), projet.param())) aria-current=[(f == filter).then_some("true")] {
-                        (label) span { (n) }
-                    }
+        nav.chips aria-label=(tr.pn_label) {
+            @for (f, label, n) in chips {
+                a href=(format!("/patch-notes?filter={}{}#versions", f.slug(), projet.param())) aria-current=[(f == filter).then_some("true")] {
+                    (label) span { (n) }
                 }
             }
         }
+    }
+}
+
+fn list_view(p: &Page, list: &[Release], filter: Filter, projet: &Projet) -> Markup {
+    let tr = p.tr;
+    let latest_tag = github::latest(list).map(|r| r.tag_name.as_str());
+    let shown: Vec<&Release> = list.iter().filter(|r| filter.keeps(r)).collect();
+    html! {
         @if shown.is_empty() {
             p.empty { (tr.pn_empty) }
         }
@@ -188,6 +198,7 @@ fn list_view(p: &Page, list: &[Release], filter: Filter, projet: &Projet) -> Mar
                 @let pts = points(r.notes());
                 @let vedette = i == 0;
                 a.pn-card.vedette[vedette] id=(r.tag_name) href=(url_version(&r.tag_name, projet.client)) {
+                    pre.ascii-noise aria-hidden="true" {}
                     div.pn-card-top {
                         (badge(p, r, is_latest))
                         span.pn-date { (format::date(tr, r.published_at.as_deref())) }
@@ -247,21 +258,25 @@ pub fn render_version(p: &Page, list: &[Release], index: usize, projet: &Projet)
         }
         section.sec {
             div.wrap.pn-version {
-                article.pn-notes {
-                    div.md {
-                        @if r.notes().is_empty() { p { (tr.card_no_notes) } }
-                        @else { (PreEscaped(markdown::render(r.notes()))) }
+                // les notes et les fichiers ensemble : le panneau des fichiers, collant, s'arrête
+                // avec les notes au lieu de passer sur la navigation
+                div.pn-corps {
+                    article.pn-notes {
+                        div.md {
+                            @if r.notes().is_empty() { p { (tr.card_no_notes) } }
+                            @else { (PreEscaped(markdown::render(r.notes()))) }
+                        }
                     }
-                }
-                @if !r.assets.is_empty() {
-                    aside.pn-fichiers {
-                        h2 { (tr.pn_files) }
-                        div.files {
-                            @for a in &r.assets {
-                                a.file href=(a.browser_download_url) {
-                                    (icons::download())
-                                    span { (a.name) }
-                                    span.sz { (format::size(tr, a.size)) }
+                    @if !r.assets.is_empty() {
+                        aside.pn-fichiers {
+                            h2 { (tr.pn_files) }
+                            div.files {
+                                @for a in &r.assets {
+                                    a.file href=(a.browser_download_url) {
+                                        (icons::download())
+                                        span { (a.name) }
+                                        span.sz { (format::size(tr, a.size)) }
+                                    }
                                 }
                             }
                         }
@@ -270,12 +285,14 @@ pub fn render_version(p: &Page, list: &[Release], index: usize, projet: &Projet)
                 nav.pn-voisines aria-label=(tr.pn_label) {
                     @if let Some(v) = plus_ancienne {
                         a.pn-voisine href=(url_version(&v.tag_name, projet.client)) {
+                            pre.ascii-noise aria-hidden="true" {}
                             span.pn-sens { (icons::arrow_left()) (tr.pn_older) }
                             strong { (v.title()) }
                         }
                     } @else { span {} }
                     @if let Some(v) = plus_recente {
                         a.pn-voisine.suivante href=(url_version(&v.tag_name, projet.client)) {
+                            pre.ascii-noise aria-hidden="true" {}
                             span.pn-sens { (tr.pn_newer) (icons::arrow_right()) }
                             strong { (v.title()) }
                         }

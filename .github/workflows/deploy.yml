@@ -1,0 +1,49 @@
+# Suivi du déploiement du site, pour le panneau « Deployments » du dépôt (environnement
+# « production ») et la coche verte du commit.
+#
+# Coolify déploie lui-même chaque push sur main (son GitHub App). Ce workflow ne lance rien et
+# n'a besoin d'aucun secret : il attend que mistly.cc serve une version démarrée après le commit.
+# Le serveur met l'heure de son démarrage dans l'adresse de ses fichiers (`/js/site.js?v=<heure>`,
+# voir ASSET_VERSION dans src/views/layout.rs) : quand elle dépasse l'heure du push, le nouveau
+# site est en ligne.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Coolify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: https://mistly.cc
+    steps:
+      - name: Attendre la nouvelle version en ligne
+        env:
+          # heure du commit poussé (relancé à la main : maintenant)
+          DEPUIS: ${{ github.event.head_commit.timestamp }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DEPUIS}" ]; then depuis=$(date -d "${DEPUIS}" +%s); else depuis=$(date +%s); fi
+          echo "Version attendue : démarrée après $(date -u -d @"$depuis" '+%F %T') UTC"
+          for _ in $(seq 1 120); do
+            v=$(curl -fsSL --max-time 20 "https://mistly.cc/?deploiement=$RANDOM" | grep -o 'site.js?v=[0-9]*' | head -1 | cut -d= -f2 || true)
+            if [ -n "$v" ] && [ "$v" -ge "$depuis" ]; then
+              echo "En ligne : version démarrée le $(date -u -d @"$v" '+%F %T') UTC"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::Le site n'a pas été redéployé en 20 minutes : regarde les Deployment Logs dans Coolify."
+          exit 1

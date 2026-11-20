@@ -274,6 +274,8 @@
   menus.forEach(m => m.querySelectorAll("a").forEach(a => a.addEventListener("click", () => { m.open = false; })));
   // Un seul menu ouvert à la fois
   menus.forEach(m => m.addEventListener("toggle", () => { if (m.open) menus.forEach(o => { if (o !== m) o.open = false; }); }));
+  // le menu Docs s'ouvre au survol : il referme les autres, pour ne pas se superposer à eux
+  document.querySelectorAll(".navdd").forEach(d => d.addEventListener("mouseenter", () => menus.forEach(m => { m.open = false; })));
 
   // Page de statut : heures locales dans les bulles, et mise à jour toutes les minutes sans recharger
   if (document.body.classList.contains("status-page")) {
