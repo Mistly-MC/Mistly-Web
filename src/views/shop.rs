@@ -199,21 +199,29 @@ fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
             input #taille-chapeau type="range" min="0.6" max="1" step="0.05" value="0.8";
             output #taille-valeur for="taille-chapeau" { "80 %" }
         }
-        // Ailes de brume : la couleur de la membrane (les os restent beiges). Les teintes sont
-        // définies dans site.js (TEINTES_AILES), la pastille montre leur ton moyen.
-        div.reglage #reglage-ailes hidden {
+        // Ailes de brume : des couleurs toutes faites (Mistly par défaut), puis une couleur libre pour
+        // la membrane et pour les os. Les tons sont définis dans site.js (PRESETS_AILES) ; la
+        // pastille montre le ton principal de la membrane.
+        div.reglage #reglage-ailes data-reglage-ailes hidden {
             span.etiquette { (tr.shop_wings_color) }
             div.teintes role="group" aria-label=(tr.shop_wings_color) {
                 @for (cle, nom, ton) in [
-                    ("crimson", &tr.shop_tint_crimson, "#a01a37"), ("mist", &tr.shop_tint_mist, "#3f6fe0"),
+                    ("misty", &tr.shop_tint_misty, "linear-gradient(135deg,#04050c,#4a7fe6 55%,#f2f7ff)"),
+                    ("crimson", &tr.shop_tint_crimson, "#a01a37"),
                     ("amethyst", &tr.shop_tint_amethyst, "#8a3fd0"), ("jade", &tr.shop_tint_jade, "#1f9e66"),
                     ("gold", &tr.shop_tint_gold, "#d0951f"), ("shadow", &tr.shop_tint_shadow, "#34344a"),
                     ("snow", &tr.shop_tint_snow, "#d6deec"),
                 ] {
-                    button.teinte type="button" data-teinte=(cle) aria-pressed=(if cle == "crimson" { "true" } else { "false" })
+                    button.teinte type="button" data-teinte=(cle) aria-pressed=(if cle == "misty" { "true" } else { "false" })
                         title=(nom) aria-label=(nom) style=(format!("--c:{ton}")) {}
                 }
             }
+        }
+        div.reglage.couleurs-libres data-reglage-ailes hidden {
+            label for="ailes-membrane" { (tr.shop_wings_membrane) }
+            input #ailes-membrane type="color" value="#4a7fe6";
+            label for="ailes-os" { (tr.shop_wings_bones) }
+            input #ailes-os type="color" value="#2e3448";
         }
         div.reglage #reglage-minime hidden {
             label for="minime-nom" { (tr.shop_minime_name) }

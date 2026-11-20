@@ -930,38 +930,59 @@
     // suit donc le joueur quand il s'accroupit. Portées en plus de la cape, un peu derrière elle. Elles
     // battent doucement, plus vite et plus fort pendant le vol.
     let ailesPortees = false, ailes = null, battement = 0;
-    // Couleur de la membrane. Dans la texture du modèle, la membrane occupe les lignes du haut
-    // (au-dessus de ZONE_MEMBRANE) et les os sont en dessous : seuls les pixels de la membrane
-    // changent, chacun prend la teinte choisie à la même luminosité. « crimson » est la couleur
-    // d'origine. Chaque teinte va du plus sombre au plus clair.
-    const ZONE_MEMBRANE = 32;
-    const TEINTES_AILES = {
-      mist: ["#0b1036", "#1d3a9a", "#3f6fe0", "#9cc8ff"],
-      amethyst: ["#1d0833", "#4a1680", "#8a3fd0", "#d2a6ff"],
-      jade: ["#04241a", "#0d5c3c", "#1f9e66", "#8be8b4"],
-      gold: ["#2e1a04", "#7a4c0c", "#d0951f", "#ffe08a"],
-      shadow: ["#07070b", "#1a1a24", "#34344a", "#7a7a96"],
-      snow: ["#4a5468", "#9aa6bd", "#d6deec", "#ffffff"],
+    // Couleurs des ailes. Dans la texture du modèle, la membrane occupe les lignes du haut (au-dessus
+    // de ZONE_OS) et les os les lignes suivantes, jusqu'à ZONE_FIN (en dessous : le corps de
+    // référence, jamais affiché). Chaque pixel d'une zone prend la teinte voulue à la même
+    // luminosité : du plus sombre au plus clair de ses 4 tons. null : la couleur d'origine du modèle
+    // (membrane cramoisie, os beiges).
+    const ZONE_OS = 32, ZONE_FIN = 96;
+    const PRESETS_AILES = {
+      // Mistly : une membrane du noir (en haut) au bleu jusqu'au blanc des nuages (le bord
+      // découpé), des os du noir au bleu acier. vertical : part du dégradé qui suit la hauteur du
+      // pixel dans la membrane plutôt que sa luminosité.
+      misty: { membrane: ["#04050c", "#1d3a8a", "#5b8cf0", "#ffffff"], os: ["#030305", "#151824", "#2e3448", "#9bb8f0"], vertical: 0.85 },
+      crimson: { membrane: null, os: null },
+      amethyst: { membrane: ["#1d0833", "#4a1680", "#8a3fd0", "#d2a6ff"], os: ["#120a1c", "#3a2a4a", "#8a78a0", "#efe6ff"] },
+      jade: { membrane: ["#04241a", "#0d5c3c", "#1f9e66", "#8be8b4"], os: null },
+      gold: { membrane: ["#2e1a04", "#7a4c0c", "#d0951f", "#ffe08a"], os: ["#1a0f05", "#5a3a18", "#b98a4a", "#fff0c8"] },
+      shadow: { membrane: ["#07070b", "#1a1a24", "#34344a", "#7a7a96"], os: ["#030305", "#1e1e26", "#4a4a5a", "#c8c8d8"] },
+      snow: { membrane: ["#4a5468", "#9aa6bd", "#d6deec", "#ffffff"], os: ["#2a3346", "#7a8aa6", "#c9d6ee", "#ffffff"] },
     };
-    let teinteAiles = "crimson";
-    try { teinteAiles = localStorage.getItem("mistly-ailes-teinte") || "crimson"; } catch { }
-    if (!TEINTES_AILES[teinteAiles]) teinteAiles = "crimson";
+    // Une couleur choisie librement : ses 4 tons, de presque noir à presque blanc
+    const hexRgb = h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16));
+    const rgbHex = c => "#" + c.map(v => Math.round(v).toString(16).padStart(2, "0")).join("");
+    const melange = (a, b, f) => a.map((v, i) => v + (b[i] - v) * f);
+    const degrade = h => { const c = hexRgb(h); return [melange(c, [0, 0, 0], 0.88), melange(c, [0, 0, 0], 0.55), c, melange(c, [255, 255, 255], 0.7)].map(rgbHex); };
+    // le choix : un preset, et éventuellement une couleur libre pour la membrane et pour les os
+    let choixAiles = { preset: "misty", membrane: null, os: null };
+    try { Object.assign(choixAiles, JSON.parse(localStorage.getItem("mistly-ailes") || "{}")); } catch { }
+    if (!PRESETS_AILES[choixAiles.preset]) choixAiles.preset = "misty";
+    const tonsAiles = partie => {
+      const libre = choixAiles[partie];
+      return /^#[0-9a-f]{6}$/i.test(libre || "") ? degrade(libre) : PRESETS_AILES[choixAiles.preset][partie];
+    };
     const teindreAiles = m => {
       const { toile, texture } = m.userData;
       if (!toile) return;
       const g2 = toile.getContext("2d");
-      const L = toile.width, H = Math.min(ZONE_MEMBRANE, toile.height);
+      const L = toile.width, H = Math.min(ZONE_FIN, toile.height);
       m.userData.origine ??= g2.getImageData(0, 0, L, H);
       const src = m.userData.origine.data, img = new ImageData(new Uint8ClampedArray(src), L, H);
-      const tons = TEINTES_AILES[teinteAiles];
-      if (tons) {
-        const lum = i => 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+      const lum = i => 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+      for (const [partie, debut, fin] of [["membrane", 0, ZONE_OS], ["os", ZONE_OS, H]]) {
+        const tons = tonsAiles(partie);
+        if (!tons) continue;
+        const a = debut * L * 4, b = fin * L * 4;
+        // bas[x] : la dernière ligne de la colonne x, pour que le bord découpé soit partout le plus clair
         let min = 255, max = 0;
-        for (let i = 0; i < src.length; i += 4) if (src[i + 3]) { const l = lum(i); min = Math.min(min, l); max = Math.max(max, l); }
-        const rgb = tons.map(h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)));
-        for (let i = 0; i < src.length; i += 4) {
+        const bas = new Array(L).fill(debut);
+        for (let i = a; i < b; i += 4) if (src[i + 3]) { const l = lum(i); min = Math.min(min, l); max = Math.max(max, l); bas[(i / 4) % L] = Math.floor(i / 4 / L); }
+        const vertical = partie === "membrane" && !choixAiles.membrane ? PRESETS_AILES[choixAiles.preset].vertical || 0 : 0;
+        const rgb = tons.map(hexRgb);
+        for (let i = a; i < b; i += 4) {
           if (!src[i + 3]) continue;
-          const t = (lum(i) - min) / (max - min || 1) * (rgb.length - 1);
+          const hauteur = (Math.floor(i / 4 / L) - debut) / (bas[(i / 4) % L] - debut || 1);
+          const t = ((1 - vertical) * (lum(i) - min) / (max - min || 1) + vertical * hauteur) * (rgb.length - 1);
           const k = Math.min(rgb.length - 2, Math.floor(t)), f = t - k;
           for (let c = 0; c < 3; c++) img.data[i + c] = Math.round(rgb[k][c] + (rgb[k + 1][c] - rgb[k][c]) * f);
         }
@@ -969,16 +990,31 @@
       g2.putImageData(img, 0, 0);
       texture.needsUpdate = true;
     };
-    const reglageAiles = document.getElementById("reglage-ailes");
+    const reglagesAiles = [...document.querySelectorAll("[data-reglage-ailes]")];
     const pastillesAiles = [...document.querySelectorAll("[data-teinte]")];
-    const marquerTeinte = () => pastillesAiles.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.teinte === teinteAiles)));
-    marquerTeinte();
-    pastillesAiles.forEach(b => b.addEventListener("click", () => {
-      teinteAiles = b.dataset.teinte;
-      try { localStorage.setItem("mistly-ailes-teinte", teinteAiles); } catch { }
-      marquerTeinte();
+    const choixLibres = { membrane: document.getElementById("ailes-membrane"), os: document.getElementById("ailes-os") };
+    const afficherChoix = () => {
+      pastillesAiles.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.teinte === choixAiles.preset && !choixAiles.membrane && !choixAiles.os)));
+      // les sélecteurs montrent le ton principal de ce qui est porté (beige / cramoisi : l'origine)
+      for (const [partie, champ] of Object.entries(choixLibres)) {
+        if (champ) champ.value = tonsAiles(partie)?.[2] ?? (partie === "os" ? "#d9bf8c" : "#a01a37");
+      }
+    };
+    const appliquerAiles = () => {
+      try { localStorage.setItem("mistly-ailes", JSON.stringify(choixAiles)); } catch { }
+      afficherChoix();
       ailes?.then(teindreAiles);
+    };
+    afficherChoix();
+    pastillesAiles.forEach(b => b.addEventListener("click", () => {
+      choixAiles = { preset: b.dataset.teinte, membrane: null, os: null };
+      appliquerAiles();
     }));
+    for (const [partie, champ] of Object.entries(choixLibres)) {
+      champ?.addEventListener("input", () => { choixAiles[partie] = champ.value; appliquerAiles(); });
+    }
+    // contre le dos, ou derrière la cape et les élytres quand elles sont portées
+    const placerAiles = m => { m.position.z = back.mode === "cape" || back.mode === "elytra" ? -1.5 : -0.4; };
     const chargerAiles = () => ailes ??= fetch(`/models/mist_wings.bbmodel?v=${versionSite}`)
       .then(r => r.json())
       .then(m => new Promise((ok, ko) => {
@@ -989,7 +1025,8 @@
       }))
       .then(modele => {
         // le modèle est fait autour du cou (y = 24) ; le corps de skinview3d a son origine en son milieu (y = 18)
-        modele.position.set(0, 6, -1.5);
+        modele.position.set(0, 6, 0);
+        placerAiles(modele);
         teindreAiles(modele);
         modele.visible = ailesPortees;
         corps.add(modele);
@@ -1001,6 +1038,7 @@
       // reviennent (vues de dos, elles se referment et s'ouvrent), sans jamais passer devant le corps
       const vitesse = vol ? 6 : 2.2, ampleur = vol ? 0.8 : 0.35;
       ailes?.then(m => {
+        placerAiles(m);
         for (const nom of ["wing_left", "wing_right"]) {
           const aile = m.userData.nommes[nom], bout = m.userData.nommes[nom + "_tip"];
           const battu = 0.5 + 0.5 * Math.sin(t * vitesse);
@@ -1013,7 +1051,8 @@
     };
     const porterAiles = on => {
       ailesPortees = on;
-      if (reglageAiles) reglageAiles.hidden = !on;
+      reglagesAiles.forEach(r => { r.hidden = !on; });
+      if (on) ailes?.then(placerAiles);
       if (on) chargerAiles().then(m => { m.visible = ailesPortees; }).catch(() => {});
       else ailes?.then(m => { m.visible = false; });
       if (on && !battement && !reduce) battement = requestAnimationFrame(battre);
@@ -1141,11 +1180,12 @@
           g.fillRect(ox + x * px, oy + y * px, px, px);
         }));
       } else if (c.dataset.thumb === "wings") {
-        // Ailes de brume : des ailes de dragon, comme le modèle (o : os, k : bout des griffes,
-        // r : membrane, d : membrane foncée). Chaque ligne est une moitié, reflétée de l'autre côté.
-        const moities = [".....k.", ".k..ko.", "..o.oo.", "oooooo.", "drrodo.", ".rroro.", "..rkrk.", "...r.r."];
+        // Ailes de brume : des ailes de dragon aux couleurs de Mistly, comme le modèle par défaut
+        // (o : os, k : bout des griffes, d : membrane sombre, r : membrane bleue, w : bord blanc).
+        // Chaque ligne est une moitié, reflétée de l'autre côté.
+        const moities = [".....k.", ".k..ko.", "..o.oo.", "oooooo.", "drrodo.", ".rroro.", "..wkrk.", "...w.w."];
         const rows = moities.map(m => m + "." + [...m].reverse().join(""));
-        const tons = { o: "#e3c896", k: "#5a3320", r: "#b01f3c", d: "#6a1128" };
+        const tons = { o: "#3a4258", k: "#9bb8f0", r: "#4a7fe6", d: "#14275e", w: "#f2f7ff" };
         const px = Math.floor(c.width / 17);
         const ox = (c.width - 15 * px) / 2, oy = (c.height - rows.length * px) / 2;
         rows.forEach((row, y) => [...row].forEach((ch, x) => {
