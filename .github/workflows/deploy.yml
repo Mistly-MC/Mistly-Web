@@ -42,12 +42,20 @@ jobs:
             echo "::error::Le secret COOLIFY_TOKEN n'est pas défini (Settings → Secrets and variables → Actions)."
             exit 1
           fi
-          api="${COOLIFY_URL%/}/api/v1"
+          # l'adresse de l'instance, avec ou sans « /api/v1 » à la fin
+          base="${COOLIFY_URL%/}"
+          api="${base%/api/v1}/api/v1"
           auth="Authorization: Bearer ${COOLIFY_TOKEN}"
 
           # Les versions récentes de Coolify n'acceptent que POST pour lancer un déploiement.
-          res=$(curl -fsS -X POST -H "$auth" "$api/deploy?uuid=${COOLIFY_APP_UUID}&force=false")
-          echo "$res"
+          # En cas d'échec, la réponse de Coolify est affichée (elle ne contient pas le token).
+          code=$(curl -sS -o reponse.json -w '%{http_code}' -X POST -H "$auth" "$api/deploy?uuid=${COOLIFY_APP_UUID}&force=false")
+          res=$(cat reponse.json)
+          echo "Coolify a répondu $code : $res"
+          if [ "$code" != "200" ]; then
+            echo "::error::Coolify a refusé le déploiement (HTTP $code). 404 : application introuvable (COOLIFY_APP_UUID) ou mauvaise adresse (COOLIFY_URL) ; 401 ou 403 : token invalide ou sans la permission « deploy »."
+            exit 1
+          fi
           id=$(echo "$res" | jq -r '.deployments[0].deployment_uuid // empty')
           if [ -z "$id" ]; then
             echo "Coolify n'a pas renvoyé d'identifiant de déploiement."
