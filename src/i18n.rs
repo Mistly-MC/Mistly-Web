@@ -212,6 +212,7 @@ traductions! {
     pub hero_see_features: String,
     pub hero_downloads: String,
     pub hero_download_win: String,
+    pub hero_download_linux: String,
     pub stat_title: String,
     pub stat_loaders: String,
     pub stat_langs: String,

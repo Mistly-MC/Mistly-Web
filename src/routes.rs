@@ -81,8 +81,27 @@ pub async fn index(
     let latest = releases.as_deref().and_then(|l| github::latest(l));
     let p = page(&state, lang, "/", releases.as_ref().map(|l| l.len()));
     let downloads = releases.as_deref().map_or(0, |l| github::total_downloads(l));
-    html_response(StatusCode::OK, home::render(&p, latest, downloads), lang, remember)
+    let linux = visiteur_linux(&headers);
+    let mut res = html_response(StatusCode::OK, home::render(&p, latest, downloads, linux), lang, remember);
+    // la page change selon le système du visiteur (bouton Linux mis en avant)
+    res.headers_mut().insert(
+        header::VARY,
+        HeaderValue::from_static("Cookie, Accept-Language, User-Agent, Sec-CH-UA-Platform"),
+    );
+    res
 }
+
+/// Le visiteur est-il sur un Linux de bureau ? D'après `Sec-CH-UA-Platform` quand le navigateur
+/// l'envoie (Chrome, Edge), sinon d'après le User-Agent. Android et ChromeOS n'en font pas partie :
+/// la version Linux ne s'y installe pas.
+fn visiteur_linux(headers: &HeaderMap) -> bool {
+    if let Some(p) = headers.get("sec-ch-ua-platform").and_then(|v| v.to_str().ok()) {
+        return p.trim().trim_matches('"').eq_ignore_ascii_case("linux");
+    }
+    let ua = headers.get(header::USER_AGENT).and_then(|v| v.to_str().ok()).unwrap_or("");
+    ua.contains("Linux") && !ua.contains("Android") && !ua.contains("CrOS")
+}
+
 
 pub async fn patch_notes(
     State(state): State<Arc<AppState>>,
@@ -431,7 +450,7 @@ pub async fn api_latest(State(state): State<Arc<AppState>>) -> Response {
     res
 }
 
-/// `/download/setup` et `/download/portable` : le fichier de la dernière version, dans l'ordre
+/// `/download/setup`, `/download/portable` et `/download/linux` : le fichier de la dernière version, dans l'ordre
 /// 1. la copie sur le serveur (voir `miroir`) ;
 /// 2. sinon, le fichier relayé depuis GitHub (l'utilisateur reste sur le domaine du site) ;
 /// 3. sinon, une redirection vers GitHub : un téléchargement ne finit jamais sur une erreur.
@@ -832,4 +851,29 @@ pub async fn domaine_principal(
         }
     }
     next.run(req).await
+}
+
+#[cfg(test)]
+mod tests_systeme {
+    use super::*;
+
+    fn avec(nom: &'static str, valeur: &'static str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert(nom, HeaderValue::from_static(valeur));
+        h
+    }
+
+    #[test]
+    fn detecte_linux() {
+        let ua = |v| avec("user-agent", v);
+        assert!(visiteur_linux(&ua("Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0")));
+        assert!(visiteur_linux(&ua("Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 Chrome/131.0")));
+        assert!(!visiteur_linux(&ua("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0")));
+        assert!(!visiteur_linux(&ua("Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/131.0 Mobile")));
+        assert!(!visiteur_linux(&ua("Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 Chrome/131.0")));
+        assert!(!visiteur_linux(&HeaderMap::new()));
+        assert!(visiteur_linux(&avec("sec-ch-ua-platform", "\"Linux\"")));
+        assert!(!visiteur_linux(&avec("sec-ch-ua-platform", "\"Android\"")));
+        assert!(!visiteur_linux(&avec("sec-ch-ua-platform", "\"Chrome OS\"")));
+    }
 }

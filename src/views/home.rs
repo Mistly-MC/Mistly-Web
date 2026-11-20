@@ -9,10 +9,12 @@ use maud::{Markup, html};
 /// Mod loaders proposés par le launcher.
 const LOADERS: [&str; 6] = ["Forge", "NeoForge", "Fabric", "Quilt", "OptiFine", "LiteLoader"];
 
-pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
+/// `linux` : le visiteur est sous Linux, la version Linux passe devant (bouton blanc, carte
+/// recommandée) ; sinon Windows.
+pub fn render(p: &Page, latest: Option<&Release>, downloads: u64, linux: bool) -> Markup {
     let tr = p.tr;
     let main = html! {
-        (hero(p))
+        (hero(p, linux))
         (chiffres(p, latest, downloads))
         (rayures())
         section.blk #features {
@@ -33,10 +35,10 @@ pub fn render(p: &Page, latest: Option<&Release>, downloads: u64) -> Markup {
         (rayures())
         (horizon(p))
         (rayures())
-        (download(p, latest))
+        (download(p, latest, linux))
         (rayures())
         (faq(p))
-        (appel(p))
+        (appel(p, linux))
     };
     layout::render(
         p,
@@ -64,7 +66,19 @@ fn rayures() -> Markup {
     html! { div.col.hatch aria-hidden="true" {} }
 }
 
-fn hero(p: &Page) -> Markup {
+/// Le bouton principal (blanc) pour le système du visiteur.
+fn bouton_principal(p: &Page, linux: bool) -> Markup {
+    let tr = p.tr;
+    html! {
+        @if linux {
+            a.btn.play href="/download/linux" { (icons::linux()) (tr.hero_download_linux) }
+        } @else {
+            a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
+        }
+    }
+}
+
+fn hero(p: &Page, linux: bool) -> Markup {
     let tr = p.tr;
     html! {
         section.hero {
@@ -75,9 +89,14 @@ fn hero(p: &Page) -> Markup {
                 }
                 h1 { (tr.hero_title_1) " " span.soft { (tr.hero_title_2) } }
                 div.actions {
-                    a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
+                    (bouton_principal(p, linux))
+                    @if linux {
+                        a.btn href="/download/setup" { (icons::windows()) "Windows" }
+                    }
                     span.btn.os-soon aria-disabled="true" title=(tr.os_macos_p) { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
-                    a.btn href="/download/linux" title=(tr.os_linux_p) { (icons::linux()) "Linux" }
+                    @if !linux {
+                        a.btn href="/download/linux" title=(tr.os_linux_p) { (icons::linux()) "Linux" }
+                    }
                 }
             }
             // Le launcher, dans un cadre posé sur le paysage : on peut cliquer ses onglets
@@ -87,7 +106,7 @@ fn hero(p: &Page) -> Markup {
 }
 
 /// Dernier appel à télécharger, sur un fond de caractères ASCII qui ondulent.
-fn appel(p: &Page) -> Markup {
+fn appel(p: &Page, linux: bool) -> Markup {
     let tr = p.tr;
     html! {
         section.blk.final-cta {
@@ -99,7 +118,7 @@ fn appel(p: &Page) -> Markup {
                         h2 { (tr.cta_title) }
                         p { (tr.cta_text) }
                         div.actions {
-                            a.btn.play href="/download/setup" { (icons::windows()) (tr.hero_download_win) }
+                            (bouton_principal(p, linux))
                             a.btn href="/docs" { (tr.nav_docs) (icons::arrow_right()) }
                         }
                     }
@@ -325,12 +344,20 @@ fn horizon(p: &Page) -> Markup {
     }
 }
 
-fn download(p: &Page, latest: Option<&Release>) -> Markup {
+fn download(p: &Page, latest: Option<&Release>, linux: bool) -> Markup {
     let tr = p.tr;
     let meta = |kind: Kind| -> Option<String> {
         let r = latest?;
         let a = r.asset(kind)?;
         Some(format!("{} · {}", r.tag_name, format::size(tr, a.size)))
+    };
+    // la carte Linux : en tête et recommandée pour un visiteur sous Linux, après macOS sinon
+    let carte_linux = html! {
+        a.dl-card.main[linux] href="/download/linux" {
+            span.top { (icons::linux()) "Linux" @if linux { span.pill { (tr.recommended) } } }
+            span.txt { (tr.os_linux_p) }
+            @if let Some(m) = meta(Kind::Linux) { span.m { (m) " · .tar.gz" } }
+        }
     };
     html! {
         section.blk #download {
@@ -338,8 +365,9 @@ fn download(p: &Page, latest: Option<&Release>) -> Markup {
                 (titre(&tr.dl_label, None))
                 p.blk-lead { (tr.dl_text) }
                 div.cells.c3.dl {
-                    a.dl-card.main href="/download/setup" {
-                        span.top { (icons::download()) (tr.inst_t) span.pill { (tr.recommended) } }
+                    @if linux { (carte_linux) }
+                    a.dl-card.main[!linux] href="/download/setup" {
+                        span.top { (icons::download()) (tr.inst_t) @if !linux { span.pill { (tr.recommended) } } }
                         span.txt { (tr.inst_p) }
                         @if let Some(m) = meta(Kind::Setup) { span.m { (m) " · .exe" } }
                     }
@@ -352,11 +380,7 @@ fn download(p: &Page, latest: Option<&Release>) -> Markup {
                         span.top { (icons::apple()) "macOS" span.badge { (tr.os_soon) } }
                         span.txt { (tr.os_macos_p) }
                     }
-                    a.dl-card href="/download/linux" {
-                        span.top { (icons::linux()) "Linux" }
-                        span.txt { (tr.os_linux_p) }
-                        @if let Some(m) = meta(Kind::Linux) { span.m { (m) " · .tar.gz" } }
-                    }
+                    @if !linux { (carte_linux) }
                     a.dl-card href="/patch-notes" {
                         span.top { (icons::notes()) (tr.notes_t) }
                         span.txt { (tr.notes_p) }
