@@ -740,6 +740,9 @@
       racine.position.set(0, 0, 0);
       for (const entree of m.outliner) { const n = noeud(entree, [0, 24, 0]); if (n) racine.add(n); }
       racine.userData.nommes = nommes;
+      // la texture reste modifiable (couleur des ailes)
+      racine.userData.toile = toile;
+      racine.userData.texture = tex;
       racine.userData.y = 0;
       return racine;
     };
@@ -927,6 +930,55 @@
     // suit donc le joueur quand il s'accroupit. Portées en plus de la cape, un peu derrière elle. Elles
     // battent doucement, plus vite et plus fort pendant le vol.
     let ailesPortees = false, ailes = null, battement = 0;
+    // Couleur de la membrane. Dans la texture du modèle, la membrane occupe les lignes du haut
+    // (au-dessus de ZONE_MEMBRANE) et les os sont en dessous : seuls les pixels de la membrane
+    // changent, chacun prend la teinte choisie à la même luminosité. « crimson » est la couleur
+    // d'origine. Chaque teinte va du plus sombre au plus clair.
+    const ZONE_MEMBRANE = 32;
+    const TEINTES_AILES = {
+      mist: ["#0b1036", "#1d3a9a", "#3f6fe0", "#9cc8ff"],
+      amethyst: ["#1d0833", "#4a1680", "#8a3fd0", "#d2a6ff"],
+      jade: ["#04241a", "#0d5c3c", "#1f9e66", "#8be8b4"],
+      gold: ["#2e1a04", "#7a4c0c", "#d0951f", "#ffe08a"],
+      shadow: ["#07070b", "#1a1a24", "#34344a", "#7a7a96"],
+      snow: ["#4a5468", "#9aa6bd", "#d6deec", "#ffffff"],
+    };
+    let teinteAiles = "crimson";
+    try { teinteAiles = localStorage.getItem("mistly-ailes-teinte") || "crimson"; } catch { }
+    if (!TEINTES_AILES[teinteAiles]) teinteAiles = "crimson";
+    const teindreAiles = m => {
+      const { toile, texture } = m.userData;
+      if (!toile) return;
+      const g2 = toile.getContext("2d");
+      const L = toile.width, H = Math.min(ZONE_MEMBRANE, toile.height);
+      m.userData.origine ??= g2.getImageData(0, 0, L, H);
+      const src = m.userData.origine.data, img = new ImageData(new Uint8ClampedArray(src), L, H);
+      const tons = TEINTES_AILES[teinteAiles];
+      if (tons) {
+        const lum = i => 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
+        let min = 255, max = 0;
+        for (let i = 0; i < src.length; i += 4) if (src[i + 3]) { const l = lum(i); min = Math.min(min, l); max = Math.max(max, l); }
+        const rgb = tons.map(h => [1, 3, 5].map(k => parseInt(h.slice(k, k + 2), 16)));
+        for (let i = 0; i < src.length; i += 4) {
+          if (!src[i + 3]) continue;
+          const t = (lum(i) - min) / (max - min || 1) * (rgb.length - 1);
+          const k = Math.min(rgb.length - 2, Math.floor(t)), f = t - k;
+          for (let c = 0; c < 3; c++) img.data[i + c] = Math.round(rgb[k][c] + (rgb[k + 1][c] - rgb[k][c]) * f);
+        }
+      }
+      g2.putImageData(img, 0, 0);
+      texture.needsUpdate = true;
+    };
+    const reglageAiles = document.getElementById("reglage-ailes");
+    const pastillesAiles = [...document.querySelectorAll("[data-teinte]")];
+    const marquerTeinte = () => pastillesAiles.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.teinte === teinteAiles)));
+    marquerTeinte();
+    pastillesAiles.forEach(b => b.addEventListener("click", () => {
+      teinteAiles = b.dataset.teinte;
+      try { localStorage.setItem("mistly-ailes-teinte", teinteAiles); } catch { }
+      marquerTeinte();
+      ailes?.then(teindreAiles);
+    }));
     const chargerAiles = () => ailes ??= fetch(`/models/mist_wings.bbmodel?v=${versionSite}`)
       .then(r => r.json())
       .then(m => new Promise((ok, ko) => {
@@ -938,6 +990,7 @@
       .then(modele => {
         // le modèle est fait autour du cou (y = 24) ; le corps de skinview3d a son origine en son milieu (y = 18)
         modele.position.set(0, 6, -1.5);
+        teindreAiles(modele);
         modele.visible = ailesPortees;
         corps.add(modele);
         return modele;
@@ -960,6 +1013,7 @@
     };
     const porterAiles = on => {
       ailesPortees = on;
+      if (reglageAiles) reglageAiles.hidden = !on;
       if (on) chargerAiles().then(m => { m.visible = ailesPortees; }).catch(() => {});
       else ailes?.then(m => { m.visible = false; });
       if (on && !battement && !reduce) battement = requestAnimationFrame(battre);
@@ -1087,15 +1141,13 @@
           g.fillRect(ox + x * px, oy + y * px, px, px);
         }));
       } else if (c.dataset.thumb === "wings") {
-        // Ailes de brume : un éventail de plumes pointues au-dessus de chaque épaule et un lobe plus
-        // petit en dessous, comme le modèle (n : contour, f : base foncée, b : bleu, c : pointes claires)
-        const rows = [
-          "c.c.......c.c", "cnc.c...c.cnc", "nbcnc...cncbn", "nbbcn...ncbbn", ".nbbfn.nfbbn.",
-          "..nffn.nffn..", "..nbfn.nfbn..", ".ncbbn.nbbcn.", ".nc.cn.nc.cn.", "..c..c.c..c..",
-        ];
-        const tons = { n: "#0e1246", f: "#1c3a9a", b: "#2f63d8", c: "#79b0ff" };
-        const px = Math.floor(c.width / 15);
-        const ox = (c.width - 13 * px) / 2, oy = (c.height - rows.length * px) / 2;
+        // Ailes de brume : des ailes de dragon, comme le modèle (o : os, k : bout des griffes,
+        // r : membrane, d : membrane foncée). Chaque ligne est une moitié, reflétée de l'autre côté.
+        const moities = [".....k.", ".k..ko.", "..o.oo.", "oooooo.", "drrodo.", ".rroro.", "..rkrk.", "...r.r."];
+        const rows = moities.map(m => m + "." + [...m].reverse().join(""));
+        const tons = { o: "#e3c896", k: "#5a3320", r: "#b01f3c", d: "#6a1128" };
+        const px = Math.floor(c.width / 17);
+        const ox = (c.width - 15 * px) / 2, oy = (c.height - rows.length * px) / 2;
         rows.forEach((row, y) => [...row].forEach((ch, x) => {
           if (!tons[ch]) return;
           g.fillStyle = tons[ch];

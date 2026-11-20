@@ -297,6 +297,12 @@ a.soon-card{text-decoration:none}
 .reglage .etiquette{flex:none;font-weight:600;color:var(--text-2)}
 .reglage .seg.epaules{flex:1;display:flex;backdrop-filter:none;-webkit-backdrop-filter:none}
 .reglage .seg.epaules button{flex:1}
+/* Couleur des ailes : une pastille par teinte */
+.reglage .teintes{flex:1;display:flex;flex-wrap:wrap;gap:8px}
+.reglage .teinte{width:26px;height:26px;padding:0;border-radius:50%;border:2px solid var(--line-2);background:var(--c);cursor:pointer;transition:transform .15s}
+.reglage .teinte:hover{transform:scale(1.1)}
+.reglage .teinte[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px;border-color:var(--bg)}
+.reglage .teinte:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* Cartes avec une image de présentation (le cosmétique sur un skin) au lieu de la vignette */
 .item-art.photo{display:block;padding:0;overflow:hidden;background:#0a0f22}

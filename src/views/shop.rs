@@ -199,6 +199,22 @@ fn reglages(tr: &Tr, player: Option<&str>) -> Markup {
             input #taille-chapeau type="range" min="0.6" max="1" step="0.05" value="0.8";
             output #taille-valeur for="taille-chapeau" { "80 %" }
         }
+        // Ailes de brume : la couleur de la membrane (les os restent beiges). Les teintes sont
+        // définies dans site.js (TEINTES_AILES), la pastille montre leur ton moyen.
+        div.reglage #reglage-ailes hidden {
+            span.etiquette { (tr.shop_wings_color) }
+            div.teintes role="group" aria-label=(tr.shop_wings_color) {
+                @for (cle, nom, ton) in [
+                    ("crimson", &tr.shop_tint_crimson, "#a01a37"), ("mist", &tr.shop_tint_mist, "#3f6fe0"),
+                    ("amethyst", &tr.shop_tint_amethyst, "#8a3fd0"), ("jade", &tr.shop_tint_jade, "#1f9e66"),
+                    ("gold", &tr.shop_tint_gold, "#d0951f"), ("shadow", &tr.shop_tint_shadow, "#34344a"),
+                    ("snow", &tr.shop_tint_snow, "#d6deec"),
+                ] {
+                    button.teinte type="button" data-teinte=(cle) aria-pressed=(if cle == "crimson" { "true" } else { "false" })
+                        title=(nom) aria-label=(nom) style=(format!("--c:{ton}")) {}
+                }
+            }
+        }
         div.reglage #reglage-minime hidden {
             label for="minime-nom" { (tr.shop_minime_name) }
             input #minime-nom type="text" value=(player.unwrap_or("")) placeholder="Steve" maxlength="16"
