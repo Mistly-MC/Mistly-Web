@@ -945,12 +945,16 @@
       });
     const battre = maintenant => {
       const t = maintenant / 1000, vol = animActuelle === "fly";
-      const vitesse = vol ? 5 : 1.6, ampleur = vol ? 0.7 : 0.3;
+      // ampleur en radians, ajoutée à la pose de repos : les ailes se replient vers l'arrière puis
+      // reviennent (vues de dos, elles se referment et s'ouvrent), sans jamais passer devant le corps
+      const vitesse = vol ? 6 : 2.2, ampleur = vol ? 0.8 : 0.35;
       ailes?.then(m => {
         for (const nom of ["wing_left", "wing_right"]) {
           const aile = m.userData.nommes[nom], bout = m.userData.nommes[nom + "_tip"];
-          if (aile) aile.rotation.y = aile.userData.reposY * (1 + ampleur * Math.sin(t * vitesse));
-          if (bout) bout.rotation.z = bout.userData.repos * (1 + ampleur * 0.8 * Math.sin(t * vitesse - 0.6));
+          const battu = 0.5 + 0.5 * Math.sin(t * vitesse);
+          if (aile) aile.rotation.y = aile.userData.reposY + Math.sign(aile.userData.reposY) * ampleur * battu;
+          // le lobe du bas suit avec un léger retard
+          if (bout) bout.rotation.z = bout.userData.repos + Math.sign(bout.userData.repos) * ampleur * 0.4 * (0.5 + 0.5 * Math.sin(t * vitesse - 0.7));
         }
       });
       battement = ailesPortees && !reduce ? requestAnimationFrame(battre) : 0;
