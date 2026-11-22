@@ -33,6 +33,7 @@
 
 mod admin;
 mod contenu;
+mod contributeurs;
 mod deploiements;
 mod client;
 mod discord;
@@ -181,6 +182,15 @@ async fn main() {
     tokio::spawn(state.registre.clone().ecrire_en_boucle());
     tokio::spawn(state.status.clone().verifier_en_boucle());
     tokio::spawn(state.deploiements.clone().rafraichir_en_boucle());
+    tokio::spawn(contributeurs::rafraichir_en_boucle(
+        env_or("GITHUB_API", "https://api.github.com"),
+        std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
+        [
+            env_or("MISTY_REPO", "Mistly-MC/Mistly-Launcher"),
+            env_or("CLIENT_REPO", "Mistly-MC/Mistly-Client"),
+            env_or("WEB_REPO", "Mistly-MC/Mistly-Web"),
+        ],
+    ));
     tokio::spawn(state.telemetrie.clone().menage_en_boucle());
     tokio::spawn(state.discord.clone().resume_en_boucle(state.telemetrie.dossier()));
 

@@ -59,6 +59,7 @@ fn page<'a>(state: &'a AppState, lang: Lang, path: &'a str, count: Option<usize>
         repo: state.github.repo(),
         scene: &state.scene,
         site_url: &state.site_url,
+        base: "",
     }
 }
 
@@ -609,7 +610,11 @@ pub async fn status_page(
 ) -> Response {
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
     let count = state.github.releases().await.map(|l| l.len());
-    let p = page(&state, lang, "/status", count);
+    let mut p = page(&state, lang, "/status", count);
+    // Sur status.<domaine>, les liens de la navigation et du pied de page mènent au site principal
+    if sous_domaine_statut(&headers) {
+        p.base = &state.site_url;
+    }
     let markup = status_view::render(&p, &state.status.lignes(), &state.status.incidents(), state.status.dispo_globale(), state.status.age(), &state.deploiements.liste());
     let mut res = html_response(StatusCode::OK, markup, lang, remember);
     res.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
@@ -894,6 +899,15 @@ pub async fn indexnow_cle() -> Response {
         Some(k) => ([(header::CONTENT_TYPE, "text/plain; charset=utf-8")], k).into_response(),
         None => StatusCode::NOT_FOUND.into_response(),
     }
+}
+
+/// La requête arrive-t-elle sur le sous-domaine de statut (`status.<domaine>`) ?
+fn sous_domaine_statut(entetes: &HeaderMap) -> bool {
+    entetes
+        .get("x-forwarded-host")
+        .or_else(|| entetes.get(header::HOST))
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|h| h.to_ascii_lowercase().starts_with("status."))
 }
 
 /// Anciennes adresses (misty-launcher.online, www.) : les pages redirigent pour de bon vers le

@@ -68,9 +68,17 @@ pub struct Page<'a> {
     pub scene: &'a str,
     /// Adresse publique du site, sans `/` final (balises canoniques, Open Graph, sitemap).
     pub site_url: &'a str,
+    /// Préfixe des liens internes de la navigation et du pied de page : vide sur le site, l'adresse
+    /// du site principal sur le sous-domaine de statut (où `/#features` mènerait au statut).
+    pub base: &'a str,
 }
 
 impl Page<'_> {
+    /// Un lien interne (`/docs`…), absolu sur le sous-domaine de statut ; une adresse complète est
+    /// gardée telle quelle.
+    pub fn lien(&self, chemin: &str) -> String {
+        if chemin.starts_with('/') { format!("{}{chemin}", self.base) } else { chemin.to_string() }
+    }
     pub fn github_url(&self) -> String {
         format!("https://github.com/{}", self.repo)
     }
@@ -141,16 +149,16 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 meta name="twitter:title" content=(head.title);
                 meta name="twitter:description" content=(head.description);
                 meta name="twitter:image" content=(image);
-                link rel="icon" href="/assets/icone.png";
-                link rel="apple-touch-icon" href="/assets/icone.png";
+                link rel="icon" href=(p.lien("/assets/icone.png"));
+                link rel="apple-touch-icon" href=(p.lien("/assets/icone.png"));
                 @if let Some(json) = &head.jsonld {
                     script type="application/ld+json" { (PreEscaped(json)) }
                 }
-                link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
+                link rel="preload" href=(p.lien("/assets/Geist-latin.woff2")) as="font" type="font/woff2" crossorigin;
                 @let v = ASSET_VERSION.as_str();
-                link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
-                link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
-                @for css in head.css { link rel="stylesheet" href=(format!("/css/{css}.css?v={v}")); }
+                link rel="stylesheet" href=(p.lien(&format!("/css/base.css?v={v}")));
+                link rel="stylesheet" href=(p.lien(&format!("/css/layout.css?v={v}")));
+                @for css in head.css { link rel="stylesheet" href=(p.lien(&format!("/css/{css}.css?v={v}"))); }
                 // Le thème choisi (clair ou sombre) est posé avant l'affichage, sans clignotement
                 script { (PreEscaped("document.documentElement.classList.add('js');try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}")) }
                 @for js in head.scripts { script src=(format!("{js}?v={v}")) defer {} }
@@ -192,8 +200,8 @@ fn telechargement(p: &Page) -> Markup {
                     li { span.n { "03" } (tr.dlx_s3) }
                 }
                 div.dlx-actions {
-                    span.dlx-retry { (tr.dlx_retry) " " a #dlx-again href="/download/setup" { (tr.dlx_retry_link) } }
-                    a.dlx-guide href="/docs/installation" { (tr.dlx_guide) (icons::arrow_right()) }
+                    span.dlx-retry { (tr.dlx_retry) " " a #dlx-again href=(p.lien("/download/setup")) { (tr.dlx_retry_link) } }
+                    a.dlx-guide href=(p.lien("/docs/installation")) { (tr.dlx_guide) (icons::arrow_right()) }
                 }
                 button.btn.dlx-close type="button" data-dlx-close { (tr.dlx_close) " " kbd { "Esc" } }
             }
@@ -218,18 +226,18 @@ fn docs_menu(p: &Page) -> Markup {
     ];
     html! {
         div.navdd {
-            a.navdd-btn href="/docs" aria-current=[p.path.starts_with("/docs").then_some("page")] aria-haspopup="true" {
+            a.navdd-btn href=(p.lien("/docs")) aria-current=[p.path.starts_with("/docs").then_some("page")] aria-haspopup="true" {
                 (tr.nav_docs) (icons::chevron())
             }
             div.mega {
                 div.mega-feat {
-                    a.feat.f-client href="/docs/mistly-client" {
+                    a.feat.f-client href=(p.lien("/docs/mistly-client")) {
                         span.k { (tr.mega_new) }
                         strong { "Mistly Client" }
                         span.d { (tr.mega_client_p) }
                         i aria-hidden="true" {}
                     }
-                    a.feat.f-horizon href="/docs/horizon" {
+                    a.feat.f-horizon href=(p.lien("/docs/horizon")) {
                         span.k { (tr.mega_new) }
                         strong { "Horizon" }
                         span.d { (tr.mega_horizon_p) }
@@ -239,18 +247,18 @@ fn docs_menu(p: &Page) -> Markup {
                 div.mega-col {
                     span.mega-t { (tr.docs_label) }
                     @for (slug, ic) in pages {
-                        a href=(format!("/docs/{slug}")) { (ic) span { (titre(slug)) } }
+                        a href=(p.lien(&format!("/docs/{slug}"))) { (ic) span { (titre(slug)) } }
                     }
-                    a.mega-all href="/docs" { (tr.mega_all) (icons::arrow_right()) }
+                    a.mega-all href=(p.lien("/docs")) { (tr.mega_all) (icons::arrow_right()) }
                 }
                 div.mega-col {
                     span.mega-t { "Mistly" }
-                    a href="/patch-notes" { (icons::notes()) span { (tr.nav_patch_notes) } }
-                    a href=(status_href()) { (icons::globe()) span { (tr.nav_status) } }
-                    a href="/shop" { (icons::bag()) span { (tr.nav_shop) } }
-                    a href="/roadmap" { (icons::layers()) span { (tr.nav_roadmap) } }
-                    a href="/articles" { (icons::notes()) span { (tr.nav_blog) } }
-                    a href="/brand" { (icons::palette()) span { (tr.nav_brand) } }
+                    a href=(p.lien("/patch-notes")) { (icons::notes()) span { (tr.nav_patch_notes) } }
+                    a href=(p.lien(status_href())) { (icons::globe()) span { (tr.nav_status) } }
+                    a href=(p.lien("/shop")) { (icons::bag()) span { (tr.nav_shop) } }
+                    a href=(p.lien("/roadmap")) { (icons::layers()) span { (tr.nav_roadmap) } }
+                    a href=(p.lien("/articles")) { (icons::notes()) span { (tr.nav_blog) } }
+                    a href=(p.lien("/brand")) { (icons::palette()) span { (tr.nav_brand) } }
                     @if let Some(url) = DONATE_URL.as_deref() {
                         a href=(url) target="_blank" rel="noopener" { (icons::heart()) span { (tr.nav_donate) } }
                     }
@@ -268,14 +276,14 @@ fn nav(p: &Page) -> Markup {
     html! {
         header.nav #top {
             div.col.nav-in {
-                a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
+                a.brand href=(p.lien("/")) { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
                 nav.links aria-label="Navigation" {
-                    a href="/#features" { (tr.nav_features) }
-                    a href="/#loaders" { (tr.nav_loaders) }
-                    a href="/#faq" { (tr.nav_faq) }
+                    a href=(p.lien("/#features")) { (tr.nav_features) }
+                    a href=(p.lien("/#loaders")) { (tr.nav_loaders) }
+                    a href=(p.lien("/#faq")) { (tr.nav_faq) }
                     (docs_menu(p))
-                    a href="/shop" aria-current=[p.path.starts_with("/shop").then_some("page")] { (tr.nav_shop) }
-                    a href="/patch-notes" aria-current=[on_notes.then_some("page")] {
+                    a href=(p.lien("/shop")) aria-current=[p.path.starts_with("/shop").then_some("page")] { (tr.nav_shop) }
+                    a href=(p.lien("/patch-notes")) aria-current=[on_notes.then_some("page")] {
                         (tr.nav_patch_notes)
                         @if let Some(n) = p.release_count { span.count { (n) } }
                     }
@@ -290,7 +298,7 @@ fn nav(p: &Page) -> Markup {
                         span.moon { (icons::moon()) } span.sun { (icons::sun()) }
                     }
                     (lang_menu(p))
-                    a.btn.play.sm href="/#download" { (icons::download()) span { (tr.nav_download) } }
+                    a.btn.play.sm href=(p.lien("/#download")) { (icons::download()) span { (tr.nav_download) } }
                     (mobile_menu(p))
                 }
             }
@@ -309,19 +317,19 @@ fn mobile_menu(p: &Page) -> Markup {
         details.burger {
             summary aria-label="Menu" { (icons::menu()) }
             nav.menu aria-label="Navigation" {
-                a href="/#features" { (tr.nav_features) }
-                a href="/#loaders" { (tr.nav_loaders) }
-                a href="/#faq" { (tr.nav_faq) }
-                a href="/docs" aria-current=[here("/docs")] { (tr.nav_docs) }
-                a href="/shop" aria-current=[here("/shop")] { (tr.nav_shop) }
-                a href="/patch-notes" aria-current=[here("/patch-notes")] {
+                a href=(p.lien("/#features")) { (tr.nav_features) }
+                a href=(p.lien("/#loaders")) { (tr.nav_loaders) }
+                a href=(p.lien("/#faq")) { (tr.nav_faq) }
+                a href=(p.lien("/docs")) aria-current=[here("/docs")] { (tr.nav_docs) }
+                a href=(p.lien("/shop")) aria-current=[here("/shop")] { (tr.nav_shop) }
+                a href=(p.lien("/patch-notes")) aria-current=[here("/patch-notes")] {
                     (tr.nav_patch_notes)
                     @if let Some(n) = p.release_count { span.count { (n) } }
                 }
-                a href=(status_href()) aria-current=[here("/status")] { (tr.nav_status) }
-                a href="/roadmap" aria-current=[here("/roadmap")] { (tr.nav_roadmap) }
-                a href="/articles" aria-current=[here("/articles")] { (tr.nav_blog) }
-                a href="/brand" aria-current=[here("/brand")] { (tr.nav_brand) }
+                a href=(p.lien(status_href())) aria-current=[here("/status")] { (tr.nav_status) }
+                a href=(p.lien("/roadmap")) aria-current=[here("/roadmap")] { (tr.nav_roadmap) }
+                a href=(p.lien("/articles")) aria-current=[here("/articles")] { (tr.nav_blog) }
+                a href=(p.lien("/brand")) aria-current=[here("/brand")] { (tr.nav_brand) }
                 @if let Some(url) = DONATE_URL.as_deref() {
                     a href=(url) target="_blank" rel="noopener" { (tr.nav_donate) (icons::external()) }
                 }
@@ -354,33 +362,74 @@ fn lang_menu(p: &Page) -> Markup {
 /// servi par `/skin/<pseudo>`, donc toujours à jour).
 const AUTEURS: [&str; 2] = ["EnderMythex", "xtheox_x"];
 
+/// « 67343 » → « 67 343 ».
+fn milliers(n: u64) -> String {
+    let s = n.to_string();
+    let mut out = String::new();
+    for (i, c) in s.chars().enumerate() {
+        if i > 0 && (s.len() - i).is_multiple_of(3) {
+            out.push(' ');
+        }
+        out.push(c);
+    }
+    out
+}
+
+/// La bulle d'un auteur : ses commits sur les trois dépôts et un petit graphique des dernières
+/// semaines (rien tant que les statistiques de GitHub ne sont pas lues).
+fn bulle(nom: &str, avatar: Markup) -> Markup {
+    let Some(c) = crate::contributeurs::de(nom) else { return html! {} };
+    let max = crate::contributeurs::maximum() as f64;
+    html! {
+        span.ctip role="tooltip" {
+            span.ctip-head {
+                (avatar)
+                strong { (nom) }
+                span.ctip-rank { "#" (c.rang) }
+            }
+            span.ctip-nums {
+                span { (milliers(c.commits)) " commits" }
+                span.add { (milliers(c.ajouts)) " ++" }
+                span.del { (milliers(c.retraits)) " --" }
+            }
+            span.ctip-bars aria-hidden="true" {
+                @for n in &c.semaines {
+                    i style=(format!("--h:{:.0}%", (*n as f64 / max * 100.0).max(if *n > 0 { 4.0 } else { 0.0 }))) {}
+                }
+            }
+            span.ctip-foot { "Launcher · Client · Web" }
+        }
+    }
+}
+
 fn credits(p: &Page) -> Markup {
+    let tete = |nom: &str| html! { span.mc-head style=(format!("--skin:url({})", p.lien(&format!("/skin/{nom}")))) aria-hidden="true" {} };
     let auteur = |nom: &str| {
         html! {
-            span.author {
-                span.mc-head style=(format!("--skin:url(/skin/{nom})")) aria-hidden="true" {}
+            span.author tabindex="0" {
+                (tete(nom))
                 span { (nom) }
+                (bulle(nom, tete(nom)))
             }
         }
     };
-    // « Made in France by {0} and {1} » : l'ordre des mots dépend de la langue
+    let marque = || html! { span.anthropic-mark { (icons::anthropic()) } };
+    // « Made in France by {0} and {1} with {Claude} » : l'ordre des mots dépend de la langue
     let texte = &p.tr.ft_credit;
     let (avant, reste) = texte.split_once("{0}").unwrap_or((texte, ""));
     let (milieu, apres) = reste.split_once("{1}").unwrap_or((reste, ""));
+    let (c_avant, c_apres) = p.tr.ft_credit_claude.split_once("{0}").unwrap_or((&p.tr.ft_credit_claude, ""));
     html! {
         div.fcredit {
             (icons::flag("fr"))
             span { (avant) } (auteur(AUTEURS[0])) span { (milieu) } (auteur(AUTEURS[1])) span { (apres) }
-            // « (et Claude aussi) », avec le logo d'Anthropic
-            @let (c_avant, c_apres) = p.tr.ft_credit_claude.split_once("{0}").unwrap_or((&p.tr.ft_credit_claude, ""));
-            span.claude-credit {
-                (c_avant)
-                a.author.claude href="https://www.anthropic.com/claude" target="_blank" rel="noopener" title="Claude, by Anthropic" {
-                    span.anthropic-mark { (icons::anthropic()) }
-                    span { "Claude" }
-                }
-                (c_apres)
+            span { (c_avant) }
+            a.author.claude href="https://www.anthropic.com/claude" target="_blank" rel="noopener" {
+                (marque())
+                span { "Claude" }
+                (bulle("Claude", marque()))
             }
+            @if !c_apres.is_empty() { span { (c_apres) } }
         }
     }
 }
@@ -392,7 +441,7 @@ fn footer(p: &Page) -> Markup {
             div.col {
                 div.ftop {
                     div {
-                        a.brand href="/" { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
+                        a.brand href=(p.lien("/")) { img src="/assets/icone.png" alt="" width="30" height="30"; span { "Mistly" } }
                         p.tag { (tr.ft_tag) }
                     }
                     p.disclaimer { (tr.ft_disclaimer) }
@@ -401,24 +450,24 @@ fn footer(p: &Page) -> Markup {
                     div {
                         h2 { (tr.ft_nav) }
                         ul {
-                            li { a href="/#features" { (tr.nav_features) } }
-                            li { a href="/#loaders" { (tr.nav_loaders) } }
-                            li { a href="/#faq" { (tr.nav_faq) } }
-                            li { a href="/docs" { (tr.docs_label) } }
-                            li { a href="/shop" { (tr.nav_shop) } }
-                            li { a href="/patch-notes" { (tr.nav_patch_notes) } }
-                            li { a href=(status_href()) { (tr.nav_status) } }
-                            li { a href="/roadmap" { (tr.nav_roadmap) } }
-                            li { a href="/articles" { (tr.nav_blog) } }
-                            li { a href="/brand" { (tr.nav_brand) } }
+                            li { a href=(p.lien("/#features")) { (tr.nav_features) } }
+                            li { a href=(p.lien("/#loaders")) { (tr.nav_loaders) } }
+                            li { a href=(p.lien("/#faq")) { (tr.nav_faq) } }
+                            li { a href=(p.lien("/docs")) { (tr.docs_label) } }
+                            li { a href=(p.lien("/shop")) { (tr.nav_shop) } }
+                            li { a href=(p.lien("/patch-notes")) { (tr.nav_patch_notes) } }
+                            li { a href=(p.lien(status_href())) { (tr.nav_status) } }
+                            li { a href=(p.lien("/roadmap")) { (tr.nav_roadmap) } }
+                            li { a href=(p.lien("/articles")) { (tr.nav_blog) } }
+                            li { a href=(p.lien("/brand")) { (tr.nav_brand) } }
                         }
                     }
                     div {
                         h2 { (tr.nav_download) }
                         ul {
-                            li { a href="/download/setup" { (tr.inst_t) } }
-                            li { a href="/download/portable" { (tr.port_t) } }
-                            li { a href="/patch-notes?project=client" { "Mistly Client" } }
+                            li { a href=(p.lien("/download/setup")) { (tr.inst_t) } }
+                            li { a href=(p.lien("/download/portable")) { (tr.port_t) } }
+                            li { a href=(p.lien("/patch-notes?project=client")) { "Mistly Client" } }
                             li { a href=(p.releases_url()) target="_blank" rel="noopener" { (tr.github_t) (icons::external()) } }
                             li { a href=(p.github_url()) target="_blank" rel="noopener" { "GitHub" (icons::external()) } }
                         }
@@ -435,7 +484,7 @@ fn footer(p: &Page) -> Markup {
                         h2 { (tr.ft_legal_t) }
                         ul {
                             @for k in crate::legal::Kind::ALL {
-                                li { a href=(k.path()) { (k.label(tr)) } }
+                                li { a href=(p.lien(k.path())) { (k.label(tr)) } }
                             }
                         }
                     }
