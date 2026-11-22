@@ -1,241 +1,361 @@
-//! Boutique de cosmétiques.
+//! Boutique de cosmétiques, rangée comme un magasin : peu de texte, des catégories, des cartes.
 //!
-//! - Sans pseudo : la vitrine. L'accroche et trois cosmétiques en vitrine, la nouveauté en grand,
-//!   les catégories en images, toute la collection (un clic l'essaie dans le studio 3D, sur Steve
-//!   ou sur le pseudo saisi), comment ça marche, et l'appel à télécharger Mistly.
+//! - `/shop` : l'accueil. Le titre et la recherche, la barre des catégories, les nouveautés,
+//!   « Découvrir » (une bannière par catégorie), puis chaque catégorie en rangée de cartes.
+//! - `/shop/<catégorie>` (`capes`, `hats`, `pets`, `emotes`) : la même tête, et toutes les cartes de
+//!   la catégorie.
+//! - `/shop/item/<article>` : la page d'un article. L'aperçu 3D à gauche (site.js le porte dès que le
+//!   joueur est chargé), et en dessous « Personnaliser l'aperçu » (couleurs, taille, pseudo…) ; la
+//!   fiche à droite (statut, une phrase, le bouton pour l'obtenir), puis des articles proches.
 //!
 //! Servie sur `/shop` et à la racine du sous-domaine `shop.<domaine>` : les liens passent par
 //! `Page::boutique`.
-//! - `/shop/emotes`, `/shop/capes`, `/shop/hats` : un catalogue par catégorie, essayé dans l'aperçu 3D
-//!   (les emotes et les chapeaux ne sont pas encore en jeu).
-//! - Avec un pseudo : le studio. À gauche, le skin du joueur en 3D (vues face / profil / dos,
-//!   animations, sa vraie cape, élytres) ; à droite, sa fiche et les catégories de
-//!   cosmétiques, toutes « bientôt disponibles », avec la cape et les élytres Mistly à essayer.
 
 use super::icons;
 use super::layout::{self, Head, Page};
 use crate::i18n::Tr;
 use maud::{Markup, html};
 
-/// Ce que la page affiche.
-pub enum ShopView<'a> {
-    /// La boutique, avec le pseudo saisi ou retenu (son skin dans l'aperçu) et, si besoin,
-    /// l'erreur ; `open` : l'essayage est déplié d'office (un pseudo vient d'être saisi).
-    Form { value: &'a str, invalid: bool, open: bool },
-}
-
 /// Pseudo Minecraft valide : 3 à 16 caractères, lettres ASCII, chiffres et `_`.
 pub fn valid_username(name: &str) -> bool {
     (3..=16).contains(&name.len()) && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
 }
 
-/// Catégories de cosmétiques montrées dans « Bientôt dans la boutique ».
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Category {
+/// Une catégorie de la boutique (`/shop/<slug>`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Catalogue {
     Capes,
-    Headwear,
-    Auras,
-    /// Styles du pseudo au-dessus de la tête
-    Tags,
+    Hats,
     Pets,
     Emotes,
 }
 
-impl Category {
-    fn text(self, tr: &Tr) -> (&str, &str) {
+impl Catalogue {
+    pub const ALL: [Catalogue; 4] = [Catalogue::Capes, Catalogue::Hats, Catalogue::Pets, Catalogue::Emotes];
+
+    pub fn from_slug(slug: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|c| c.slug() == slug)
+    }
+
+    pub fn slug(self) -> &'static str {
         match self {
-            Category::Capes => (&tr.shop_cat_capes, &tr.shop_cat_capes_p),
-            Category::Headwear => (&tr.shop_cat_hats, &tr.shop_cat_hats_p),
-            Category::Auras => (&tr.shop_cat_effects, &tr.shop_cat_effects_p),
-            Category::Tags => (&tr.shop_cat_tags, &tr.shop_cat_tags_p),
-            Category::Pets => (&tr.shop_cat_pets, &tr.shop_cat_pets_p),
-            Category::Emotes => (&tr.shop_cat_emotes, &tr.shop_cat_emotes_p),
+            Self::Capes => "capes",
+            Self::Hats => "hats",
+            Self::Pets => "pets",
+            Self::Emotes => "emotes",
         }
     }
 
-    fn icon(self) -> Markup {
+    fn nom(self, tr: &Tr) -> &str {
         match self {
-            Category::Capes => icons::cape(),
-            Category::Headwear => icons::crown(),
-            Category::Auras => icons::sparkles(),
-            Category::Tags => icons::tag(),
-            Category::Pets => icons::paw(),
-            Category::Emotes => icons::smile(),
+            Self::Capes => &tr.shop_cat_capes,
+            Self::Hats => &tr.shop_cat_hats,
+            Self::Pets => &tr.shop_cat_pets,
+            Self::Emotes => &tr.shop_cat_emotes,
+        }
+    }
+
+    fn icone(self) -> Markup {
+        match self {
+            Self::Capes => icons::cape(),
+            Self::Hats => icons::crown(),
+            Self::Pets => icons::paw(),
+            Self::Emotes => icons::smile(),
+        }
+    }
+
+    /// L'image de sa bannière (« Découvrir »).
+    fn image(self) -> &'static str {
+        match self {
+            Self::Capes => "cape-mistly",
+            Self::Hats => "cloudly",
+            Self::Pets => "minime",
+            Self::Emotes => "calin",
         }
     }
 }
 
-pub fn render(p: &Page, view: ShopView) -> Markup {
-    let tr = p.tr;
-    let main = match view {
-        ShopView::Form { value, invalid, open } => {
-            let preview = valid_username(value).then_some(value);
-            let (hug, hug_texte) = emote_texte(tr, "hug");
-            html! {
-                // L'accroche : le texte à gauche, trois cosmétiques en vitrine à droite (un clic les
-                // essaie dans le studio 3D, comme toutes les cartes de la page)
-                section.hero.sh-hero {
-                    div.col.sh-hero-in {
-                        div.sh-copy {
-                            span.label { (tr.shop_label) }
-                            h1 { (tr.shop_hero_t1) br; span.soft { (tr.shop_hero_t2) } }
-                            p.sub { (tr.shop_hero_sub) }
-                            div.sh-ctas {
-                                button.btn.play.lg type="button" data-try="cape" { (icons::sparkles()) span { (tr.shop_cta_try) } }
-                                a.btn.lg href="#collection" { span { (tr.shop_cta_browse) } (icons::arrow_right()) }
-                            }
-                            ul.sh-trust {
-                                li { (icons::check()) (tr.shop_trust_1) }
-                                li { (icons::check()) (tr.shop_trust_2) }
-                                li { (icons::check()) (tr.shop_trust_3) }
-                            }
-                        }
-                        div.sh-collage {
-                            @for (i, (cle, image, nom)) in [("cape", "cape-mistly", &tr.shop_item_cape), ("cloudly", "cloudly", &tr.shop_cloudly_t), ("elytra", "elytres-mistly", &tr.shop_item_elytra)].into_iter().enumerate() {
-                                button.sh-shot.(format!("s{}", i + 1)) type="button" data-try=(cle) aria-label=(format!("{} – {}", nom, tr.shop_try_on)) {
-                                    img src=(photo(image)) alt="" width="600" height="475";
-                                    span.sh-shot-tag { (nom) }
-                                }
-                            }
-                            span.sh-glow aria-hidden="true" {}
-                        }
-                    }
-                }
-                // L'essayage : le studio 3D, dans la page, déplié seulement quand on clique sur un
-                // cosmétique (ou ouvert d'office après une saisie de pseudo, acceptée ou refusée)
-                section.tryon #tryon aria-labelledby="feat-name" hidden[!invalid && !open] {
-                  div.tryon-in {
-                    div.col.tryon-box {
-                    button.tryon-close type="button" data-close aria-label=(tr.shop_close) { "✕" }
-                        div.vitrine {
-                            (stage(p, preview.unwrap_or("MHF_Steve"), preview, false))
-                            div.featured {
-                                span.label { (tr.shop_featured) }
-                                h1 #feat-name { (tr.shop_item_cape) }
-                                p #feat-text { (tr.shop_cape_p) }
-                                div.badges { span.badge.free #feat-badge { (tr.shop_free_client) } }
-                                div.pick role="group" aria-label=(tr.shop_collection) {
-                                    @for a in &ARTICLES { (bouton_article(tr, a)) }
-                                }
-                                (reglages(tr, preview))
-                                div.try {
-                                    strong { (tr.shop_try) }
-                                    p { (tr.shop_try_p) }
-                                    (form(p, value, invalid, &p.boutique("")))
-                                }
-                            }
-                        }
-                    }
-                  }
-                }
-                // La nouveauté, en grand
-                section.blk {
-                    div.col {
-                        div.sh-spot {
-                            div.sh-spot-img { img src=(photo("calin")) alt="" width="600" height="475" loading="lazy"; }
-                            div.sh-spot-txt {
-                                span.sh-new { (tr.shop_new) }
-                                h2 { (hug) }
-                                p { (hug_texte) }
-                                div.sh-ctas {
-                                    button.btn.play type="button" data-try="hug" data-carte-emote="" data-name=(hug) data-text=(hug_texte) data-badge=(tr.shop_new) {
-                                        (icons::sparkles()) span { (tr.shop_try_on) }
-                                    }
-                                    a.btn href=(p.boutique("emotes")) { span { (tr.shop_cat_emotes) } (icons::arrow_right()) }
-                                }
-                            }
-                        }
-                    }
-                }
-                (collection(p))
-            }
+/// Le statut d'un article : sur sa carte et sur sa fiche.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Statut {
+    /// Dans Mistly Client, pour tout le monde
+    Gratuit,
+    /// Réservé aux premiers joueurs
+    Early,
+    /// Nouveau, pas encore en jeu
+    Nouveau,
+    /// Pas encore en jeu : seulement dans l'aperçu
+    Bientot,
+}
+
+impl Statut {
+    fn classe(self) -> &'static str {
+        match self {
+            Statut::Gratuit => "st-free",
+            Statut::Early => "st-early",
+            Statut::Nouveau => "st-new",
+            Statut::Bientot => "st-soon",
         }
+    }
+    /// L'étiquette courte, sur l'image.
+    fn badge(self, tr: &Tr) -> &str {
+        match self {
+            Statut::Gratuit => &tr.shop_available,
+            Statut::Early => &tr.shop_early_badge,
+            Statut::Nouveau => &tr.shop_new,
+            Statut::Bientot => &tr.shop_badge,
+        }
+    }
+    fn disponible(self) -> bool {
+        matches!(self, Statut::Gratuit | Statut::Early)
+    }
+}
+
+/// Un article de la boutique : un cosmétique de la collection Mistly, ou une emote.
+#[derive(Clone, Copy)]
+pub struct Objet {
+    pub cle: &'static str,
+    cat: Catalogue,
+    article: Option<&'static Article>,
+}
+
+impl Objet {
+    fn nom<'a>(&self, tr: &'a Tr) -> &'a str {
+        self.article.map_or_else(|| emote_texte(tr, self.cle).0, |a| a.nom(tr))
+    }
+    fn texte<'a>(&self, tr: &'a Tr) -> &'a str {
+        self.article.map_or_else(|| emote_texte(tr, self.cle).1, |a| a.texte(tr))
+    }
+    fn statut(&self) -> Statut {
+        match self.article {
+            Some(a) if a.early => Statut::Early,
+            Some(a) if !a.bientot => Statut::Gratuit,
+            None if self.cle == "hug" => Statut::Nouveau,
+            _ => Statut::Bientot,
+        }
+    }
+    /// La clé de son visuel (`art_carte`).
+    fn art(&self) -> String {
+        if self.article.is_some() { self.cle.to_string() } else { format!("emote-{}", self.cle) }
+    }
+}
+
+/// Tous les articles, dans l'ordre de la boutique.
+pub fn objets() -> Vec<Objet> {
+    let cat = |a: &Article| match a.back {
+        Some("pet") => Catalogue::Pets,
+        None => Catalogue::Hats,
+        _ => Catalogue::Capes,
     };
-    layout::render(
-        p,
-        Head {
-            title: &tr.shop_title,
-            description: &tr.shop_sub,
-            jsonld: None,
-            css: &["home", "patch-notes", "shop"],
-            scripts: &["/vendor/skinview3d/skinview3d.bundle.js"],
-            body_class: "shop",
-        },
-        main,
-    )
+    let mut liste: Vec<Objet> = ARTICLES.iter().map(|a| Objet { cle: a.thumb, cat: cat(a), article: Some(a) }).collect();
+    liste.extend(EMOTES.iter().map(|e| Objet { cle: e, cat: Catalogue::Emotes, article: None }));
+    liste
 }
+
+/// L'article `cle`, s'il existe.
+pub fn objet(cle: &str) -> Option<Objet> {
+    objets().into_iter().find(|o| o.cle == cle)
+}
+
+/// Les nouveautés, en tête de la boutique.
+const NOUVEAUTES: [&str; 5] = ["hug", "wings", "minime", "bunny", "piggyback"];
 
 /// Adresse d'une image de présentation (public/assets/presentation, 600 × 475).
 fn photo(nom: &str) -> String {
     format!("/assets/presentation/{nom}.jpg?v={}", layout::ASSET_VERSION.as_str())
 }
 
-/// Haut des pages de la boutique (studio, catalogues) : un bouton pour revenir en arrière, puis le
-/// fil d'Ariane jusqu'à `ici`.
-fn haut_de_page(p: &Page, ici: &str) -> Markup {
+/// La tête de la boutique : le titre et la recherche, puis la barre des catégories.
+fn tete(p: &Page, actif: Option<Catalogue>) -> Markup {
     let tr = p.tr;
     html! {
-        div.page-top {
-            // revient à la page d'avant si elle est sur le site (voir site.js), sinon à la boutique
-            a.back-btn href=(p.boutique("")) data-retour { (icons::arrow_right()) span { (tr.shop_back) } }
-            nav.crumbs aria-label="Breadcrumb" {
-                a href=(p.boutique("")) { (icons::bag()) (tr.shop_label) }
-                span { "/" }
-                span { (ici) }
+        section.shop-top.sx-top {
+            div.col {
+                div.sx-head {
+                    div {
+                        h1 { (tr.shop_label) }
+                        p { (tr.shop_mega_p) }
+                    }
+                    label.sx-search {
+                        (icons::search())
+                        input #sx-q type="search" placeholder=(tr.shop_search) aria-label=(tr.shop_search) autocomplete="off" spellcheck="false";
+                    }
+                }
+                nav.sx-tabs aria-label=(tr.shop_categories) {
+                    a href=(p.boutique("")) aria-current=[actif.is_none().then_some("page")] { (icons::sparkles()) (tr.shop_tab_featured) }
+                    span.sx-sep aria-hidden="true" {}
+                    @for c in Catalogue::ALL {
+                        a href=(p.boutique(c.slug())) aria-current=[(actif == Some(c)).then_some("page")] { (c.icone()) (c.nom(tr)) }
+                    }
+                }
             }
         }
     }
 }
 
-/// Une page de catalogue de la boutique (`/shop/<slug>`), ouverte depuis sa carte.
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Catalogue {
-    Emotes,
-    Capes,
-    Hats,
-    Pets,
+/// Une carte : l'image et son étiquette, le nom et le statut. Elle ouvre la page de l'article.
+fn carte(p: &Page, o: &Objet) -> Markup {
+    let tr = p.tr;
+    let s = o.statut();
+    html! {
+        a.sx-card href=(p.boutique(&format!("item/{}", o.cle))) data-nom=(o.nom(tr).to_lowercase()) {
+            span.sx-art {
+                @if presentation(&o.art()).is_some() {
+                    (art_carte(&o.art(), 60, 96))
+                } @else {
+                    // pas de photo : l'icône de sa catégorie (les vignettes en pixels ont besoin de l'aperçu 3D)
+                    span.item-art.sx-icon { (if o.cle == "wings" { icons::wings() } else { o.cat.icone() }) }
+                }
+                span.sx-badge.(s.classe()) { (s.badge(tr)) }
+                span.sx-cat { (o.cat.nom(tr)) }
+            }
+            span.sx-foot {
+                strong { (o.nom(tr)) }
+                span.sx-state.(s.classe()) { @if s.disponible() { (icons::check()) } (s.badge(tr)) }
+            }
+        }
+    }
 }
 
-impl Catalogue {
-    pub fn from_slug(slug: &str) -> Option<Self> {
-        match slug {
-            "emotes" => Some(Self::Emotes),
-            "capes" => Some(Self::Capes),
-            "hats" => Some(Self::Hats),
-            "pets" => Some(Self::Pets),
-            _ => None,
+/// Une rangée titrée de cartes, avec « Tout voir ».
+fn rangee(p: &Page, titre: &str, tout: Option<&str>, objets: &[Objet]) -> Markup {
+    html! {
+        section.sx-row {
+            div.sx-row-head {
+                h2 { (titre) sup { "(" (objets.len()) ")" } }
+                @if let Some(lien) = tout { a.sx-all href=(lien) { (p.tr.shop_view_all) (icons::arrow_right()) } }
+            }
+            div.sx-grid { @for o in objets { (carte(p, o)) } }
         }
     }
+}
 
-    pub fn slug(self) -> &'static str {
-        match self {
-            Self::Emotes => "emotes",
-            Self::Capes => "capes",
-            Self::Hats => "hats",
-            Self::Pets => "pets",
+fn page_boutique(p: &Page, titre: &str, description: &str, main: Markup, scripts: &[&str]) -> Markup {
+    layout::render(
+        p,
+        Head { title: titre, description, jsonld: None, css: &["home", "patch-notes", "shop"], scripts, body_class: "shop" },
+        main,
+    )
+}
+
+/// L'accueil de la boutique.
+pub fn render(p: &Page) -> Markup {
+    let tr = p.tr;
+    let tous = objets();
+    let nouveautes: Vec<Objet> = NOUVEAUTES.iter().filter_map(|c| objet(c)).collect();
+    let main = html! {
+        (tete(p, None))
+        div.col.sx-body {
+            (rangee(p, &tr.shop_new_t, None, &nouveautes))
+            section.sx-row {
+                div.sx-row-head { h2 { (tr.shop_discover) } }
+                div.sx-banners {
+                    @for c in Catalogue::ALL {
+                        @let n = tous.iter().filter(|o| o.cat == c).count();
+                        a.sx-banner href=(p.boutique(c.slug())) {
+                            img src=(photo(c.image())) alt="" width="600" height="475" loading="lazy";
+                            span.sx-banner-txt { strong { (c.nom(tr)) } span { (n) " " (tr.shop_items) } }
+                        }
+                    }
+                }
+            }
+            @for c in Catalogue::ALL {
+                @let liste: Vec<Objet> = tous.iter().filter(|o| o.cat == c).copied().collect();
+                (rangee(p, c.nom(tr), Some(&p.boutique(c.slug())), &liste))
+            }
+            p.sx-empty hidden { (tr.shop_no_result) }
         }
-    }
+    };
+    page_boutique(p, &tr.shop_title, &tr.shop_sub, main, &["/js/boutique.js"])
+}
 
-    /// Titre et phrase d'introduction de la page.
-    fn texte(self, tr: &Tr) -> (&str, &str) {
-        match self {
-            Self::Emotes => (&tr.shop_cat_emotes, &tr.shop_emotes_lead),
-            Self::Capes => (&tr.shop_cat_capes, &tr.shop_capes_lead),
-            Self::Hats => (&tr.shop_cat_hats, &tr.shop_hats_lead),
-            Self::Pets => (&tr.shop_cat_pets, &tr.shop_pets_lead),
+/// Une catégorie de la boutique.
+pub fn render_catalogue(p: &Page, cat: Catalogue) -> Markup {
+    let tr = p.tr;
+    let liste: Vec<Objet> = objets().into_iter().filter(|o| o.cat == cat).collect();
+    let main = html! {
+        (tete(p, Some(cat)))
+        div.col.sx-body {
+            (rangee(p, cat.nom(tr), None, &liste))
+            p.sx-empty hidden { (tr.shop_no_result) }
         }
-    }
+    };
+    let titre = format!("{} – {}", cat.nom(tr), tr.shop_title);
+    page_boutique(p, &titre, &tr.shop_mega_p, main, &["/js/boutique.js"])
+}
 
-    /// Les articles Mistly de la page (ailes et capes, chapeaux, ou compagnons).
-    fn articles(self) -> impl Iterator<Item = &'static Article> {
-        ARTICLES.iter().filter(move |a| match self {
-            // les élytres se mettent avec le bouton « Élytres » de l'aperçu, pas dans la liste
-            Self::Capes => matches!(a.back, Some("cape" | "wings")),
-            Self::Hats => a.back.is_none(),
-            Self::Pets => a.back == Some("pet"),
-            Self::Emotes => false,
-        })
-    }
+/// La page d'un article : l'aperçu 3D (porté d'office) et ses réglages, la fiche, puis des
+/// articles proches.
+pub fn render_objet(p: &Page, o: &Objet, player: Option<&str>, value: &str, invalid: bool) -> Markup {
+    let tr = p.tr;
+    let s = o.statut();
+    let proches: Vec<Objet> = {
+        let tous = objets();
+        let mut l: Vec<Objet> = tous.iter().filter(|x| x.cat == o.cat && x.cle != o.cle).copied().collect();
+        l.extend(tous.iter().filter(|x| x.cat != o.cat).copied());
+        l.truncate(4);
+        l
+    };
+    let ici = p.boutique(&format!("item/{}", o.cle));
+    let main = html! {
+        section.studio.sx-item data-catalogue=(o.cat.slug()) {
+            div.col {
+                nav.sx-crumbs aria-label="Breadcrumb" {
+                    a href=(p.boutique("")) { (tr.shop_label) }
+                    (icons::chevron())
+                    a href=(p.boutique(o.cat.slug())) { (o.cat.nom(tr)) }
+                    (icons::chevron())
+                    span { (o.nom(tr)) }
+                }
+                div.sx-title {
+                    a.sx-back href=(p.boutique(o.cat.slug())) data-retour aria-label=(tr.shop_back) { (icons::arrow_left()) }
+                    h1 { (o.nom(tr)) }
+                    span.sx-badge.(s.classe()) { (s.badge(tr)) }
+                }
+                div.sx-item-grid {
+                    div.sx-left {
+                        div.sx-stage {
+                            (stage(p, player.unwrap_or("MHF_Steve"), player, false))
+                        }
+                        div.sx-panel {
+                            h2 { (icons::palette()) (tr.shop_customize) }
+                            (reglages(tr, player))
+                            (form(p, value, invalid, &ici))
+                        }
+                        // le bouton que site.js clique dès que le joueur est chargé : l'article est porté
+                        div.pick hidden {
+                            @if let Some(a) = o.article {
+                                (bouton_article(tr, a))
+                            } @else {
+                                @let (nom, texte) = emote_texte(tr, o.cle);
+                                button.emote-choice type="button" data-try=(o.cle) data-name=(nom) data-text=(texte) data-badge=(s.badge(tr)) aria-pressed="false" { (nom) }
+                            }
+                        }
+                    }
+                    aside.sx-info {
+                        div.sx-price {
+                            span.sx-state.(s.classe()) { @if s.disponible() { (icons::check()) } (s.badge(tr)) }
+                            strong { @if s.disponible() { (tr.shop_free_client) } @else { (tr.shop_soon) } }
+                        }
+                        p.sx-desc { (o.texte(tr)) }
+                        ul.sx-facts {
+                            li { (icons::user()) (tr.shop_trust_1) }
+                            li { (o.cat.icone()) (o.cat.nom(tr)) }
+                            li { (icons::sparkles()) (tr.shop_trust_3) }
+                        }
+                        @if s.disponible() {
+                            a.btn.play.sx-get href=(p.lien("/#download")) { (icons::download()) span { (tr.shop_get) } }
+                        } @else {
+                            button.btn.sx-get type="button" disabled { (tr.shop_soon) }
+                        }
+                    }
+                }
+                (rangee(p, &tr.shop_more, Some(&p.boutique(o.cat.slug())), &proches))
+            }
+        }
+    };
+    let titre = format!("{} – {}", o.nom(tr), tr.shop_title);
+    page_boutique(p, &titre, o.texte(tr), main, &["/vendor/skinview3d/skinview3d.bundle.js"])
 }
 
 /// Réglages de l'article porté, montrés par site.js quand ils servent : la taille du chapeau
@@ -315,77 +435,6 @@ fn bouton_article(tr: &Tr, a: &Article) -> Markup {
             span { (a.nom(tr)) }
         }
     }
-}
-
-/// Une page de catalogue (emotes, capes, chapeaux) : l'aperçu 3D à gauche, sur le dernier pseudo
-/// choisi (ou Steve), et la liste à droite. Un clic joue l'emote ou porte l'article ; la case du
-/// pseudo, en dessous, met son propre skin dans l'aperçu.
-pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &str, invalid: bool) -> Markup {
-    let tr = p.tr;
-    let (titre, intro) = cat.texte(tr);
-    let nombre = if cat == Catalogue::Emotes { EMOTES.len() } else { cat.articles().count() };
-    // la fiche montre d'abord le premier de la liste
-    let (premier, premier_texte, premier_badge) = match cat.articles().next() {
-        Some(a) => (a.nom(tr), a.texte(tr), a.badge(tr)),
-        None => {
-            let (nom, texte) = emote_texte(tr, EMOTES[0]);
-            (nom, texte, tr.shop_new.as_str())
-        }
-    };
-    let main = html! {
-        section.studio.emotes-page data-catalogue=(cat.slug()) {
-            div.wrap {
-                (haut_de_page(p, titre))
-                header.emotes-head {
-                    h1 { (titre) sup { "(" (nombre) ")" } }
-                    p { (intro) }
-                }
-                div.vitrine {
-                    (stage(p, player.unwrap_or("MHF_Steve"), player, false))
-                    div.featured {
-                        span.label { (titre) }
-                        h1 #feat-name { (premier) }
-                        p #feat-text { (premier_texte) }
-                        div.badges { span.badge #feat-badge { (premier_badge) } }
-                        div.pick.emote-pick role="group" aria-label=(titre) {
-                            @if cat == Catalogue::Emotes {
-                                @for (i, cle) in EMOTES.iter().enumerate() {
-                                    @let (nom, texte) = emote_texte(tr, cle);
-                                    button.emote-choice type="button" data-try=(cle) data-name=(nom) data-text=(texte)
-                                        data-badge=(if *cle == "hug" { &tr.shop_new } else { &tr.shop_badge })
-                                        aria-pressed=(if i == 0 { "true" } else { "false" }) {
-                                        canvas.thumb data-thumb=(format!("emote-{cle}")) width="30" height="48" aria-hidden="true" {}
-                                        span { (nom) }
-                                    }
-                                }
-                            } @else {
-                                @for a in cat.articles() { (bouton_article(tr, a)) }
-                            }
-                        }
-                        (reglages(tr, player))
-                        div.try {
-                            strong { (tr.shop_try) }
-                            p { (tr.shop_try_p) }
-                            (form(p, value, invalid, &p.boutique(cat.slug())))
-                        }
-                    }
-                }
-            }
-        }
-    };
-    let titre_page = format!("{titre} – {}", tr.shop_title);
-    layout::render(
-        p,
-        Head {
-            title: &titre_page,
-            description: intro,
-            jsonld: None,
-            css: &["home", "patch-notes", "shop"],
-            scripts: &["/vendor/skinview3d/skinview3d.bundle.js"],
-            body_class: "shop",
-        },
-        main,
-    )
 }
 
 /// Un article de la collection Mistly.
@@ -492,132 +541,6 @@ fn art_carte(cle: &str, l: u32, h: u32) -> Markup {
             }
         } @else {
             span.item-art.emote[cle.starts_with("emote-")] { canvas.thumb data-thumb=(cle) width=(l) height=(h) aria-hidden="true" {} }
-        }
-    }
-}
-
-/// Une carte de la collection : son visuel, son badge, son nom et sa phrase ; un clic l'essaie
-/// (un cosmétique est porté, une emote est jouée).
-fn carte_produit(tr: &Tr, cle: &str, nom: &str, texte: &str, badge: &str, classe_badge: &str, emote: bool) -> Markup {
-    let art = if emote { format!("emote-{cle}") } else { cle.to_string() };
-    html! {
-        button.sh-card.reveal type="button" data-try=(cle) data-carte-emote=[emote.then_some("")]
-            data-name=[emote.then_some(nom)] data-text=[emote.then_some(texte)] data-badge=[emote.then_some(badge)] {
-            span.sh-card-art {
-                (art_carte(&art, 60, 96))
-                span.sh-badge.(classe_badge) { (badge) }
-            }
-            span.sh-card-body {
-                strong { (nom) }
-                span.desc { (texte) }
-                span.sh-card-foot {
-                    span { @if emote { (tr.shop_cat_emotes) } @else { "Mistly Client" } }
-                    span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
-                }
-            }
-        }
-    }
-}
-
-/// Les catégories (en images), toute la collection, comment ça marche, puis l'appel final.
-fn collection(p: &Page) -> Markup {
-    let tr = p.tr;
-    // catégorie, image, nombre d'articles
-    let categories = [
-        (Catalogue::Capes, Category::Capes, "cape-mistly", Catalogue::Capes.articles().count()),
-        (Catalogue::Hats, Category::Headwear, "cloudly", Catalogue::Hats.articles().count()),
-        (Catalogue::Emotes, Category::Emotes, "salut", EMOTES.len()),
-        (Catalogue::Pets, Category::Pets, "minime", Catalogue::Pets.articles().count()),
-    ];
-    let bientot = [Category::Auras, Category::Tags];
-    // les emotes qui ont une image de présentation
-    let emotes = ["hug", "wave", "cheer", "piggyback"];
-    let total = ARTICLES.len() + emotes.len();
-    html! {
-        section.blk {
-            div.col {
-                h2.blk-title { (tr.shop_categories) sup { "(" (categories.len() + bientot.len()) ")" } }
-                div.cells.c4.sh-cats {
-                    @for (cat, c, image, n) in categories {
-                        @let (titre, texte) = c.text(tr);
-                        a.sh-cat.reveal href=(p.boutique(cat.slug())) {
-                            span.sh-cat-img { img src=(photo(image)) alt="" width="600" height="475" loading="lazy"; }
-                            span.sh-cat-body {
-                                strong { (titre) span.n { (n) " " (tr.shop_items) } }
-                                span.desc { (texte) }
-                                span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
-                            }
-                        }
-                    }
-                }
-                div.cells.c2.sh-soon {
-                    @for c in bientot {
-                        @let (titre, texte) = c.text(tr);
-                        div.soon-card.reveal {
-                            pre.ascii-noise aria-hidden="true" {}
-                            span.soon-body {
-                                span.ico { (c.icon()) }
-                                strong { (titre) }
-                                span.desc { (texte) }
-                                span.soon-foot { span.badge { (tr.shop_badge) } }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        div.col.hatch aria-hidden="true" {}
-        section.blk #collection {
-            div.col {
-                h2.blk-title { (tr.shop_all) sup { "(" (total) ")" } }
-                div.sh-grid {
-                    @for a in &ARTICLES {
-                        @let (badge, classe) = if a.early { (&tr.shop_early_badge, "early") } else if a.bientot { (&tr.shop_badge, "soon") } else { (&tr.shop_free_client, "free") };
-                        (carte_produit(tr, a.thumb, a.nom(tr), a.texte(tr), badge, classe, false))
-                    }
-                    @for cle in emotes {
-                        @let (nom, texte) = emote_texte(tr, cle);
-                        @let (badge, classe) = if cle == "hug" { (&tr.shop_new, "new") } else { (&tr.shop_badge, "soon") };
-                        (carte_produit(tr, cle, nom, texte, badge, classe, true))
-                    }
-                }
-            }
-        }
-        section.blk {
-            div.col {
-                h2.blk-title { (tr.shop_how_t) }
-                div.cells.c3.sh-steps {
-                    @for (n, (titre, texte, ic)) in [
-                        (&tr.shop_how_1_t, &tr.shop_how_1_p, icons::download()),
-                        (&tr.shop_how_2_t, &tr.shop_how_2_p, icons::shirt()),
-                        (&tr.shop_how_3_t, &tr.shop_how_3_p, icons::sparkles()),
-                    ].into_iter().enumerate() {
-                        div.sh-step.reveal {
-                            span.sh-step-n { (format!("0{}", n + 1)) }
-                            span.ico { (ic) }
-                            strong { (titre) }
-                            p { (texte) }
-                        }
-                    }
-                }
-            }
-        }
-        section.blk {
-            div.col {
-                div.sh-cta {
-                    div.sh-cta-art aria-hidden="true" {
-                        img src=(photo("victoire")) alt="" width="600" height="475" loading="lazy";
-                    }
-                    div.sh-cta-txt {
-                        h2 { (tr.shop_cta_t) }
-                        p { (tr.shop_cta_p) }
-                        div.sh-ctas {
-                            a.btn.play href=(p.lien("/#download")) { (icons::download()) span { (tr.shop_cta_dl) } }
-                            a.btn href=(p.boutique("capes")) { span { (tr.shop_mega_try) } (icons::arrow_right()) }
-                        }
-                    }
-                }
-            }
         }
     }
 }

@@ -6,7 +6,7 @@ use crate::github::{self, Kind};
 use crate::i18n::{self, Lang};
 use crate::skins;
 use crate::views::docs as docs_view;
-use crate::views::shop::{self, ShopView};
+use crate::views::shop;
 use crate::views::status as status_view;
 use crate::views::verify as verify_view;
 use crate::views::{home, layout::Page, not_found, patch_notes};
@@ -285,52 +285,21 @@ fn read_cookie<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
 }
 
 /// Boutique : formulaire du pseudo, puis « bientôt disponible ».
-/// Le pseudo validé est retenu dans un cookie pour les visites suivantes.
-pub async fn shop(
-    State(state): State<Arc<AppState>>,
-    Query(q): Query<PageQuery>,
-    headers: HeaderMap,
-) -> Response {
-    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
-    let count = state.github.releases().await.map(|l| l.len());
-    let mut p = page(&state, lang, "/shop", count);
-    if sous_domaine_boutique(&headers) {
-        p.base = &state.site_url;
-        p.boutique = true;
+/// Le pseudo saisi (`?player=`), le dernier retenu (cookie) et ce qu'il faut afficher :
+/// `(joueur de l'aperçu, texte de la case, saisie refusée, pseudo à retenir)`.
+fn joueur_boutique<'a>(headers: &'a HeaderMap, q: &'a PageQuery) -> (Option<&'a str>, &'a str, bool, Option<&'a str>) {
+    let saved = read_cookie(headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
+    match q.player.as_deref().map(str::trim) {
+        Some(name) if shop::valid_username(name) => (Some(name), name, false, Some(name)),
+        Some(name) => (saved, name, !name.is_empty(), None),
+        None => (saved, saved.unwrap_or(""), false, None),
     }
-    let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
-    let typed = q.player.as_deref().map(str::trim);
+}
 
-    // Toujours la boutique : un pseudo saisi (retenu) ou retenu met seulement son skin dans
-    // l'aperçu ; s'il vient d'être saisi, l'essayage s'ouvre dessus.
-    let (view, new_player) = match typed {
-        Some(name) if shop::valid_username(name) => (
-            ShopView::Form {
-                value: name,
-                invalid: false,
-                open: true,
-            },
-            Some(name),
-        ),
-        Some(name) => (
-            ShopView::Form {
-                value: name,
-                invalid: !name.is_empty(),
-                open: false,
-            },
-            None,
-        ),
-        None => (
-            ShopView::Form {
-                value: saved.unwrap_or(""),
-                invalid: false,
-                open: false,
-            },
-            None,
-        ),
-    };
-    let mut res = html_response(StatusCode::OK, shop::render(&p, view), lang, remember);
-    if let Some(name) = new_player {
+/// Une page de la boutique, avec le pseudo à retenir s'il vient d'être saisi.
+fn reponse_boutique(markup: Markup, lang: Lang, remember: bool, nouveau: Option<&str>) -> Response {
+    let mut res = html_response(StatusCode::OK, markup, lang, remember);
+    if let Some(name) = nouveau {
         let cookie = format!("{PLAYER_COOKIE}={name}; Path=/; Max-Age=31536000; SameSite=Lax");
         if let Ok(v) = HeaderValue::from_str(&cookie) {
             res.headers_mut().append(header::SET_COOKIE, v);
@@ -339,8 +308,26 @@ pub async fn shop(
     res
 }
 
-/// Une page de catalogue (`/shop/emotes`, `/shop/capes`, `/shop/hats`), essayée sur le pseudo saisi
-/// dans sa case (retenu comme dans la boutique), sinon sur le dernier choisi.
+/// La page de la boutique (sur `shop.<domaine>`, ses liens et sa navigation s'y adaptent).
+async fn page_boutique<'a>(state: &'a AppState, lang: Lang, chemin: &'a str, headers: &HeaderMap) -> Page<'a> {
+    let count = state.github.releases().await.map(|l| l.len());
+    let mut p = page(state, lang, chemin, count);
+    if sous_domaine_boutique(headers) {
+        p.base = &state.site_url;
+        p.boutique = true;
+    }
+    p
+}
+
+/// `/shop` : l'accueil de la boutique.
+pub async fn shop(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let p = page_boutique(&state, lang, "/shop", &headers).await;
+    let (_, _, _, nouveau) = joueur_boutique(&headers, &q);
+    reponse_boutique(shop::render(&p), lang, remember, nouveau)
+}
+
+/// `/shop/<catégorie>` : une catégorie de la boutique.
 pub async fn shop_catalogue(
     State(state): State<Arc<AppState>>,
     Path(slug): Path<String>,
@@ -352,28 +339,28 @@ pub async fn shop_catalogue(
         return not_found(State(state), uri, headers).await;
     };
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
-    let count = state.github.releases().await.map(|l| l.len());
-    let path = format!("/shop/{}", cat.slug());
-    let mut p = page(&state, lang, &path, count);
-    if sous_domaine_boutique(&headers) {
-        p.base = &state.site_url;
-        p.boutique = true;
-    }
-    let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
-    let typed = q.player.as_deref().map(str::trim);
-    let (player, value, invalid, new_player) = match typed {
-        Some(name) if shop::valid_username(name) => (Some(name), name, false, Some(name)),
-        Some(name) => (saved, name, !name.is_empty(), None),
-        None => (saved, saved.unwrap_or(""), false, None),
+    let chemin = format!("/shop/{}", cat.slug());
+    let p = page_boutique(&state, lang, &chemin, &headers).await;
+    let (_, _, _, nouveau) = joueur_boutique(&headers, &q);
+    reponse_boutique(shop::render_catalogue(&p, cat), lang, remember, nouveau)
+}
+
+/// `/shop/item/<article>` : la page d'un article, essayé en 3D sur le pseudo saisi ou retenu.
+pub async fn shop_item(
+    State(state): State<Arc<AppState>>,
+    Path(cle): Path<String>,
+    Query(q): Query<PageQuery>,
+    uri: Uri,
+    headers: HeaderMap,
+) -> Response {
+    let Some(o) = shop::objet(&cle) else {
+        return not_found(State(state), uri, headers).await;
     };
-    let mut res = html_response(StatusCode::OK, shop::render_catalogue(&p, cat, player, value, invalid), lang, remember);
-    if let Some(name) = new_player {
-        let cookie = format!("{PLAYER_COOKIE}={name}; Path=/; Max-Age=31536000; SameSite=Lax");
-        if let Ok(v) = HeaderValue::from_str(&cookie) {
-            res.headers_mut().append(header::SET_COOKIE, v);
-        }
-    }
-    res
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let chemin = format!("/shop/item/{}", o.cle);
+    let p = page_boutique(&state, lang, &chemin, &headers).await;
+    let (joueur, valeur, refuse, nouveau) = joueur_boutique(&headers, &q);
+    reponse_boutique(shop::render_objet(&p, &o, joueur, valeur, refuse), lang, remember, nouveau)
 }
 
 fn texture_response(png: axum::body::Bytes) -> Response {
@@ -977,6 +964,9 @@ pub async fn domaine_principal(
         // (le routage est déjà fait quand ce middleware tourne : on appelle les pages directement)
         if chemin == "/" {
             return shop(State(state.clone()), q, entetes).await;
+        }
+        if let Some(cle) = chemin.strip_prefix("/item/") {
+            return shop_item(State(state.clone()), Path(cle.to_string()), q, uri, entetes).await;
         }
         if let Some(cat) = shop::Catalogue::from_slug(chemin.trim_start_matches('/')) {
             return shop_catalogue(State(state.clone()), Path(cat.slug().to_string()), q, uri, entetes).await;

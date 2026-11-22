@@ -310,7 +310,7 @@ fn shop_menu(p: &Page) -> Markup {
                 (tr.nav_shop) (icons::chevron())
             }
             div.mega.mega-shop {
-                a.shop-feat href=(p.boutique("emotes")) {
+                a.shop-feat href=(p.boutique("item/hug")) {
                     img src=(image("calin")) alt="" width="600" height="475" loading="lazy";
                     span.shop-feat-txt {
                         span.k { (tr.shop_new) }

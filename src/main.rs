@@ -217,6 +217,7 @@ async fn main() {
         .route("/patch-notes/{tag}", get(routes::patch_notes_version))
         .route("/shop", get(routes::shop))
         .route("/shop/{cat}", get(routes::shop_catalogue))
+        .route("/shop/item/{cle}", get(routes::shop_item))
         .route("/skin/{name}", get(routes::skin))
         .route("/cape/{name}", get(routes::cape))
         .route("/player/{name}", get(routes::player))
