@@ -37,6 +37,12 @@ pub static STATUS_URL: LazyLock<Option<String>> = LazyLock::new(|| {
     std::env::var("STATUS_URL").ok().map(|v| v.trim().trim_end_matches('/').to_string()).filter(|v| !v.is_empty())
 });
 
+/// Adresse de la boutique sur son sous-domaine (`SHOP_URL`, ex. `https://shop.mistly.cc`).
+/// Réglée, les liens de la boutique y mènent et `/shop` y redirige ; sinon elle reste sur `/shop`.
+pub static SHOP_URL: LazyLock<Option<String>> = LazyLock::new(|| {
+    std::env::var("SHOP_URL").ok().map(|v| v.trim().trim_end_matches('/').to_string()).filter(|v| !v.is_empty())
+});
+
 /// Lien vers la page de statut.
 pub fn status_href() -> &'static str {
     STATUS_URL.as_deref().unwrap_or("/status")
@@ -71,11 +77,28 @@ pub struct Page<'a> {
     /// Préfixe des liens internes de la navigation et du pied de page : vide sur le site, l'adresse
     /// du site principal sur le sous-domaine de statut (où `/#features` mènerait au statut).
     pub base: &'a str,
+    /// La page est servie sur le sous-domaine de la boutique (`shop.<domaine>`) : ses liens
+    /// internes se passent de `/shop`.
+    pub boutique: bool,
 }
 
 impl Page<'_> {
     /// Un lien interne (`/docs`…), absolu sur le sous-domaine de statut ; une adresse complète est
     /// gardée telle quelle.
+    /// Un lien vers la boutique : `""` (l'accueil) ou une catégorie (`capes`…). À la racine du
+    /// sous-domaine quand on y est, sur `SHOP_URL` quand elle est réglée, sinon sur `/shop`.
+    pub fn boutique(&self, page: &str) -> String {
+        let page = page.trim_matches('/');
+        let suite = if page.is_empty() { String::new() } else { format!("/{page}") };
+        if self.boutique {
+            if suite.is_empty() { "/".into() } else { suite }
+        } else if let Some(url) = SHOP_URL.as_deref() {
+            format!("{url}{}", if suite.is_empty() { "/" } else { &suite })
+        } else {
+            format!("{}/shop{suite}", self.base)
+        }
+    }
+
     pub fn lien(&self, chemin: &str) -> String {
         if chemin.starts_with('/') { format!("{}{chemin}", self.base) } else { chemin.to_string() }
     }
@@ -255,7 +278,7 @@ fn docs_menu(p: &Page) -> Markup {
                     span.mega-t { "Mistly" }
                     a href=(p.lien("/patch-notes")) { (icons::notes()) span { (tr.nav_patch_notes) } }
                     a href=(p.lien(status_href())) { (icons::globe()) span { (tr.nav_status) } }
-                    a href=(p.lien("/shop")) { (icons::bag()) span { (tr.nav_shop) } }
+                    a href=(p.boutique("")) { (icons::bag()) span { (tr.nav_shop) } }
                     a href=(p.lien("/roadmap")) { (icons::layers()) span { (tr.nav_roadmap) } }
                     a href=(p.lien("/articles")) { (icons::notes()) span { (tr.nav_blog) } }
                     a href=(p.lien("/brand")) { (icons::palette()) span { (tr.nav_brand) } }
@@ -264,6 +287,52 @@ fn docs_menu(p: &Page) -> Markup {
                     }
                     a href=(DISCORD_URL) target="_blank" rel="noopener" { (icons::discord()) span { "Discord" } }
                     a href=(GITHUB_ORG_URL) target="_blank" rel="noopener" { (icons::github()) span { "GitHub" } }
+                }
+            }
+        }
+    }
+}
+
+/// Le menu de la boutique, ouvert au survol du lien « Boutique » : la nouveauté en grand, puis les
+/// catégories en vignettes avec leurs cosmétiques (images de public/assets/presentation).
+fn shop_menu(p: &Page) -> Markup {
+    let tr = p.tr;
+    let image = |nom: &str| format!("/assets/presentation/{nom}.jpg?v={}", ASSET_VERSION.as_str());
+    let tuiles: [(&str, &str, &str); 4] = [
+        ("capes", &tr.shop_cat_capes, "cape-mistly"),
+        ("hats", &tr.shop_cat_hats, "cloudly"),
+        ("emotes", &tr.shop_cat_emotes, "salut"),
+        ("pets", &tr.shop_cat_pets, "minime"),
+    ];
+    html! {
+        div.navdd.shopdd {
+            a.navdd-btn href=(p.boutique("")) aria-current=[p.path.starts_with("/shop").then_some("page")] aria-haspopup="true" {
+                (tr.nav_shop) (icons::chevron())
+            }
+            div.mega.mega-shop {
+                a.shop-feat href=(p.boutique("emotes")) {
+                    img src=(image("calin")) alt="" width="600" height="475" loading="lazy";
+                    span.shop-feat-txt {
+                        span.k { (tr.shop_new) }
+                        strong { (tr.shop_anim_hug) }
+                        span.d { (tr.shop_emote_hug_p) }
+                    }
+                }
+                div.shop-side {
+                    span.mega-t { (tr.nav_shop) }
+                    p.shop-mega-p { (tr.shop_mega_p) }
+                    div.shop-tiles {
+                        @for (slug, nom, img) in tuiles {
+                            a.shop-tile href=(p.boutique(slug)) {
+                                img src=(image(img)) alt="" width="600" height="475" loading="lazy";
+                                span { (nom) }
+                            }
+                        }
+                    }
+                    div.shop-mega-links {
+                        a href=(p.boutique("")) { (icons::bag()) span { (tr.shop_mega_all) } (icons::arrow_right()) }
+                        a href=(p.boutique("capes")) { (icons::user()) span { (tr.shop_mega_try) } (icons::arrow_right()) }
+                    }
                 }
             }
         }
@@ -282,7 +351,7 @@ fn nav(p: &Page) -> Markup {
                     a href=(p.lien("/#loaders")) { (tr.nav_loaders) }
                     a href=(p.lien("/#faq")) { (tr.nav_faq) }
                     (docs_menu(p))
-                    a href=(p.lien("/shop")) aria-current=[p.path.starts_with("/shop").then_some("page")] { (tr.nav_shop) }
+                    (shop_menu(p))
                     a href=(p.lien("/patch-notes")) aria-current=[on_notes.then_some("page")] {
                         (tr.nav_patch_notes)
                         @if let Some(n) = p.release_count { span.count { (n) } }
@@ -321,7 +390,7 @@ fn mobile_menu(p: &Page) -> Markup {
                 a href=(p.lien("/#loaders")) { (tr.nav_loaders) }
                 a href=(p.lien("/#faq")) { (tr.nav_faq) }
                 a href=(p.lien("/docs")) aria-current=[here("/docs")] { (tr.nav_docs) }
-                a href=(p.lien("/shop")) aria-current=[here("/shop")] { (tr.nav_shop) }
+                a href=(p.boutique("")) aria-current=[here("/shop")] { (tr.nav_shop) }
                 a href=(p.lien("/patch-notes")) aria-current=[here("/patch-notes")] {
                     (tr.nav_patch_notes)
                     @if let Some(n) = p.release_count { span.count { (n) } }
@@ -422,14 +491,19 @@ fn credits(p: &Page) -> Markup {
     html! {
         div.fcredit {
             (icons::flag("fr"))
-            span { (avant) } (auteur(AUTEURS[0])) span { (milieu) } (auteur(AUTEURS[1])) span { (apres) }
-            span { (c_avant) }
+            // (un texte vide ne doit pas compter comme un élément : il doublerait l'espace)
+            @if !avant.is_empty() { span { (avant) } }
+            (auteur(AUTEURS[0]))
+            @if !milieu.is_empty() { span { (milieu) } }
+            (auteur(AUTEURS[1]))
+            @if !apres.trim().is_empty() { span { (apres) } }
+            @if !c_avant.trim().is_empty() { span { (c_avant.trim()) } }
             a.author.claude href="https://www.anthropic.com/claude" target="_blank" rel="noopener" {
                 (marque())
                 span { "Claude" }
                 (bulle("Claude", marque()))
             }
-            @if !c_apres.is_empty() { span { (c_apres) } }
+            @if !c_apres.trim().is_empty() { span { (c_apres.trim()) } }
         }
     }
 }
@@ -454,7 +528,7 @@ fn footer(p: &Page) -> Markup {
                             li { a href=(p.lien("/#loaders")) { (tr.nav_loaders) } }
                             li { a href=(p.lien("/#faq")) { (tr.nav_faq) } }
                             li { a href=(p.lien("/docs")) { (tr.docs_label) } }
-                            li { a href=(p.lien("/shop")) { (tr.nav_shop) } }
+                            li { a href=(p.boutique("")) { (tr.nav_shop) } }
                             li { a href=(p.lien("/patch-notes")) { (tr.nav_patch_notes) } }
                             li { a href=(p.lien(status_href())) { (tr.nav_status) } }
                             li { a href=(p.lien("/roadmap")) { (tr.nav_roadmap) } }

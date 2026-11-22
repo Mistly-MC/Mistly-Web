@@ -60,6 +60,7 @@ fn page<'a>(state: &'a AppState, lang: Lang, path: &'a str, count: Option<usize>
         scene: &state.scene,
         site_url: &state.site_url,
         base: "",
+        boutique: false,
     }
 }
 
@@ -292,7 +293,11 @@ pub async fn shop(
 ) -> Response {
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
     let count = state.github.releases().await.map(|l| l.len());
-    let p = page(&state, lang, "/shop", count);
+    let mut p = page(&state, lang, "/shop", count);
+    if sous_domaine_boutique(&headers) {
+        p.base = &state.site_url;
+        p.boutique = true;
+    }
     let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
     let typed = q.player.as_deref().map(str::trim);
 
@@ -349,7 +354,11 @@ pub async fn shop_catalogue(
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
     let count = state.github.releases().await.map(|l| l.len());
     let path = format!("/shop/{}", cat.slug());
-    let p = page(&state, lang, &path, count);
+    let mut p = page(&state, lang, &path, count);
+    if sous_domaine_boutique(&headers) {
+        p.base = &state.site_url;
+        p.boutique = true;
+    }
     let saved = read_cookie(&headers, PLAYER_COOKIE).filter(|n| shop::valid_username(n));
     let typed = q.player.as_deref().map(str::trim);
     let (player, value, invalid, new_player) = match typed {
@@ -901,6 +910,24 @@ pub async fn indexnow_cle() -> Response {
     }
 }
 
+/// Redirection permanente (301).
+fn redirection_permanente(cible: &str) -> Response {
+    let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
+    if let Ok(v) = HeaderValue::from_str(cible) {
+        res.headers_mut().insert(header::LOCATION, v);
+    }
+    res
+}
+
+/// La requête arrive-t-elle sur le sous-domaine de la boutique (`shop.<domaine>`) ?
+fn sous_domaine_boutique(entetes: &HeaderMap) -> bool {
+    entetes
+        .get("x-forwarded-host")
+        .or_else(|| entetes.get(header::HOST))
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|h| h.to_ascii_lowercase().starts_with("shop."))
+}
+
 /// La requête arrive-t-elle sur le sous-domaine de statut (`status.<domaine>`) ?
 fn sous_domaine_statut(entetes: &HeaderMap) -> bool {
     entetes
@@ -934,6 +961,35 @@ pub async fn domaine_principal(
             .iter()
             .any(|p| chemin.starts_with(p));
     if let Some(h) = &hote
+        && h.starts_with("shop.")
+        && req.method() == axum::http::Method::GET
+    {
+        // les fichiers et relais dont la boutique a besoin (aperçu 3D : skins, capes, modèles)
+        let utile = ["/css/", "/js/", "/assets/", "/vendor/", "/models/", "/skin/", "/cape/", "/player/", "/site.webmanifest", "/robots.txt"]
+            .iter()
+            .any(|p| chemin.starts_with(p));
+        if utile {
+            return next.run(req).await;
+        }
+        let q = Query::<PageQuery>::try_from_uri(req.uri()).unwrap_or(Query(PageQuery::default()));
+        let entetes = req.headers().clone();
+        let uri = req.uri().clone();
+        // (le routage est déjà fait quand ce middleware tourne : on appelle les pages directement)
+        if chemin == "/" {
+            return shop(State(state.clone()), q, entetes).await;
+        }
+        if let Some(cat) = shop::Catalogue::from_slug(chemin.trim_start_matches('/')) {
+            return shop_catalogue(State(state.clone()), Path(cat.slug().to_string()), q, uri, entetes).await;
+        }
+        // /shop et /shop/<catégorie> → la même page à la racine du sous-domaine ; le reste → le site
+        let requete = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
+        let cible = match chemin.strip_prefix("/shop") {
+            Some(reste) if reste.is_empty() || reste.starts_with('/') => format!("/{}{requete}", reste.trim_start_matches('/')),
+            _ => format!("{}{}", state.site_url, req.uri().path_and_query().map_or("/", |p| p.as_str())),
+        };
+        return redirection_permanente(&cible);
+    }
+    if let Some(h) = &hote
         && h.starts_with("status.")
         && req.method() == axum::http::Method::GET
     {
@@ -960,6 +1016,14 @@ pub async fn domaine_principal(
             return res;
         }
         return next.run(req).await;
+    }
+    // Avec SHOP_URL réglée, /shop et ses catégories partent vers le sous-domaine de la boutique
+    if let Some(reste) = chemin.strip_prefix("/shop")
+        && (reste.is_empty() || reste.starts_with('/'))
+        && let Some(url) = crate::views::layout::SHOP_URL.as_deref()
+    {
+        let requete = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
+        return redirection_permanente(&format!("{url}/{}{requete}", reste.trim_start_matches('/')));
     }
     // Avec STATUS_URL réglée, /status du site principal part vers le sous-domaine
     if chemin == "/status"

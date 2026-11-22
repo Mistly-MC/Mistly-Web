@@ -13,6 +13,9 @@
 //! - `STATUS_URL` (facultatif, ex. `https://status.mistly.cc`) : la page de statut sur son
 //!   sous-domaine ; les liens « Statut » y mènent et `/status` y redirige. Le sous-domaine
 //!   `status.<domaine>` sert la page de statut à sa racine, réglée ou non
+//! - `SHOP_URL` (facultatif, ex. `https://shop.mistly.cc`) : la boutique sur son sous-domaine ;
+//!   ses liens y mènent et `/shop` y redirige. Le sous-domaine `shop.<domaine>` sert la boutique à
+//!   sa racine (`/`, `/capes`…), réglée ou non
 //! - `DONATE_URL` (Buy Me a Coffee d'EnderMythex par défaut ; vide : pas de bouton) : page de dons
 //! - `SKIN_API` (`https://mc-heads.net` par défaut) : service qui fournit les skins (boutique)
 //! - `GITHUB_API` (`https://api.github.com` par défaut) : utile pour tester avec une fausse API

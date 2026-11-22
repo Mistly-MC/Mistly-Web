@@ -1,7 +1,11 @@
 //! Boutique de cosmétiques.
 //!
-//! - Sans pseudo : la vitrine. L'article à la une en 3D (sur Steve, ou sur le pseudo saisi), les
-//!   tendances à essayer d'un clic, et les catégories qui arrivent bientôt.
+//! - Sans pseudo : la vitrine. L'accroche et trois cosmétiques en vitrine, la nouveauté en grand,
+//!   les catégories en images, toute la collection (un clic l'essaie dans le studio 3D, sur Steve
+//!   ou sur le pseudo saisi), comment ça marche, et l'appel à télécharger Mistly.
+//!
+//! Servie sur `/shop` et à la racine du sous-domaine `shop.<domaine>` : les liens passent par
+//! `Page::boutique`.
 //! - `/shop/emotes`, `/shop/capes`, `/shop/hats` : un catalogue par catégorie, essayé dans l'aperçu 3D
 //!   (les emotes et les chapeaux ne sont pas encore en jeu).
 //! - Avec un pseudo : le studio. À gauche, le skin du joueur en 3D (vues face / profil / dos,
@@ -66,13 +70,34 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
     let main = match view {
         ShopView::Form { value, invalid, open } => {
             let preview = valid_username(value).then_some(value);
+            let (hug, hug_texte) = emote_texte(tr, "hug");
             html! {
-                section.shop-top {
-                    div.col {
-                        header.shop-head {
+                // L'accroche : le texte à gauche, trois cosmétiques en vitrine à droite (un clic les
+                // essaie dans le studio 3D, comme toutes les cartes de la page)
+                section.hero.sh-hero {
+                    div.col.sh-hero-in {
+                        div.sh-copy {
                             span.label { (tr.shop_label) }
-                            h1 { (tr.shop_h1_1) " " span.soft { (tr.shop_h1_2) } }
-                            p { (tr.shop_click_hint) }
+                            h1 { (tr.shop_hero_t1) br; span.soft { (tr.shop_hero_t2) } }
+                            p.sub { (tr.shop_hero_sub) }
+                            div.sh-ctas {
+                                button.btn.play.lg type="button" data-try="cape" { (icons::sparkles()) span { (tr.shop_cta_try) } }
+                                a.btn.lg href="#collection" { span { (tr.shop_cta_browse) } (icons::arrow_right()) }
+                            }
+                            ul.sh-trust {
+                                li { (icons::check()) (tr.shop_trust_1) }
+                                li { (icons::check()) (tr.shop_trust_2) }
+                                li { (icons::check()) (tr.shop_trust_3) }
+                            }
+                        }
+                        div.sh-collage {
+                            @for (i, (cle, image, nom)) in [("cape", "cape-mistly", &tr.shop_item_cape), ("cloudly", "cloudly", &tr.shop_cloudly_t), ("elytra", "elytres-mistly", &tr.shop_item_elytra)].into_iter().enumerate() {
+                                button.sh-shot.(format!("s{}", i + 1)) type="button" data-try=(cle) aria-label=(format!("{} – {}", nom, tr.shop_try_on)) {
+                                    img src=(photo(image)) alt="" width="600" height="475";
+                                    span.sh-shot-tag { (nom) }
+                                }
+                            }
+                            span.sh-glow aria-hidden="true" {}
                         }
                     }
                 }
@@ -96,12 +121,31 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
                                 div.try {
                                     strong { (tr.shop_try) }
                                     p { (tr.shop_try_p) }
-                                    (form(p, value, invalid, "/shop"))
+                                    (form(p, value, invalid, &p.boutique("")))
                                 }
                             }
                         }
                     }
                   }
+                }
+                // La nouveauté, en grand
+                section.blk {
+                    div.col {
+                        div.sh-spot {
+                            div.sh-spot-img { img src=(photo("calin")) alt="" width="600" height="475" loading="lazy"; }
+                            div.sh-spot-txt {
+                                span.sh-new { (tr.shop_new) }
+                                h2 { (hug) }
+                                p { (hug_texte) }
+                                div.sh-ctas {
+                                    button.btn.play type="button" data-try="hug" data-carte-emote="" data-name=(hug) data-text=(hug_texte) data-badge=(tr.shop_new) {
+                                        (icons::sparkles()) span { (tr.shop_try_on) }
+                                    }
+                                    a.btn href=(p.boutique("emotes")) { span { (tr.shop_cat_emotes) } (icons::arrow_right()) }
+                                }
+                            }
+                        }
+                    }
                 }
                 (collection(p))
             }
@@ -121,15 +165,21 @@ pub fn render(p: &Page, view: ShopView) -> Markup {
     )
 }
 
+/// Adresse d'une image de présentation (public/assets/presentation, 600 × 475).
+fn photo(nom: &str) -> String {
+    format!("/assets/presentation/{nom}.jpg?v={}", layout::ASSET_VERSION.as_str())
+}
+
 /// Haut des pages de la boutique (studio, catalogues) : un bouton pour revenir en arrière, puis le
 /// fil d'Ariane jusqu'à `ici`.
-fn haut_de_page(tr: &Tr, ici: &str) -> Markup {
+fn haut_de_page(p: &Page, ici: &str) -> Markup {
+    let tr = p.tr;
     html! {
         div.page-top {
             // revient à la page d'avant si elle est sur le site (voir site.js), sinon à la boutique
-            a.back-btn href="/shop" data-retour { (icons::arrow_right()) span { (tr.shop_back) } }
+            a.back-btn href=(p.boutique("")) data-retour { (icons::arrow_right()) span { (tr.shop_back) } }
             nav.crumbs aria-label="Breadcrumb" {
-                a href="/shop" { (icons::bag()) (tr.shop_label) }
+                a href=(p.boutique("")) { (icons::bag()) (tr.shop_label) }
                 span { "/" }
                 span { (ici) }
             }
@@ -285,7 +335,7 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
     let main = html! {
         section.studio.emotes-page data-catalogue=(cat.slug()) {
             div.wrap {
-                (haut_de_page(tr, titre))
+                (haut_de_page(p, titre))
                 header.emotes-head {
                     h1 { (titre) sup { "(" (nombre) ")" } }
                     p { (intro) }
@@ -316,7 +366,7 @@ pub fn render_catalogue(p: &Page, cat: Catalogue, player: Option<&str>, value: &
                         div.try {
                             strong { (tr.shop_try) }
                             p { (tr.shop_try_p) }
-                            (form(p, value, invalid, &format!("/shop/{}", cat.slug())))
+                            (form(p, value, invalid, &p.boutique(cat.slug())))
                         }
                     }
                 }
@@ -446,18 +496,22 @@ fn art_carte(cle: &str, l: u32, h: u32) -> Markup {
     }
 }
 
-/// Carte d'une emote (tendances, catalogue) : un clic la joue dans l'essayage.
-fn carte_emote(tr: &Tr, cle: &str, nouveau: bool) -> Markup {
-    let (nom, texte) = emote_texte(tr, cle);
-    let badge = if nouveau { &tr.shop_new } else { &tr.shop_badge };
+/// Une carte de la collection : son visuel, son badge, son nom et sa phrase ; un clic l'essaie
+/// (un cosmétique est porté, une emote est jouée).
+fn carte_produit(tr: &Tr, cle: &str, nom: &str, texte: &str, badge: &str, classe_badge: &str, emote: bool) -> Markup {
+    let art = if emote { format!("emote-{cle}") } else { cle.to_string() };
     html! {
-        button.item-card.reveal type="button" data-try=(cle) data-carte-emote="" data-name=(nom) data-text=(texte) data-badge=(tr.shop_badge) {
-            (art_carte(&format!("emote-{cle}"), 90, 144))
-            span.item-body {
+        button.sh-card.reveal type="button" data-try=(cle) data-carte-emote=[emote.then_some("")]
+            data-name=[emote.then_some(nom)] data-text=[emote.then_some(texte)] data-badge=[emote.then_some(badge)] {
+            span.sh-card-art {
+                (art_carte(&art, 60, 96))
+                span.sh-badge.(classe_badge) { (badge) }
+            }
+            span.sh-card-body {
                 strong { (nom) }
                 span.desc { (texte) }
-                span.item-foot {
-                    span.badge.new[nouveau] { (badge) }
+                span.sh-card-foot {
+                    span { @if emote { (tr.shop_cat_emotes) } @else { "Mistly Client" } }
                     span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
                 }
             }
@@ -465,30 +519,47 @@ fn carte_emote(tr: &Tr, cle: &str, nouveau: bool) -> Markup {
     }
 }
 
-/// Les tendances : la nouveauté puis les pages les plus vues (cape, élytres, Cloudly).
-const TENDANCES: [&str; 3] = ["cape", "elytra", "cloudly"];
-
-/// Les tendances, puis les catégories qui arrivent bientôt.
+/// Les catégories (en images), toute la collection, comment ça marche, puis l'appel final.
 fn collection(p: &Page) -> Markup {
     let tr = p.tr;
-    let bientot = [Category::Headwear, Category::Capes, Category::Tags, Category::Auras, Category::Pets, Category::Emotes];
+    // catégorie, image, nombre d'articles
+    let categories = [
+        (Catalogue::Capes, Category::Capes, "cape-mistly", Catalogue::Capes.articles().count()),
+        (Catalogue::Hats, Category::Headwear, "cloudly", Catalogue::Hats.articles().count()),
+        (Catalogue::Emotes, Category::Emotes, "salut", EMOTES.len()),
+        (Catalogue::Pets, Category::Pets, "minime", Catalogue::Pets.articles().count()),
+    ];
+    let bientot = [Category::Auras, Category::Tags];
+    // les emotes qui ont une image de présentation
+    let emotes = ["hug", "wave", "cheer", "piggyback"];
+    let total = ARTICLES.len() + emotes.len();
     html! {
         section.blk {
             div.col {
-                h2.blk-title { (tr.shop_trending) sup { "(" (TENDANCES.len() + 1) ")" } }
-                div.cells.c4 {
-                    // la nouveauté d'abord : le Câlin
-                    (carte_emote(tr, "hug", true))
-                    @for a in ARTICLES.iter().filter(|a| TENDANCES.contains(&a.thumb)) {
-                        button.item-card.reveal type="button" data-try=(a.thumb) {
-                            (art_carte(a.thumb, 60, 96))
-                            span.item-body {
-                                strong { (a.nom(tr)) }
-                                span.desc { (a.texte(tr)) }
-                                span.item-foot {
-                                    @if a.early { span.badge.early { (tr.shop_early_badge) } } @else { span.badge.free { (tr.shop_available) } }
-                                    span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
-                                }
+                h2.blk-title { (tr.shop_categories) sup { "(" (categories.len() + bientot.len()) ")" } }
+                div.cells.c4.sh-cats {
+                    @for (cat, c, image, n) in categories {
+                        @let (titre, texte) = c.text(tr);
+                        a.sh-cat.reveal href=(p.boutique(cat.slug())) {
+                            span.sh-cat-img { img src=(photo(image)) alt="" width="600" height="475" loading="lazy"; }
+                            span.sh-cat-body {
+                                strong { (titre) span.n { (n) " " (tr.shop_items) } }
+                                span.desc { (texte) }
+                                span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
+                            }
+                        }
+                    }
+                }
+                div.cells.c2.sh-soon {
+                    @for c in bientot {
+                        @let (titre, texte) = c.text(tr);
+                        div.soon-card.reveal {
+                            pre.ascii-noise aria-hidden="true" {}
+                            span.soon-body {
+                                span.ico { (c.icon()) }
+                                strong { (titre) }
+                                span.desc { (texte) }
+                                span.soon-foot { span.badge { (tr.shop_badge) } }
                             }
                         }
                     }
@@ -496,40 +567,53 @@ fn collection(p: &Page) -> Markup {
             }
         }
         div.col.hatch aria-hidden="true" {}
+        section.blk #collection {
+            div.col {
+                h2.blk-title { (tr.shop_all) sup { "(" (total) ")" } }
+                div.sh-grid {
+                    @for a in &ARTICLES {
+                        @let (badge, classe) = if a.early { (&tr.shop_early_badge, "early") } else if a.bientot { (&tr.shop_badge, "soon") } else { (&tr.shop_free_client, "free") };
+                        (carte_produit(tr, a.thumb, a.nom(tr), a.texte(tr), badge, classe, false))
+                    }
+                    @for cle in emotes {
+                        @let (nom, texte) = emote_texte(tr, cle);
+                        @let (badge, classe) = if cle == "hug" { (&tr.shop_new, "new") } else { (&tr.shop_badge, "soon") };
+                        (carte_produit(tr, cle, nom, texte, badge, classe, true))
+                    }
+                }
+            }
+        }
         section.blk {
             div.col {
-                h2.blk-title { (tr.shop_coming_t) sup { "(" (bientot.len()) ")" } }
-                div.cells.c3 {
-                    @for c in bientot {
-                        @let (titre, texte) = c.text(tr);
-                        // Chapeaux, capes, compagnons et emotes ont déjà leur page : la carte l'ouvre, sans « Bientôt »
-                        @let page = match c {
-                            Category::Headwear => Some(Catalogue::Hats),
-                            Category::Capes => Some(Catalogue::Capes),
-                            Category::Emotes => Some(Catalogue::Emotes),
-                            Category::Pets => Some(Catalogue::Pets),
-                            _ => None,
-                        };
-                        @let corps = html! {
-                            pre.ascii-noise aria-hidden="true" {}
-                            span.soon-body {
-                                span.ico { (c.icon()) }
-                                strong { (titre) }
-                                span.desc { (texte) }
-                                span.soon-foot {
-                                    @if page.is_some() {
-                                        span {}
-                                        span.try-it { (tr.shop_try_on) (icons::arrow_right()) }
-                                    } @else {
-                                        span.badge { (tr.shop_badge) }
-                                    }
-                                }
-                            }
-                        };
-                        @if let Some(cat) = page {
-                            a.soon-card.clickable.reveal href=(format!("/shop/{}", cat.slug())) { (corps) }
-                        } @else {
-                            div.soon-card.reveal { (corps) }
+                h2.blk-title { (tr.shop_how_t) }
+                div.cells.c3.sh-steps {
+                    @for (n, (titre, texte, ic)) in [
+                        (&tr.shop_how_1_t, &tr.shop_how_1_p, icons::download()),
+                        (&tr.shop_how_2_t, &tr.shop_how_2_p, icons::shirt()),
+                        (&tr.shop_how_3_t, &tr.shop_how_3_p, icons::sparkles()),
+                    ].into_iter().enumerate() {
+                        div.sh-step.reveal {
+                            span.sh-step-n { (format!("0{}", n + 1)) }
+                            span.ico { (ic) }
+                            strong { (titre) }
+                            p { (texte) }
+                        }
+                    }
+                }
+            }
+        }
+        section.blk {
+            div.col {
+                div.sh-cta {
+                    div.sh-cta-art aria-hidden="true" {
+                        img src=(photo("victoire")) alt="" width="600" height="475" loading="lazy";
+                    }
+                    div.sh-cta-txt {
+                        h2 { (tr.shop_cta_t) }
+                        p { (tr.shop_cta_p) }
+                        div.sh-ctas {
+                            a.btn.play href=(p.lien("/#download")) { (icons::download()) span { (tr.shop_cta_dl) } }
+                            a.btn href=(p.boutique("capes")) { span { (tr.shop_mega_try) } (icons::arrow_right()) }
                         }
                     }
                 }
