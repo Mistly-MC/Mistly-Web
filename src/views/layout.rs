@@ -31,6 +31,17 @@ pub static DONATE_URL: LazyLock<Option<String>> = LazyLock::new(|| match std::en
     Err(_) => Some("https://buymeacoffee.com/EnderMythex".to_string()),
 });
 
+/// Adresse de la page de statut sur son sous-domaine (`STATUS_URL`, ex. `https://status.mistly.cc`).
+/// Réglée, les liens « Statut » y mènent et `/status` y redirige ; sinon la page reste sur `/status`.
+pub static STATUS_URL: LazyLock<Option<String>> = LazyLock::new(|| {
+    std::env::var("STATUS_URL").ok().map(|v| v.trim().trim_end_matches('/').to_string()).filter(|v| !v.is_empty())
+});
+
+/// Lien vers la page de statut.
+pub fn status_href() -> &'static str {
+    STATUS_URL.as_deref().unwrap_or("/status")
+}
+
 /// L'organisation GitHub de Mistly (launcher, client, site).
 pub const GITHUB_ORG_URL: &str = "https://github.com/Mistly-MC";
 
@@ -235,7 +246,7 @@ fn docs_menu(p: &Page) -> Markup {
                 div.mega-col {
                     span.mega-t { "Mistly" }
                     a href="/patch-notes" { (icons::notes()) span { (tr.nav_patch_notes) } }
-                    a href="/status" { (icons::globe()) span { (tr.nav_status) } }
+                    a href=(status_href()) { (icons::globe()) span { (tr.nav_status) } }
                     a href="/shop" { (icons::bag()) span { (tr.nav_shop) } }
                     a href="/brand" { (icons::palette()) span { (tr.nav_brand) } }
                     @if let Some(url) = DONATE_URL.as_deref() {
@@ -305,7 +316,7 @@ fn mobile_menu(p: &Page) -> Markup {
                     (tr.nav_patch_notes)
                     @if let Some(n) = p.release_count { span.count { (n) } }
                 }
-                a href="/status" aria-current=[here("/status")] { (tr.nav_status) }
+                a href=(status_href()) aria-current=[here("/status")] { (tr.nav_status) }
                 a href="/brand" aria-current=[here("/brand")] { (tr.nav_brand) }
                 @if let Some(url) = DONATE_URL.as_deref() {
                     a href=(url) target="_blank" rel="noopener" { (tr.nav_donate) (icons::external()) }
@@ -382,7 +393,7 @@ fn footer(p: &Page) -> Markup {
                             li { a href="/docs" { (tr.docs_label) } }
                             li { a href="/shop" { (tr.nav_shop) } }
                             li { a href="/patch-notes" { (tr.nav_patch_notes) } }
-                            li { a href="/status" { (tr.nav_status) } }
+                            li { a href=(status_href()) { (tr.nav_status) } }
                             li { a href="/brand" { (tr.nav_brand) } }
                         }
                     }

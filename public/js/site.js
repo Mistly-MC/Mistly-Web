@@ -277,26 +277,6 @@
   // le menu Docs s'ouvre au survol : il referme les autres, pour ne pas se superposer à eux
   document.querySelectorAll(".navdd").forEach(d => d.addEventListener("mouseenter", () => menus.forEach(m => { m.open = false; })));
 
-  // Page de statut : heures locales dans les bulles, et mise à jour toutes les minutes sans recharger
-  if (document.body.classList.contains("status-page")) {
-    const local = root => root.querySelectorAll(".st-bars [data-t]").forEach(i => {
-      const t = new Date(+i.dataset.t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      i.title = i.title.replace(/^\d\d:\d\d UTC/, t);
-    });
-    local(document);
-    setInterval(async () => {
-      if (document.hidden) return;
-      const html = await fetch(location.href, { cache: "no-store" }).then(r => r.ok ? r.text() : null).catch(() => null);
-      if (!html) return;
-      const next = new DOMParser().parseFromString(html, "text/html");
-      for (const sel of [".term", ".st-group"]) {
-        const a = [...document.querySelectorAll(sel)], b = [...next.querySelectorAll(sel)];
-        if (a.length === b.length) a.forEach((el, i) => el.replaceWith(b[i]));
-      }
-      local(document);
-    }, 60_000);
-  }
-
   // Accordéons (FAQ, patch notes) : la hauteur glisse à l'ouverture et à la fermeture. Dans la
   // FAQ (details name="faq"), ouvrir une question referme celle qui était ouverte.
   const accordeons = [...document.querySelectorAll(".qa details, details.rel")];

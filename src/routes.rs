@@ -871,6 +871,9 @@ pub async fn indexnow_cle() -> Response {
 /// Anciennes adresses (misty-launcher.online, www.) : les pages redirigent pour de bon vers le
 /// domaine principal, pour que les moteurs de recherche n'en gardent qu'une. L'API, les
 /// téléchargements et le captcha restent servis sur toutes les adresses (le launcher les appelle).
+///
+/// Le sous-domaine `status.<domaine>` sert la page de statut à sa racine (`/`), avec les
+/// fichiers statiques et `/status.json` ; ses autres pages renvoient vers le domaine principal.
 pub async fn domaine_principal(
     State(state): State<Arc<AppState>>,
     req: axum::extract::Request,
@@ -888,6 +891,45 @@ pub async fn domaine_principal(
         && !["/api/", "/download/", "/verify", "/activity", "/skin/", "/cape/", "/player/", "/admin", "/status.json", "/indexnow"]
             .iter()
             .any(|p| chemin.starts_with(p));
+    if let Some(h) = &hote
+        && h.starts_with("status.")
+        && req.method() == axum::http::Method::GET
+    {
+        let statique = ["/css/", "/js/", "/assets/", "/vendor/", "/status.json", "/site.webmanifest", "/robots.txt"]
+            .iter()
+            .any(|p| chemin.starts_with(p));
+        if chemin == "/" {
+            // (le routage est déjà fait quand ce middleware tourne : on appelle la page directement)
+            let q = Query::<PageQuery>::try_from_uri(req.uri()).unwrap_or(Query(PageQuery::default()));
+            let entetes = req.headers().clone();
+            return status_page(State(state.clone()), q, entetes).await;
+        }
+        if !statique {
+            // /status → la racine du sous-domaine ; le reste → le site principal
+            let cible = if chemin == "/status" {
+                format!("/{}", req.uri().query().map(|q| format!("?{q}")).unwrap_or_default())
+            } else {
+                format!("{}{}", state.site_url, req.uri().path_and_query().map_or("/", |p| p.as_str()))
+            };
+            let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
+            if let Ok(v) = HeaderValue::from_str(&cible) {
+                res.headers_mut().insert(header::LOCATION, v);
+            }
+            return res;
+        }
+        return next.run(req).await;
+    }
+    // Avec STATUS_URL réglée, /status du site principal part vers le sous-domaine
+    if chemin == "/status"
+        && let Some(url) = crate::views::layout::STATUS_URL.as_deref()
+    {
+        let cible = format!("{url}{}", req.uri().query().map(|q| format!("?{q}")).unwrap_or_default());
+        let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
+        if let Ok(v) = HeaderValue::from_str(&cible) {
+            res.headers_mut().insert(header::LOCATION, v);
+        }
+        return res;
+    }
     if let Some(h) = hote {
         let ancien = h != principal && (h == format!("www.{principal}") || h.ends_with("misty-launcher.online"));
         if ancien && page && !principal.is_empty() {

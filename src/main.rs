@@ -10,6 +10,10 @@
 //! - `INDEXNOW_KEY` (facultatif, 8 à 128 caractères) : annonce les pages à Bing, Yandex… (IndexNow)
 //! - `MISTY_PUBLIC_DIR` (`public` par défaut) : fichiers statiques (CSS, JS, images, polices)
 //! - `SITE_URL` (`https://mistly.cc` par défaut) : adresse publique, pour le référencement
+//! - `STATUS_URL` (facultatif, ex. `https://status.mistly.cc`) : la page de statut sur son
+//!   sous-domaine ; les liens « Statut » y mènent et `/status` y redirige. Le sous-domaine
+//!   `status.<domaine>` sert la page de statut à sa racine, réglée ou non
+//! - `DONATE_URL` (Buy Me a Coffee d'EnderMythex par défaut ; vide : pas de bouton) : page de dons
 //! - `SKIN_API` (`https://mc-heads.net` par défaut) : service qui fournit les skins (boutique)
 //! - `GITHUB_API` (`https://api.github.com` par défaut) : utile pour tester avec une fausse API
 //! - `GITHUB_WEB` (`https://github.com` par défaut) : flux Atom et fichiers des releases
