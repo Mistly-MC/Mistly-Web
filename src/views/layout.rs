@@ -248,6 +248,8 @@ fn docs_menu(p: &Page) -> Markup {
                     a href="/patch-notes" { (icons::notes()) span { (tr.nav_patch_notes) } }
                     a href=(status_href()) { (icons::globe()) span { (tr.nav_status) } }
                     a href="/shop" { (icons::bag()) span { (tr.nav_shop) } }
+                    a href="/roadmap" { (icons::layers()) span { (tr.nav_roadmap) } }
+                    a href="/articles" { (icons::notes()) span { (tr.nav_blog) } }
                     a href="/brand" { (icons::palette()) span { (tr.nav_brand) } }
                     @if let Some(url) = DONATE_URL.as_deref() {
                         a href=(url) target="_blank" rel="noopener" { (icons::heart()) span { (tr.nav_donate) } }
@@ -317,6 +319,8 @@ fn mobile_menu(p: &Page) -> Markup {
                     @if let Some(n) = p.release_count { span.count { (n) } }
                 }
                 a href=(status_href()) aria-current=[here("/status")] { (tr.nav_status) }
+                a href="/roadmap" aria-current=[here("/roadmap")] { (tr.nav_roadmap) }
+                a href="/articles" aria-current=[here("/articles")] { (tr.nav_blog) }
                 a href="/brand" aria-current=[here("/brand")] { (tr.nav_brand) }
                 @if let Some(url) = DONATE_URL.as_deref() {
                     a href=(url) target="_blank" rel="noopener" { (tr.nav_donate) (icons::external()) }
@@ -367,6 +371,16 @@ fn credits(p: &Page) -> Markup {
         div.fcredit {
             (icons::flag("fr"))
             span { (avant) } (auteur(AUTEURS[0])) span { (milieu) } (auteur(AUTEURS[1])) span { (apres) }
+            // « (et Claude aussi) », avec le logo d'Anthropic
+            @let (c_avant, c_apres) = p.tr.ft_credit_claude.split_once("{0}").unwrap_or((&p.tr.ft_credit_claude, ""));
+            span.claude-credit {
+                (c_avant)
+                a.author.claude href="https://www.anthropic.com/claude" target="_blank" rel="noopener" title="Claude, by Anthropic" {
+                    span.anthropic-mark { (icons::anthropic()) }
+                    span { "Claude" }
+                }
+                (c_apres)
+            }
         }
     }
 }
@@ -394,6 +408,8 @@ fn footer(p: &Page) -> Markup {
                             li { a href="/shop" { (tr.nav_shop) } }
                             li { a href="/patch-notes" { (tr.nav_patch_notes) } }
                             li { a href=(status_href()) { (tr.nav_status) } }
+                            li { a href="/roadmap" { (tr.nav_roadmap) } }
+                            li { a href="/articles" { (tr.nav_blog) } }
                             li { a href="/brand" { (tr.nav_brand) } }
                         }
                     }

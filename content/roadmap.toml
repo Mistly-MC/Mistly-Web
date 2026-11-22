@@ -1,0 +1,117 @@
+# Roadmap de Mistly, affichée sur /roadmap.
+#
+# Une entrée [[item]] par chantier :
+#   status  = "done" (terminé), "progress" (en cours) ou "planned" (prévu)
+#   project = "launcher", "client", "site" ou "horizon"
+#   title_fr, title_en, desc_fr, desc_en : le titre et une phrase, en français et en anglais
+#   version = "0.5.0" (facultatif) : la version qui l'apporte
+# Dans chaque colonne, les chantiers gardent l'ordre de ce fichier.
+
+# ---------- En cours ----------
+
+[[item]]
+status = "progress"
+project = "launcher"
+version = "0.5.0"
+title_fr = "Le nouveau design du launcher"
+title_en = "The launcher's new design"
+desc_fr = "Une barre latérale avec chaque page, des cartes en verre sur le paysage, la police Geist, et de nouveaux Paramètres rangés par catégories."
+desc_en = "A sidebar with every page, glass cards over the landscape, the Geist font, and new Settings sorted into categories."
+
+[[item]]
+status = "progress"
+project = "launcher"
+version = "0.5.0"
+title_fr = "Page Découvrir"
+title_en = "Discover page"
+desc_fr = "Mods, modpacks, packs de ressources, shaders, data packs et mondes de Modrinth et CurseForge, installés en un clic dans le profil choisi."
+desc_en = "Mods, modpacks, resource packs, shaders, data packs and worlds from Modrinth and CurseForge, installed in one click into the profile you pick."
+
+[[item]]
+status = "progress"
+project = "launcher"
+version = "0.5.0"
+title_fr = "Serveurs et amis"
+title_en = "Servers and friends"
+desc_fr = "Tes serveurs favoris avec leur ping en direct, une liste de grands serveurs publics, et une nouvelle page Amis."
+desc_en = "Your favourite servers with live ping, a list of big public servers, and a new Friends page."
+
+# ---------- Prévu ----------
+
+[[item]]
+status = "planned"
+project = "launcher"
+title_fr = "Mistly sur macOS"
+title_en = "Mistly on macOS"
+desc_fr = "Le launcher sur Mac, après Windows et Linux."
+desc_en = "The launcher on Mac, after Windows and Linux."
+
+[[item]]
+status = "planned"
+project = "client"
+title_fr = "Mist Wings dans le jeu"
+title_en = "Mist Wings in game"
+desc_fr = "Les ailes de dragon de la boutique, avec leurs couleurs, visibles par tous dans Mistly Client."
+desc_en = "The dragon wings from the shop, with their colours, visible to everyone in Mistly Client."
+
+[[item]]
+status = "planned"
+project = "client"
+title_fr = "Mistly Client pour Bedrock"
+title_en = "Mistly Client for Bedrock"
+desc_fr = "Les cosmétiques de Mistly sur Minecraft Bedrock Edition."
+desc_en = "Mistly's cosmetics on Minecraft Bedrock Edition."
+
+[[item]]
+status = "planned"
+project = "site"
+title_fr = "Ouverture de la boutique"
+title_en = "The shop opens"
+desc_fr = "Capes, chapeaux, émotes et compagnons à porter dans Mistly Client."
+desc_en = "Capes, hats, emotes and pets to wear in Mistly Client."
+
+# ---------- Terminé ----------
+
+[[item]]
+status = "done"
+project = "site"
+title_fr = "Page de statut et déploiements"
+title_en = "Status page and deployments"
+desc_fr = "L'état des services dont Mistly a besoin, vérifiés chaque minute, et les derniers déploiements du launcher, du client et du site."
+desc_en = "The state of every service Mistly needs, checked every minute, and the latest deployments of the launcher, the client and the site."
+
+[[item]]
+status = "done"
+project = "launcher"
+version = "0.4.1"
+title_fr = "Version de Mistly Client dans À propos"
+title_en = "Mistly Client version in About"
+desc_fr = "La version du mod, s'il est à jour, et un bouton pour le mettre à jour tout de suite."
+desc_en = "The mod's version, whether it is up to date, and a button to update it right away."
+
+[[item]]
+status = "done"
+project = "launcher"
+version = "0.4.0"
+title_fr = "Mistly sur Linux"
+title_en = "Mistly on Linux"
+desc_fr = "Le launcher sur Linux x86_64, avec les mises à jour automatiques comme sous Windows."
+desc_en = "The launcher on Linux x86_64, with automatic updates like on Windows."
+
+[[item]]
+status = "done"
+project = "launcher"
+version = "0.4.0"
+title_fr = "Mises à jour signées"
+title_en = "Signed updates"
+desc_fr = "Chaque mise à jour est vérifiée (somme SHA-256 et signature de l'équipe) avant d'être installée."
+desc_en = "Every update is checked (SHA-256 checksum and the team's signature) before it installs."
+
+[[item]]
+status = "done"
+project = "launcher"
+version = "0.3.9"
+title_fr = "Protection contre Java4Shell"
+title_en = "Java4Shell protection"
+desc_fr = "Chaque partie démarre avec la protection recommandée, et Mistly Client prévient quand elle manque."
+desc_en = "Every game starts with the recommended protection, and Mistly Client warns when it is missing."

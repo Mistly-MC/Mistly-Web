@@ -1,17 +1,17 @@
 //! Page de statut : l'état des services dont Mistly a besoin, vérifiés par le site lui-même.
 //!
-//! Une page à part (sans la navigation du site), servie sur `/status` et à la racine du
-//! sous-domaine `status.<domaine>` : les liens vers le reste du site sont donc absolus.
-//! En haut l'état général sur le paysage du launcher, puis les chiffres clés, une carte par groupe
-//! de services (une barre par jour sur 30 jours, ou par minute sur la dernière heure) et le
-//! journal des incidents. status.js met la page à jour toutes les minutes.
+//! Servie sur `/status` et à la racine du sous-domaine `status.<domaine>` (où les autres pages
+//! renvoient vers le site principal). En haut l'état général et les chiffres clés, puis une carte
+//! par groupe de services (une barre par jour sur 30 jours, ou par minute sur la dernière heure),
+//! les déploiements GitHub Actions et le journal des incidents. status.js met la page à jour
+//! toutes les minutes.
 
 use super::icons;
-use super::layout::{ASSET_VERSION, DISCORD_URL, Page};
+use super::layout::{self, Head, Page};
+use crate::deploiements::{Execution, Issue, Projet};
 use crate::format;
-use crate::i18n::Lang;
 use crate::status::{Etat, Groupe, Incident, Jour, Ligne, Role, SERVICES};
-use maud::{DOCTYPE, Markup, PreEscaped, html};
+use maud::{Markup, html};
 
 /// « 99,98 % » selon la langue.
 fn pourcent(p: &Page, v: f32) -> String {
@@ -65,10 +65,15 @@ fn barres(cases: impl Iterator<Item = (Option<Etat>, String, Option<i64>)>) -> M
     }
 }
 
-pub fn render(p: &Page, lignes: &[Ligne], incidents: &[Incident], dispo: Option<f32>, age: Option<u64>) -> Markup {
+pub fn render(
+    p: &Page,
+    lignes: &[Ligne],
+    incidents: &[Incident],
+    dispo: Option<f32>,
+    age: Option<u64>,
+    deploiements: &[(Projet, String, Option<Vec<Execution>>)],
+) -> Markup {
     let tr = p.tr;
-    let site = p.site_url;
-    let v = ASSET_VERSION.as_str();
     let mesurees: Vec<&Ligne> = lignes.iter().filter(|l| l.actuel.is_some()).collect();
     let hors_ligne = mesurees.iter().filter(|l| l.actuel.map(|m| m.etat) == Some(Etat::HorsLigne)).count();
     let lents = mesurees.iter().filter(|l| l.actuel.map(|m| m.etat) == Some(Etat::Lent)).count();
@@ -90,147 +95,186 @@ pub fn render(p: &Page, lignes: &[Ligne], incidents: &[Incident], dispo: Option<
         (Groupe::Mods, &tr.st_group_mods, &tr.st_group_mods_desc),
     ];
     let premier_jour = lignes.first().and_then(|l| l.jours.first()).map(|(d, _)| format::jour(tr, *d, false));
-    let canonical = super::layout::STATUS_URL.clone().map_or_else(|| format!("{site}/status"), |u| format!("{u}/"));
     let stat = |valeur: String, libelle: &str, id: &str| {
         html! { div.sp-stat { strong id=(id) { (valeur) } span { (libelle) } } }
     };
-
-    html! {
-        (DOCTYPE)
-        html lang=(p.lang.code()) {
-            head {
-                meta charset="utf-8";
-                meta name="viewport" content="width=device-width, initial-scale=1";
-                title { (tr.st_title) }
-                meta name="description" content=(tr.st_sub);
-                meta name="theme-color" content="#09090b";
-                meta name="color-scheme" content="dark light";
-                link rel="canonical" href=(format!("{canonical}?lang={}", p.lang.code()));
-                meta property="og:type" content="website";
-                meta property="og:site_name" content="Mistly Status";
-                meta property="og:title" content=(tr.st_title);
-                meta property="og:description" content=(tr.st_sub);
-                meta property="og:image" content=(format!("{site}/assets/og/{}.png?v={v}", p.lang.code()));
-                meta name="twitter:card" content="summary_large_image";
-                link rel="icon" href="/assets/icone.png";
-                link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
-                link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
-                link rel="stylesheet" href=(format!("/css/status.css?v={v}"));
-                script { (PreEscaped("document.documentElement.classList.add('js');try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;if(localStorage.getItem('st-view')==='min')document.documentElement.classList.add('st-min')}catch(e){}")) }
-                script src=(format!("/js/status.js?v={v}")) defer {}
-            }
-            body.sp data-state=(etat) {
-                // Le paysage du launcher, en fond du haut de page
-                div.sp-sky aria-hidden="true" { (PreEscaped(p.scene)) }
-
-                header.sp-top {
-                    div.sp-wrap.sp-top-in {
-                        a.sp-brand href=(site) {
-                            img src="/assets/icone.png" alt="" width="26" height="26";
-                            span { "Mistly" }
-                            em { "Status" }
-                        }
-                        div.sp-actions {
-                            details.sp-lang {
-                                summary aria-label=(tr.nav_language) title=(tr.lang_name) { (icons::flag(p.lang.code())) }
-                                div.sp-lang-menu {
-                                    @for l in Lang::ALL {
-                                        a href=(format!("?lang={}", l.code())) hreflang=(l.code()) aria-current=[(l == p.lang).then_some("true")] title=(l.tr().lang_name) aria-label=(l.tr().lang_name) { (icons::flag(l.code())) }
-                                    }
-                                }
-                            }
-                            button.sp-icon type="button" data-theme-toggle aria-label=(tr.nav_theme) title=(tr.nav_theme) {
-                                span.moon { (icons::moon()) } span.sun { (icons::sun()) }
-                            }
-                            a.sp-site href=(site) { "mistly.cc" (icons::arrow_right()) }
-                        }
+    let main = html! {
+        // L'état général, sur le paysage du site
+        section.hero.sp-hero {
+            div.col.sp-head #sp-hero data-state=(etat) {
+                div.sp-orb.(etat) aria-hidden="true" {
+                    i {}
+                    @match etat {
+                        "up" => (icons::check()),
+                        "wait" => (icons::refresh()),
+                        _ => (icons::alert()),
                     }
                 }
-
-                main.sp-wrap {
-                    // L'état général
-                    section.sp-hero #sp-hero {
-                        div.sp-orb.(etat) aria-hidden="true" {
-                            i {}
-                            @match etat {
-                                "up" => (icons::check()),
-                                "wait" => (icons::refresh()),
-                                _ => (icons::alert()),
-                            }
-                        }
-                        h1 { (titre) }
-                        p.sp-meta {
-                            span.sp-live { i {} (tr.st_live) }
-                            @if let Some(s) = age { span #sp-age data-age=(s) { (tr.st_checked.replace("{0}", &s.to_string())) } }
-                        }
-                        div.sp-stats {
-                            (stat(dispo.map_or_else(|| "—".into(), |d| pourcent(p, d)), &tr.st_uptime_30, "sp-uptime"))
-                            (stat(format!("{en_ligne}/{}", lignes.len()), &tr.st_online, "sp-online"))
-                            (stat(latence.map_or_else(|| "—".into(), |ms| format!("{ms} ms")), &tr.st_latency, "sp-latency"))
-                            (stat(incidents.len().to_string(), &tr.st_incidents, "sp-incidents"))
-                        }
-                    }
-
-                    // Les services
-                    div.sp-bar {
-                        h2 { "Services" }
-                        div.sp-seg role="group" {
-                            button type="button" data-view="days" { (tr.st_view_days) }
-                            button type="button" data-view="min" { (tr.st_view_minutes) }
-                        }
-                    }
-                    div #sp-groups {
-                        @for (groupe, nom, desc) in groupes {
-                            @let services: Vec<&Ligne> = lignes.iter().filter(|l| SERVICES[l.index].groupe == groupe).collect();
-                            @let e = pire(services.iter().map(|l| l.actuel.map(|m| m.etat)));
-                            section.sp-group {
-                                header.sp-group-head {
-                                    div {
-                                        h3 { (nom) span.n { (services.len()) } }
-                                        p { (desc) }
-                                    }
-                                    span.sp-pill.(classe(e)) { i {} (nom_etat(p, e)) }
-                                }
-                                @for l in services { (ligne(p, l)) }
-                                div.sp-axis aria-hidden="true" {
-                                    span {}
-                                    div { span.d { (premier_jour.as_deref().unwrap_or("")) } span.m { (tr.st_hour_ago) } span { (tr.st_now) } }
-                                    span {}
-                                }
-                            }
-                        }
-                    }
-
-                    // Le journal des incidents
-                    section.sp-incidents #sp-log {
-                        div.sp-bar { h2 { (tr.st_incidents_t) } span.sp-sub { (tr.st_incidents) } }
-                        @if incidents.is_empty() {
-                            div.sp-calm { (icons::check()) span { (tr.st_no_incidents) } }
-                        } @else {
-                            ol.sp-timeline {
-                                @for i in incidents { (incident(p, i)) }
-                            }
-                        }
-                    }
-
-                    footer.sp-foot {
-                        div.sp-legend {
-                            span { i.up {} (tr.st_up) }
-                            span { i.slow {} (tr.st_slow) }
-                            span { i.down {} (tr.st_down) }
-                            span { i.none {} (tr.st_no_data) }
-                        }
-                        p { (tr.st_how) " " a href="/status.json" { "status.json" } }
-                        div.sp-links {
-                            a href=(site) { img src="/assets/icone.png" alt="" width="16" height="16"; "mistly.cc" }
-                            a href=(format!("{site}/docs")) { (tr.nav_docs) }
-                            a href=(DISCORD_URL) target="_blank" rel="noopener" { (icons::discord()) "Discord" }
-                        }
-                    }
+                h1 { (titre) }
+                @if let Some(s) = age { p.sp-meta #sp-age data-age=(s) { (tr.st_checked.replace("{0}", &s.to_string())) } }
+                div.sp-stats {
+                    (stat(dispo.map_or_else(|| "—".into(), |d| pourcent(p, d)), &tr.st_uptime_30, "sp-uptime"))
+                    (stat(format!("{en_ligne}/{}", lignes.len()), &tr.st_online, "sp-online"))
+                    (stat(latence.map_or_else(|| "—".into(), |ms| format!("{ms} ms")), &tr.st_latency, "sp-latency"))
+                    (stat(incidents.len().to_string(), &tr.st_incidents, "sp-incidents"))
                 }
-                div.sp-tip #sp-tip role="tooltip" hidden {}
             }
         }
+
+        // Les services
+        section.blk.sp-sec {
+            div.col {
+                div.sp-bar {
+                    h2.blk-title { "Services" sup { "(" (lignes.len()) ")" } }
+                    div.sp-seg role="group" {
+                        button type="button" data-view="days" { (tr.st_view_days) }
+                        button type="button" data-view="min" { (tr.st_view_minutes) }
+                    }
+                }
+                div.sp-groups #sp-groups {
+                    @for (groupe, nom, desc) in groupes {
+                        @let services: Vec<&Ligne> = lignes.iter().filter(|l| SERVICES[l.index].groupe == groupe).collect();
+                        @let e = pire(services.iter().map(|l| l.actuel.map(|m| m.etat)));
+                        section.sp-group {
+                            header.sp-group-head {
+                                div {
+                                    h3 { (nom) span.n { (services.len()) } }
+                                    p { (desc) }
+                                }
+                                span.sp-pill.(classe(e)) { i {} (nom_etat(p, e)) }
+                            }
+                            @for l in services { (ligne(p, l)) }
+                            div.sp-axis aria-hidden="true" {
+                                span {}
+                                div { span.d { (premier_jour.as_deref().unwrap_or("")) } span.m { (tr.st_hour_ago) } span { (tr.st_now) } }
+                                span {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Les déploiements (GitHub Actions)
+        section.blk.sp-sec {
+            div.col {
+                h2.blk-title { (tr.st_deploys) }
+                p.blk-lead { (tr.st_deploys_sub) }
+                div.cells.c3.sp-deploys #sp-deploys {
+                    @for (projet, repo, execs) in deploiements { (carte_deploiement(p, *projet, repo, execs.as_deref())) }
+                }
+            }
+        }
+
+        // Le journal des incidents
+        section.blk.sp-sec {
+            div.col #sp-log {
+                h2.blk-title { (tr.st_incidents_t) sup { "(" (incidents.len()) ")" } }
+                p.blk-lead { (tr.st_incidents) }
+                div.sp-pad {
+                    @if incidents.is_empty() {
+                        div.sp-calm { (icons::check()) span { (tr.st_no_incidents) } }
+                    } @else {
+                        ol.sp-timeline {
+                            @for i in incidents { (incident(p, i)) }
+                        }
+                    }
+                    div.sp-legend {
+                        span { i.up {} (tr.st_up) }
+                        span { i.slow {} (tr.st_slow) }
+                        span { i.down {} (tr.st_down) }
+                        span { i.none {} (tr.st_no_data) }
+                    }
+                    p.sp-how { (tr.st_how) " " a href="/status.json" { "status.json" } }
+                }
+            }
+        }
+        div.sp-tip #sp-tip role="tooltip" hidden {}
+    };
+    layout::render(
+        p,
+        Head {
+            title: &tr.st_title,
+            description: &tr.st_sub,
+            jsonld: None,
+            css: &["home", "status"],
+            scripts: &["/js/status.js"],
+            body_class: "status-page",
+        },
+        main,
+    )
+}
+
+/// Un projet et ses dernières exécutions GitHub Actions.
+fn carte_deploiement(p: &Page, projet: Projet, repo: &str, execs: Option<&[Execution]>) -> Markup {
+    let tr = p.tr;
+    let nom = match projet {
+        Projet::Launcher => "Mistly Launcher",
+        Projet::Client => "Mistly Client",
+        Projet::Site => tr.st_proj_site.as_str(),
+    };
+    let icone = match projet {
+        Projet::Launcher => icons::download(),
+        Projet::Client => icons::package(),
+        Projet::Site => icons::globe(),
+    };
+    let texte = |i: Issue| match i {
+        Issue::Reussi => &tr.st_run_ok,
+        Issue::Echoue => &tr.st_run_fail,
+        Issue::EnCours => &tr.st_run_running,
+        Issue::Annule => &tr.st_run_cancel,
+        Issue::EnAttente => &tr.st_run_queued,
+    };
+    let premiere = execs.and_then(|e| e.split_first());
+    html! {
+        div.sp-deploy {
+            header {
+                span.sp-dico { (icone) }
+                div {
+                    strong { (nom) }
+                    a href=(format!("https://github.com/{repo}/actions")) target="_blank" rel="noopener" { (repo) (icons::external()) }
+                }
+            }
+            @if let Some((d, reste)) = premiere {
+                a.sp-last.(d.issue().slug()) href=(d.html_url) target="_blank" rel="noopener" {
+                    span.sp-run { i {} (texte(d.issue())) }
+                    strong { (d.titre()) }
+                    span.sp-run-meta {
+                        (d.name.as_deref().unwrap_or(""))
+                        @if let Some(n) = d.run_number { " #" (n) }
+                        @if let Some(b) = &d.head_branch { " · " code { (b) } }
+                    }
+                    span.sp-run-meta {
+                        @if let Some(t) = d.run_started_at { (format::moment(tr, t.unix_timestamp())) }
+                        @if let Some(s) = d.duree() { " · " (duree_courte(s)) }
+                    }
+                }
+                ul.sp-runs {
+                    @for e in reste.iter().take(4) {
+                        li {
+                            a href=(e.html_url) target="_blank" rel="noopener" title=(texte(e.issue())) {
+                                i.(e.issue().slug()) {}
+                                span.t { (e.titre()) }
+                                span.w { (e.name.as_deref().unwrap_or("")) }
+                            }
+                        }
+                    }
+                }
+            } @else {
+                p.sp-wait { (tr.st_waiting_short) }
+            }
+        }
+    }
+}
+
+/// « 45 s », « 7 min 30 ».
+fn duree_courte(s: i64) -> String {
+    if s < 60 {
+        format!("{s} s")
+    } else if s < 3600 {
+        format!("{} min {:02}", s / 60, s % 60)
+    } else {
+        format!("{} h {:02}", s / 3600, (s / 60) % 60)
     }
 }
 

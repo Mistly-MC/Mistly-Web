@@ -146,8 +146,11 @@ pub fn sitemap_xml(site: &str) -> String {
         "/shop/pets".into(),
         "/status".into(),
         "/brand".into(),
+        "/roadmap".into(),
+        "/articles".into(),
     ];
     paths.extend(crate::legal::Kind::ALL.iter().map(|k| k.path().to_string()));
+    paths.extend(crate::contenu::articles(Lang::En).iter().map(|a| format!("/articles/{}", a.slug)));
     paths.extend(
         docs::get(Lang::En)
             .pages
@@ -197,7 +200,7 @@ mod tests {
     #[test]
     fn sitemap_lists_every_page_in_every_language() {
         let xml = sitemap_xml("https://example.com");
-        let pages = 10 + crate::legal::Kind::ALL.len() + docs::get(Lang::En).pages.len();
+        let pages = 12 + crate::contenu::articles(Lang::En).len() + crate::legal::Kind::ALL.len() + docs::get(Lang::En).pages.len();
         assert_eq!(xml.matches("<url>").count(), pages * Lang::ALL.len());
         assert!(xml.contains("<loc>https://example.com/docs/installation?lang=fr</loc>"));
         assert!(xml.contains("<loc>https://example.com/privacy?lang=fr</loc>"));

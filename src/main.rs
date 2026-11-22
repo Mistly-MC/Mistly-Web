@@ -32,6 +32,8 @@
 //!   (`/api/telemetry/summary`, `/api/telemetry/report/{code}`) avec `Authorization: Bearer …`
 
 mod admin;
+mod contenu;
+mod deploiements;
 mod client;
 mod discord;
 mod puzzle;
@@ -67,6 +69,8 @@ pub struct AppState {
     pub github: Arc<github::GitHub>,
     /// Releases de Mistly Client, le mod en jeu (dépôt à part depuis la 0.3.8).
     pub client_releases: Arc<github::GitHub>,
+    /// Dernières exécutions GitHub Actions du launcher, du client et du site (page de statut).
+    pub deploiements: Arc<deploiements::Deploiements>,
     /// Page de statut : vérifications des services, faites en arrière-plan.
     pub status: Arc<status::Status>,
     /// Paysage de fond (le même que dans le launcher), le même sur toutes les pages.
@@ -125,6 +129,7 @@ async fn main() {
     i18n::init();
     docs::init();
     legal::init();
+    contenu::init();
 
     let state = Arc::new(AppState {
         github: Arc::new(github::GitHub::new(
@@ -138,6 +143,15 @@ async fn main() {
             env_or("GITHUB_WEB", "https://github.com"),
             env_or("CLIENT_REPO", "Mistly-MC/Mistly-Client"),
             std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
+        )),
+        deploiements: Arc::new(deploiements::Deploiements::new(
+            env_or("GITHUB_API", "https://api.github.com"),
+            std::env::var("GITHUB_TOKEN").ok().filter(|t| !t.is_empty()),
+            [
+                (deploiements::Projet::Launcher, env_or("MISTY_REPO", "Mistly-MC/Mistly-Launcher")),
+                (deploiements::Projet::Client, env_or("CLIENT_REPO", "Mistly-MC/Mistly-Client")),
+                (deploiements::Projet::Site, env_or("WEB_REPO", "Mistly-MC/Mistly-Web")),
+            ],
         )),
         status: Arc::new(status::Status::new()),
         telemetrie: Arc::new(telemetrie::Telemetrie::new()),
@@ -166,6 +180,7 @@ async fn main() {
     }
     tokio::spawn(state.registre.clone().ecrire_en_boucle());
     tokio::spawn(state.status.clone().verifier_en_boucle());
+    tokio::spawn(state.deploiements.clone().rafraichir_en_boucle());
     tokio::spawn(state.telemetrie.clone().menage_en_boucle());
     tokio::spawn(state.discord.clone().resume_en_boucle(state.telemetrie.dossier()));
 
@@ -201,6 +216,9 @@ async fn main() {
         .route("/docs/{slug}", get(routes::docs_page))
         .route("/status", get(routes::status_page))
         .route("/brand", get(routes::brand))
+        .route("/roadmap", get(routes::roadmap))
+        .route("/articles", get(routes::articles))
+        .route("/articles/{slug}", get(routes::article))
         .route("/media-kit", get(routes::brand_alias))
         // Les outils ont été retirés du site : les anciens liens mènent à l'accueil
         .route("/tools", get(routes::outils_retires))

@@ -227,6 +227,34 @@ pub async fn brand(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery
     html_response(StatusCode::OK, crate::views::brand::render(&p), lang, remember)
 }
 
+/// `/roadmap` : ce qui est en cours, prévu et terminé.
+pub async fn roadmap(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let count = state.github.releases().await.map(|l| l.len());
+    let p = page(&state, lang, "/roadmap", count);
+    html_response(StatusCode::OK, crate::views::contenu::roadmap(&p), lang, remember)
+}
+
+/// `/articles` : la liste des articles.
+pub async fn articles(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let count = state.github.releases().await.map(|l| l.len());
+    let p = page(&state, lang, "/articles", count);
+    html_response(StatusCode::OK, crate::views::contenu::articles(&p), lang, remember)
+}
+
+/// `/articles/<slug>` : un article (404 s'il n'existe pas).
+pub async fn article(State(state): State<Arc<AppState>>, Path(slug): Path<String>, Query(q): Query<PageQuery>, uri: Uri, headers: HeaderMap) -> Response {
+    let Some(a) = crate::contenu::article(i18n::negotiate(q.lang.as_deref(), &headers).0, &slug) else {
+        return not_found(State(state), uri, headers).await;
+    };
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let count = state.github.releases().await.map(|l| l.len());
+    let chemin = format!("/articles/{}", a.slug);
+    let p = page(&state, lang, &chemin, count);
+    html_response(StatusCode::OK, crate::views::contenu::article(&p, a), lang, remember)
+}
+
 /// `/media-kit` : l'autre nom courant de la page, redirigé vers `/brand`.
 pub async fn brand_alias() -> Response {
     let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
@@ -582,7 +610,7 @@ pub async fn status_page(
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
     let count = state.github.releases().await.map(|l| l.len());
     let p = page(&state, lang, "/status", count);
-    let markup = status_view::render(&p, &state.status.lignes(), &state.status.incidents(), state.status.dispo_globale(), state.status.age());
+    let markup = status_view::render(&p, &state.status.lignes(), &state.status.incidents(), state.status.dispo_globale(), state.status.age(), &state.deploiements.liste());
     let mut res = html_response(StatusCode::OK, markup, lang, remember);
     res.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
     res

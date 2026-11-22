@@ -19,6 +19,7 @@ COPY src src
 COPY locales locales
 COPY docs docs
 COPY legal legal
+COPY content content
 # logo intégré au captcha puzzle (include_bytes!)
 COPY public/assets/icone.png public/assets/icone.png
 # COPY garde la date des fichiers du clone, plus ancienne que le faux main.rs : sans ce touch,
