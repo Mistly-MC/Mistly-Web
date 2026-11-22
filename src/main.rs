@@ -40,6 +40,7 @@
 //!   (`/api/telemetry/summary`, `/api/telemetry/report/{code}`) avec `Authorization: Bearer …`
 
 mod admin;
+mod todo;
 mod boutique;
 mod contenu;
 mod contributeurs;
@@ -141,6 +142,7 @@ async fn main() {
     legal::init();
     contenu::init();
     boutique::init();
+    todo::init();
 
     let state = Arc::new(AppState {
         github: Arc::new(github::GitHub::new(
@@ -282,6 +284,7 @@ async fn main() {
         .route("/admin/cosmetics", get(admin::cosmetiques).post(admin::changer_regle).layer(DefaultBodyLimit::max(4 * 1024)))
         .route("/admin/shop", get(admin::boutique).post(admin::enregistrer_boutique).layer(DefaultBodyLimit::max(64 * 1024)))
         .route("/admin/docs", get(admin::docs))
+        .route("/admin/todo", get(admin::todo).post(admin::changer_todo).layer(DefaultBodyLimit::max(4 * 1024)))
         .route("/admin/reports", get(admin::rapports))
         .route("/admin/log", get(admin::journal))
         .route("/admin/database", get(admin::base).post(admin::enregistrer_base).layer(DefaultBodyLimit::max(64 * 1024 * 1024)))

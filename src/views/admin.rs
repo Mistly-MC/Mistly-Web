@@ -74,6 +74,7 @@ enum Onglet {
     Cosmetiques,
     Boutique,
     Docs,
+    Todo,
     Rapports,
     Journal,
     Base,
@@ -145,6 +146,7 @@ impl Onglet {
             Onglet::Cosmetiques => "Cosmetics",
             Onglet::Boutique => "Shop",
             Onglet::Docs => "Docs",
+            Onglet::Todo => "To-do",
             Onglet::Rapports => "Reports",
             Onglet::Journal => "Log",
             Onglet::Base => "Database",
@@ -157,6 +159,7 @@ impl Onglet {
             Onglet::Cosmetiques => icons::sparkles(),
             Onglet::Boutique => icons::bag(),
             Onglet::Docs => icons::bolt(),
+            Onglet::Todo => icons::check(),
             Onglet::Rapports => icons::alert(),
             Onglet::Journal => icons::notes(),
             Onglet::Base => icons::archive(),
@@ -169,6 +172,7 @@ impl Onglet {
             Onglet::Cosmetiques => "/admin/cosmetics",
             Onglet::Boutique => "/admin/shop",
             Onglet::Docs => "/admin/docs",
+            Onglet::Todo => "/admin/todo",
             Onglet::Rapports => "/admin/reports",
             Onglet::Journal => "/admin/log",
             Onglet::Base => "/admin/database",
@@ -178,7 +182,7 @@ impl Onglet {
 
 fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Markup) -> Markup {
     let v = ASSET_VERSION.as_str();
-    let onglets = [Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Boutique, Onglet::Rapports, Onglet::Journal, Onglet::Base, Onglet::Docs];
+    let onglets = [Onglet::Accueil, Onglet::Todo, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Boutique, Onglet::Rapports, Onglet::Journal, Onglet::Base, Onglet::Docs];
     html! {
         (DOCTYPE)
         html lang="en" data-theme="dark" {
@@ -1079,6 +1083,78 @@ pub fn docs(d: &Diag) -> Markup {
                         tr { td { code { "shop.mistly.cc" } } td.muted { "The shop at the root, /capes, /item/<id>… (SHOP_URL)." } }
                         tr { td { code { "docs.mistly.cc" } } td.muted { "The documentation at the root (DOCS_URL)." } }
                         tr { td { code { "misty-launcher.online" } } td.muted { "Old domain: pages redirect to mistly.cc, the API and downloads still answer (old launchers)." } }
+                    }
+                }
+            }
+        },
+    )
+}
+
+// ---------- To-do ----------
+
+/// La liste des choses à faire : une colonne par projet. Dans chacune, un champ pour ajouter, les
+/// tâches à faire (bouton « Done ») puis celles terminées (on peut les rouvrir).
+pub fn todo(flash: &Flash, taches: &[crate::todo::Tache]) -> Markup {
+    use crate::todo::Projet;
+    let bouton = |action: &str, id: u64, classe: &str, titre: &str, contenu: Markup| {
+        html! {
+            form method="post" action="/admin/todo" {
+                input type="hidden" name="action" value=(action);
+                input type="hidden" name="id" value=(id);
+                button class=(classe) type="submit" title=(titre) aria-label=(titre) { (contenu) }
+            }
+        }
+    };
+    shell(
+        "To-do",
+        Some(Onglet::Todo),
+        Some(flash),
+        html! {
+            (entete("To-do", Some("What's left to do on each project. Every change goes to the log with who made it.")))
+            div.todo {
+                @for (p, teinte, ic) in [(Projet::Launcher, "p-lilac", icons::download()), (Projet::Client, "p-pink", icons::sparkles()), (Projet::Web, "p-peach", icons::globe())] {
+                    @let a_faire: Vec<&crate::todo::Tache> = taches.iter().filter(|t| t.projet == p && t.fait.is_none()).collect();
+                    @let faites: Vec<&crate::todo::Tache> = { let mut f: Vec<_> = taches.iter().filter(|t| t.projet == p && t.fait.is_some()).collect(); f.sort_by_key(|t| std::cmp::Reverse(t.fait)); f };
+                    section.todo-col.(teinte) {
+                        header {
+                            span.ov-ic { (ic) }
+                            h2 { (p.nom()) }
+                            span.todo-n { (a_faire.len()) " to do" }
+                        }
+                        @let total = a_faire.len() + faites.len();
+                        div.todo-bar title=(format!("{} / {} done", faites.len(), total)) {
+                            i style=(format!("width:{}%", (faites.len() * 100).checked_div(total).unwrap_or(0))) {}
+                        }
+                        form.todo-add method="post" action="/admin/todo" {
+                            input type="hidden" name="action" value="add";
+                            input type="hidden" name="projet" value=(p.code());
+                            input type="text" name="texte" placeholder="Add a task…" maxlength=(crate::todo::MAX_TEXTE) required aria-label=(format!("New task for {}", p.nom()));
+                            button type="submit" aria-label="Add" { (icons::arrow_right()) }
+                        }
+                        @if a_faire.is_empty() { p.empty { "Nothing left to do." } }
+                        ul.todo-list {
+                            @for t in &a_faire {
+                                li {
+                                    (bouton("done", t.id, "todo-check", "Done", html! { (icons::check()) }))
+                                    div { span { (t.texte) } small { "added " (il_y_a(t.cree)) } }
+                                    (bouton("delete", t.id, "todo-del", "Delete", html! { "✕" }))
+                                }
+                            }
+                        }
+                        @if !faites.is_empty() {
+                            details.todo-done {
+                                summary { "Done" span { (faites.len()) } }
+                                ul.todo-list {
+                                    @for t in &faites {
+                                        li.fait {
+                                            (bouton("undo", t.id, "todo-check on", "Reopen", html! { (icons::check()) }))
+                                            div { span { (t.texte) } small { "done " (il_y_a(t.fait.unwrap_or(t.cree))) } }
+                                            (bouton("delete", t.id, "todo-del", "Delete", html! { "✕" }))
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

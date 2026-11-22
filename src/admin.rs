@@ -691,6 +691,51 @@ pub async fn docs(State(state): State<Arc<AppState>>, entetes: HeaderMap) -> Res
     page(vue::docs(&d))
 }
 
+// ---------- To-do ----------
+
+pub async fn todo(State(state): State<Arc<AppState>>, entetes: HeaderMap, Query(m): Query<Message>) -> Response {
+    garde!(state, entetes);
+    page(vue::todo(&m.vue(), &crate::todo::liste()))
+}
+
+#[derive(Deserialize)]
+pub struct ChangementTodo {
+    action: String,
+    id: Option<u64>,
+    projet: Option<String>,
+    texte: Option<String>,
+}
+
+/// Ajoute, termine, rouvre ou supprime une tâche (et le note au journal, avec l'adresse).
+pub async fn changer_todo(State(state): State<Arc<AppState>>, entetes: HeaderMap, Form(c): Form<ChangementTodo>) -> Response {
+    garde!(state, entetes, post);
+    let ip = crate::presence::adresse(&entetes);
+    let (journal, message) = match c.action.as_str() {
+        "add" => {
+            let Some(p) = c.projet.as_deref().and_then(crate::todo::Projet::depuis) else {
+                return retour("/admin/todo", false, "Unknown project.");
+            };
+            match crate::todo::ajouter(p, c.texte.as_deref().unwrap_or("")) {
+                Some(t) => (format!("To-do added ({}): {t}", p.nom()), "Task added."),
+                None => return retour("/admin/todo", false, "Write the task first."),
+            }
+        }
+        "done" | "undo" | "delete" => {
+            let id = c.id.unwrap_or(0);
+            let r = if c.action == "delete" { crate::todo::supprimer(id) } else { crate::todo::marquer(id, c.action == "done") };
+            let Some(t) = r else { return retour("/admin/todo", false, "This task no longer exists.") };
+            match c.action.as_str() {
+                "done" => (format!("To-do done: {t}"), "Task done."),
+                "undo" => (format!("To-do reopened: {t}"), "Task reopened."),
+                _ => (format!("To-do deleted: {t}"), "Task deleted."),
+            }
+        }
+        _ => return retour("/admin/todo", false, "Unknown action."),
+    };
+    state.registre.modifier_par(Some(&ip), &journal, |_| ());
+    retour("/admin/todo", true, message)
+}
+
 // ---------- Rapports de logs ----------
 
 #[derive(Deserialize, Default)]

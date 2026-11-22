@@ -294,6 +294,43 @@ body.admin.login-page{display:block}
 .ip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--lilac);background:rgb(142 170 240 / .12);vertical-align:middle}
 .msgs .ip{margin-left:0;padding:0 6px;font-size:10.5px}
 
+/* ---------- To-do ---------- */
+.todo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.todo-col{--c:var(--lilac);display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:22px;background:var(--card)}
+.todo-col.p-pink{--c:var(--pink)}
+.todo-col.p-peach{--c:var(--peach)}
+.todo-col header{display:flex;align-items:center;gap:10px}
+.todo-col h2{font-size:16px;font-weight:600}
+.todo-n{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.todo-bar{height:6px;border-radius:999px;background:rgb(255 255 255 / .06);overflow:hidden}
+.todo-bar i{display:block;height:100%;border-radius:inherit;background:var(--c);transition:width .5s ease}
+.todo-add{display:flex;align-items:center;gap:8px;height:44px;padding:0 6px 0 14px;border-radius:14px;background:var(--card-2)}
+.admin .todo-add input,.admin .todo-add input:focus{flex:1;min-width:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;outline:0;font-size:13.5px}
+.todo-add:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent)}
+.todo-add button{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:10px;cursor:pointer;color:#0b1224;background:var(--c)}
+.todo-add .ic{width:15px;height:15px}
+.todo-list{display:flex;flex-direction:column;gap:6px}
+.todo-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;background:var(--card-2);transition:background .15s}
+.todo-list li:hover{background:#2c2c32}
+.todo-list form{display:contents}
+.todo-list li>div{display:flex;flex-direction:column;min-width:0}
+.todo-list li span{font-size:13.5px;line-height:1.4;overflow-wrap:anywhere}
+.todo-list small{font-size:11.5px;color:var(--sub)}
+.todo-check{display:grid;place-items:center;width:26px;height:26px;padding:0;border-radius:50%;cursor:pointer;color:transparent;background:none;border:2px solid color-mix(in srgb,var(--c) 60%,transparent);transition:color .15s,background .15s,transform .15s}
+.todo-check .ic{width:14px;height:14px;stroke-width:3}
+.todo-check:hover{color:var(--c);transform:scale(1.08)}
+.todo-check.on{color:#0b1224;background:var(--c);border-color:var(--c)}
+.todo-del{display:grid;place-items:center;width:26px;height:26px;padding:0;border:0;border-radius:8px;cursor:pointer;font-size:12px;color:var(--sub);background:none;opacity:0;transition:opacity .15s,color .15s,background .15s}
+.todo-list li:hover .todo-del,.todo-del:focus-visible{opacity:1}
+.todo-del:hover{color:var(--bad);background:rgb(245 154 154 / .1)}
+.todo-list li.fait span{text-decoration:line-through;color:var(--sub)}
+.todo-done summary{display:flex;align-items:center;gap:8px;padding:4px 2px 8px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;list-style:none}
+.todo-done summary::-webkit-details-marker{display:none}
+.todo-done summary::before{content:"›";display:inline-block;transition:transform .2s}
+.todo-done[open] summary::before{transform:rotate(90deg)}
+.todo-done summary span{padding:1px 8px;border-radius:999px;font-size:11.5px;background:rgb(255 255 255 / .06)}
+@media (max-width:1100px){.todo{grid-template-columns:minmax(0,1fr)}}
+
 /* ---------- Docs de l'équipe ---------- */
 .doc-toc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
 .doc-toc a{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;color:var(--sub);background:var(--card);transition:color .15s,background .15s}
