@@ -149,16 +149,16 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 meta name="twitter:title" content=(head.title);
                 meta name="twitter:description" content=(head.description);
                 meta name="twitter:image" content=(image);
-                link rel="icon" href=(p.lien("/assets/icone.png"));
-                link rel="apple-touch-icon" href=(p.lien("/assets/icone.png"));
+                link rel="icon" href="/assets/icone.png";
+                link rel="apple-touch-icon" href="/assets/icone.png";
                 @if let Some(json) = &head.jsonld {
                     script type="application/ld+json" { (PreEscaped(json)) }
                 }
-                link rel="preload" href=(p.lien("/assets/Geist-latin.woff2")) as="font" type="font/woff2" crossorigin;
+                link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
                 @let v = ASSET_VERSION.as_str();
-                link rel="stylesheet" href=(p.lien(&format!("/css/base.css?v={v}")));
-                link rel="stylesheet" href=(p.lien(&format!("/css/layout.css?v={v}")));
-                @for css in head.css { link rel="stylesheet" href=(p.lien(&format!("/css/{css}.css?v={v}"))); }
+                link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
+                link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
+                @for css in head.css { link rel="stylesheet" href=(format!("/css/{css}.css?v={v}")); }
                 // Le thème choisi (clair ou sombre) est posé avant l'affichage, sans clignotement
                 script { (PreEscaped("document.documentElement.classList.add('js');try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}")) }
                 @for js in head.scripts { script src=(format!("{js}?v={v}")) defer {} }
