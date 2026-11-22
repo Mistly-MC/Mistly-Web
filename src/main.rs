@@ -13,9 +13,8 @@
 //! - `STATUS_URL` (facultatif, ex. `https://status.mistly.cc`) : la page de statut sur son
 //!   sous-domaine ; les liens « Statut » y mènent et `/status` y redirige. Le sous-domaine
 //!   `status.<domaine>` sert la page de statut à sa racine, réglée ou non
-//! - `ADMIN_URL` (facultatif, ex. `https://a0.mistly.cc`) : le tableau de bord sur son sous-domaine ;
-//!   `/admin` du site principal y redirige. Le sous-domaine `a0.<domaine>` sert le tableau de bord à
-//!   sa racine, réglée ou non
+//! - Le tableau de bord n'est servi que sur le sous-domaine `a0.<domaine>` (à sa racine) ; `/admin`
+//!   du site principal répond 404
 //! - `DOCS_URL` (facultatif, ex. `https://docs.mistly.cc`) : la documentation sur son sous-domaine ;
 //!   ses liens y mènent et `/docs` y redirige. Le sous-domaine `docs.<domaine>` sert la doc à sa
 //!   racine (`/`, `/installation`…), réglée ou non

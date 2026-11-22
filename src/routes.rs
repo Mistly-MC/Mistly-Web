@@ -1096,13 +1096,15 @@ pub async fn domaine_principal(
         }
         return next.run(req).await;
     }
-    // Avec ADMIN_URL réglée, le tableau de bord du site principal part vers son sous-domaine
+    // Le tableau de bord n'existe que sur son sous-domaine (a0.<domaine>) : sur le site principal
+    // (et ses anciennes adresses), /admin n'existe pas. En local (localhost), il reste ouvert pour les essais.
     if (chemin == "/admin" || chemin.starts_with("/admin/"))
-        && !hote.as_deref().is_some_and(|h| h.starts_with("a0."))
-        && let Some(url) = std::env::var("ADMIN_URL").ok().map(|u| u.trim().trim_end_matches('/').to_string()).filter(|u| !u.is_empty())
+        && let Some(h) = &hote
+        && !h.starts_with("a0.")
+        && !principal.is_empty()
+        && (h == &principal || h.ends_with(&format!(".{principal}")) || h.ends_with("misty-launcher.online"))
     {
-        let requete = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
-        return redirection_permanente(&format!("{url}{chemin}{requete}"));
+        return StatusCode::NOT_FOUND.into_response();
     }
     // Avec DOCS_URL réglée, /docs et ses pages partent vers le sous-domaine de la doc
     if let Some(reste) = chemin.strip_prefix("/docs")

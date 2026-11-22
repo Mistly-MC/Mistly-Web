@@ -115,6 +115,13 @@ fn nom_cosmetique(id: &str) -> &str {
     crate::registre::cosmetique(id).map_or(id, |c| c.nom)
 }
 
+/// L'adresse du site principal (le tableau de bord est sur son propre sous-domaine, où `/` mène au
+/// tableau de bord).
+fn site(chemin: &str) -> String {
+    let base = std::env::var("SITE_URL").ok().filter(|v| !v.is_empty()).unwrap_or_else(|| "https://mistly.cc".into());
+    format!("{}{chemin}", base.trim_end_matches('/'))
+}
+
 /// Tête du joueur, dessinée par admin.js depuis son skin (`/skin/<pseudo>`).
 fn tete(nom: Option<&str>, taille: u32) -> Markup {
     html! {
@@ -202,7 +209,7 @@ fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Mark
                             }
                         }
                         div.rail-foot {
-                            a href="/" target="_blank" rel="noopener" aria-label="View site" { (icons::globe()) span.tip { "View site" } }
+                            a href=(site("/")) target="_blank" rel="noopener" aria-label="View site" { (icons::globe()) span.tip { "View site" } }
                         }
                     }
                     main.content {
@@ -295,14 +302,14 @@ pub fn connexion(erreur: Option<&str>, scene: &str) -> Markup {
                             div.lg-social {
                                 (lien(super::layout::DISCORD_URL, "Discord", icons::discord()))
                                 (lien(super::layout::GITHUB_ORG_URL, "GitHub", icons::github()))
-                                (lien("/status", "Status", icons::globe()))
-                                (lien("/", "Website", icons::external()))
+                                (lien(&site("/status"), "Status", icons::globe()))
+                                (lien(&site("/"), "Website", icons::external()))
                             }
                         }
                         nav.lg-foot {
-                            a href="/privacy?lang=en" { "Privacy" }
-                            a href="/terms?lang=en" { "Terms" }
-                            a href="/status?lang=en" { "Status" }
+                            a href=(site("/privacy?lang=en")) { "Privacy" }
+                            a href=(site("/terms?lang=en")) { "Terms" }
+                            a href=(site("/status?lang=en")) { "Status" }
                         }
                     }
                     div.lg-art aria-hidden="true" {
@@ -384,6 +391,7 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
                             }
                         }
                     }
+                    @if let Some(t) = telemetrie { (repartition(t)) }
                     div.side-sec {
                         div.side-head { h2 { "Open a report" } }
                         form.quick method="get" action="/admin/reports" {
@@ -425,6 +433,44 @@ fn liste_en_ligne(en_ligne: &[Ligne]) -> Markup {
     }
 }
 
+/// La répartition (versions du launcher, parties par loader), dans la colonne de droite.
+fn repartition(t: &Value) -> Markup {
+    let paires = |v: &Value| -> Vec<(String, u64)> {
+        let mut l: Vec<(String, u64)> = v.as_object().map(|o| o.iter().map(|(k, v)| (k.clone(), v.as_u64().unwrap_or(0))).collect()).unwrap_or_default();
+        l.sort_by_key(|x| std::cmp::Reverse(x.1));
+        l
+    };
+    let versions = paires(&t["launcher_versions"]);
+    let loaders = paires(&t["games_by_loader"]);
+    let crashs = paires(&t["crashes_by_loader"]);
+    let ligne = |teinte: &str, ic: Markup, nom: &str, detail: String, pastille: String| {
+        html! {
+            li.rep {
+                span.rep-ic.(teinte) { (ic) }
+                div { strong { (nom) } span { (detail) } }
+                span.pill.(teinte) { (pastille) }
+            }
+        }
+    };
+    html! {
+        div.side-sec {
+            div.side-head { h2 { "Launcher versions" } }
+            @if versions.is_empty() { p.empty { "—" } }
+            ul.reps { @for (k, n) in versions.iter().take(3) { (ligne("p-lilac", icons::tag(), &format!("Launcher {k}"), format!("{n} install(s)"), format!("{n}"))) } }
+        }
+        div.side-sec {
+            div.side-head { h2 { "Games by loader" } }
+            @if loaders.is_empty() { p.empty { "—" } }
+            ul.reps {
+                @for (k, n) in loaders.iter().take(3) {
+                    @let c = crashs.iter().find(|x| x.0 == *k).map_or(0, |x| x.1);
+                    (ligne(if c > 0 { "p-pink" } else { "p-mint" }, icons::package(), k, format!("{c} crash(es)"), format!("{n}")))
+                }
+            }
+        }
+    }
+}
+
 fn telemetrie_bloc(t: &Value) -> Markup {
     let paires = |v: &Value| -> Vec<(String, u64)> {
         let mut l: Vec<(String, u64)> = v.as_object().map(|o| o.iter().map(|(k, v)| (k.clone(), v.as_u64().unwrap_or(0))).collect()).unwrap_or_default();
@@ -442,19 +488,6 @@ fn telemetrie_bloc(t: &Value) -> Markup {
         "b": jours.iter().map(|j| j.2).collect::<Vec<_>>(),
     });
     let plantages: u64 = paires(&t["crashes_by_loader"]).iter().map(|x| x.1).sum();
-    let versions = paires(&t["launcher_versions"]);
-    let loaders = paires(&t["games_by_loader"]);
-    let crashs = paires(&t["crashes_by_loader"]);
-    // Une ligne de la répartition : l'icône dans un rond, le nom, le nombre, une pastille
-    let ligne = |teinte: &str, ic: Markup, nom: &str, detail: String, pastille: String| {
-        html! {
-            li.rep {
-                span.rep-ic.(teinte) { (ic) }
-                div { strong { (nom) } span { (detail) } }
-                span.pill.(teinte) { (pastille) }
-            }
-        }
-    };
     html! {
         section.ov-panel.ov-chart {
             div.chart-head {
@@ -481,26 +514,7 @@ fn telemetrie_bloc(t: &Value) -> Markup {
                 div { span { "Reports" } strong { (t["reports"].as_u64().unwrap_or(0)) } }
             }
         }
-        section.ov-panel {
-            div.panel-head { h2 { "Breakdown" } span.muted { "Last 30 days, players who accepted telemetry" } }
-            div.rep-cols {
-                div {
-                    h3 { "Launcher versions" }
-                    @if versions.is_empty() { p.empty { "—" } }
-                    ul { @for (k, n) in versions.iter().take(4) { (ligne("p-lilac", icons::tag(), &format!("Launcher {k}"), format!("{n} install(s)"), format!("{n}"))) } }
-                }
-                div {
-                    h3 { "Games by loader" }
-                    @if loaders.is_empty() { p.empty { "—" } }
-                    ul {
-                        @for (k, n) in loaders.iter().take(4) {
-                            @let c = crashs.iter().find(|x| x.0 == *k).map_or(0, |x| x.1);
-                            (ligne(if c > 0 { "p-pink" } else { "p-mint" }, icons::package(), k, format!("{n} game(s) · {c} crash(es)"), format!("{n}")))
-                        }
-                    }
-                }
-            }
-        }
+
     }
 }
 
@@ -633,7 +647,7 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
                     }
                     @if let Some(n) = nom {
                         div.links {
-                            a href=(format!("/shop?player={n}")) target="_blank" rel="noopener" { "3D preview" (icons::external()) }
+                            a href=(site(&format!("/shop?player={n}"))) target="_blank" rel="noopener" { "3D preview" (icons::external()) }
                             a href=(format!("https://namemc.com/profile/{n}")) target="_blank" rel="noopener" { "NameMC" (icons::external()) }
                         }
                     }
@@ -817,7 +831,7 @@ pub fn boutique(flash: &Flash, lignes: &[crate::views::shop::LigneAdmin]) -> Mar
                                     td.c { label.switch { input type="checkbox" name=(format!("{}.nouveau", l.cle)) value="1" checked[r.nouveau]; span {} } }
                                     td.c { label.switch { input type="checkbox" name=(format!("{}.populaire", l.cle)) value="1" checked[r.populaire]; span {} } }
                                     td.c { label.switch.danger { input type="checkbox" name=(format!("{}.cache", l.cle)) value="1" checked[r.cache]; span {} } }
-                                    td.num { a.more href=(format!("/shop/item/{}", l.cle)) target="_blank" rel="noopener" { "View" (icons::external()) } }
+                                    td.num { a.more href=(site(&format!("/shop/item/{}", l.cle))) target="_blank" rel="noopener" { "View" (icons::external()) } }
                                 }
                             }
                         }

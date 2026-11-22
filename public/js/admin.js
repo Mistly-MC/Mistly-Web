@@ -178,6 +178,14 @@
       vers(a, !calme);
     }));
     addEventListener("resize", () => vers(liens[ici], false));
+    // Retour arrière : la page revient du cache avec le rond sur l'icône cliquée avant de partir.
+    // On le remet sur celle de la page.
+    addEventListener("pageshow", (e) => {
+      if (!e.persisted) return;
+      liens.forEach((a, i) => (i === ici ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+      vers(liens[ici], false);
+      try { sessionStorage.setItem("adm-rail", ici); } catch {}
+    });
   }
 
   // Barre du haut : « / » place le curseur dans la recherche des joueurs
@@ -285,7 +293,7 @@
       const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" });
       const defs = el("defs", {});
       const grad = el("linearGradient", { id: "g-a", x1: 0, y1: 0, x2: 0, y2: 1 });
-      grad.append(el("stop", { offset: 0, "stop-color": "#a99cf0", "stop-opacity": .28 }), el("stop", { offset: 1, "stop-color": "#a99cf0", "stop-opacity": 0 }));
+      grad.append(el("stop", { offset: 0, "stop-color": "#8eaaf0", "stop-opacity": .3 }), el("stop", { offset: 1, "stop-color": "#8eaaf0", "stop-opacity": 0 }));
       defs.append(grad); svg.append(defs);
       // la grille et ses valeurs (installations)
       const grille = el("g", { class: "grid" });
@@ -325,7 +333,7 @@
         const r = svg.getBoundingClientRect();
         const i = Math.max(0, Math.min(labels.length - 1, Math.round((e.clientX - r.left - g) / L * (labels.length - 1))));
         ligne.setAttribute("x1", x(i)); ligne.setAttribute("x2", x(i)); ligne.setAttribute("visibility", "visible");
-        bulle.innerHTML = `<b>${jour(labels[i])}</b><span><i style="background:#a99cf0"></i>${A[i]} installs</span><span><i style="background:#f2a7dc"></i>${B[i]} events</span>`;
+        bulle.innerHTML = `<b>${jour(labels[i])}</b><span><i style="background:#8eaaf0"></i>${A[i]} installs</span><span><i style="background:#5fd4e8"></i>${B[i]} events</span>`;
         bulle.style.left = x(i) + "px";
         bulle.style.top = Math.min(yA(A[i]), yB(B[i])) + "px";
         bulle.hidden = false;
