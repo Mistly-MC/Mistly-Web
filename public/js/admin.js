@@ -148,6 +148,37 @@
     s.addEventListener("change", () => s.form.requestSubmit());
   }
 
+  // Barre du haut : « / » place le curseur dans la recherche des joueurs
+  const tbq = document.getElementById("tb-q");
+  addEventListener("keydown", e => {
+    if (e.key === "/" && tbq && !/input|textarea|select/i.test(document.activeElement?.tagName || "")) { e.preventDefault(); tbq.focus(); }
+  });
+
+  // Les mini-courbes des chiffres en direct : les mesures de la session (gardées pour l'onglet)
+  const courbes = {};
+  const mesure = (id, v) => {
+    let l = [];
+    try { l = JSON.parse(sessionStorage.getItem("adm-spark-" + id)) || []; } catch {}
+    l.push(Number(v) || 0);
+    l = l.slice(-40);
+    try { sessionStorage.setItem("adm-spark-" + id, JSON.stringify(l)); } catch {}
+    courbes[id] = l;
+    dessiner(id);
+  };
+  const dessiner = (id) => {
+    const svg = document.querySelector(`svg[data-spark="${id}"]`);
+    const l = courbes[id];
+    if (!svg || !l) return;
+    const v = l.length > 1 ? l : [l[0], l[0]];
+    const max = Math.max(...v, 1), min = Math.min(...v, 0);
+    const pts = v.map((x, i) => `${(i / (v.length - 1) * 120).toFixed(1)},${(30 - (x - min) / (max - min || 1) * 26).toFixed(1)}`).join(" ");
+    svg.innerHTML = `<polygon points="0,32 ${pts} 120,32"/><polyline points="${pts}"/>`;
+  };
+  document.querySelectorAll("svg[data-spark]").forEach(svg => {
+    const id = svg.dataset.spark;
+    mesure(id, document.getElementById(id)?.textContent);
+  });
+
   // Vue d'ensemble : chiffres et joueurs en ligne toutes les 15 secondes
   const online = document.getElementById("online");
   if (online) {
@@ -168,6 +199,8 @@
         };
         set("n-launchers", d.launchers);
         set("n-client", d.players.length);
+        mesure("n-launchers", d.launchers);
+        mesure("n-client", d.players.length);
         if (!d.players.length) {
           online.innerHTML = '<p class="empty">Personne n\'est en jeu avec Mistly Client.</p>';
           return;

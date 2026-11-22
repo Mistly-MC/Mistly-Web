@@ -128,32 +128,47 @@ fn nom_ou_uuid(nom: Option<&str>, uuid: &str) -> String {
 // ---------- Squelette ----------
 
 impl Onglet {
-    /// Le chemin et la commande affichés dans l'invite en haut de chaque page.
-    fn invite(self) -> (&'static str, &'static str) {
+    /// Le titre de la page, son icône et son groupe dans le menu.
+    fn titre(self) -> &'static str {
         match self {
-            Onglet::Accueil => ("~", "mistly status --live"),
-            Onglet::Joueurs => ("~/players", "mistly players ls"),
-            Onglet::Cosmetiques => ("~/cosmetics", "mistly cosmetics rules"),
-            Onglet::Rapports => ("~/reports", "mistly reports"),
-            Onglet::Journal => ("~/log", "tail -n 200 journal.log"),
-            Onglet::Base => ("~/database", "vim joueurs.json"),
+            Onglet::Accueil => "Vue d'ensemble",
+            Onglet::Joueurs => "Joueurs",
+            Onglet::Cosmetiques => "Cosmétiques",
+            Onglet::Rapports => "Rapports",
+            Onglet::Journal => "Journal",
+            Onglet::Base => "Base de données",
+        }
+    }
+    fn icone(self) -> Markup {
+        match self {
+            Onglet::Accueil => icons::grid(),
+            Onglet::Joueurs => icons::user(),
+            Onglet::Cosmetiques => icons::sparkles(),
+            Onglet::Rapports => icons::alert(),
+            Onglet::Journal => icons::notes(),
+            Onglet::Base => icons::archive(),
+        }
+    }
+    fn lien(self) -> &'static str {
+        match self {
+            Onglet::Accueil => "/admin",
+            Onglet::Joueurs => "/admin/players",
+            Onglet::Cosmetiques => "/admin/cosmetics",
+            Onglet::Rapports => "/admin/reports",
+            Onglet::Journal => "/admin/log",
+            Onglet::Base => "/admin/database",
         }
     }
 }
 
 fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Markup) -> Markup {
     let v = ASSET_VERSION.as_str();
-    let liens = [
-        (Onglet::Accueil, "/admin", "vue d'ensemble"),
-        (Onglet::Joueurs, "/admin/players", "joueurs"),
-        (Onglet::Cosmetiques, "/admin/cosmetics", "cosmétiques"),
-        (Onglet::Rapports, "/admin/reports", "rapports"),
-        (Onglet::Journal, "/admin/log", "journal"),
-        (Onglet::Base, "/admin/database", "base de données"),
+    let groupes: [(&str, &[Onglet]); 2] = [
+        ("Pilotage", &[Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques]),
+        ("Données", &[Onglet::Rapports, Onglet::Journal, Onglet::Base]),
     ];
     html! {
         (DOCTYPE)
-        // Toujours sombre : c'est un terminal
         html lang="fr" data-theme="dark" {
             head {
                 meta charset="utf-8";
@@ -162,45 +177,62 @@ fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Mark
                 meta name="color-scheme" content="dark";
                 title { (titre) " · Mistly Admin" }
                 link rel="icon" href="/assets/icone.png";
+                link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
                 link rel="stylesheet" href=(format!("/css/admin.css?v={v}"));
                 script src=(format!("/js/admin.js?v={v}")) defer {}
             }
-            body.admin.login-page[onglet.is_none()] {
-                canvas.adm-bg aria-hidden="true" {}
-                @if let Some(o) = onglet {
-                    aside.side {
-                        a.brand href="/admin" { img src="/assets/icone.png" alt="" width="24" height="24"; span { "MISTLY" } em { "admin" } }
-                        div.host { i {} span { "admin@mistly.cc" } }
-                        nav.tree aria-label="Tableau de bord" {
-                            span.root { "~/admin" }
-                            @for (cible, href, texte) in &liens {
-                                a href=(href) aria-current=[(o == *cible).then_some("page")] {
-                                    span.br aria-hidden="true" { "──" }
-                                    span.t { (texte) }
+            body.admin {
+                div.adm-glow aria-hidden="true" {}
+                aside.side {
+                    a.brand href="/admin" {
+                        img src="/assets/icone.png" alt="" width="30" height="30";
+                        span { strong { "Mistly" } em { "Admin" } }
+                    }
+                    nav.menu aria-label="Tableau de bord" {
+                        @for (groupe, onglets) in groupes {
+                            span.menu-t { (groupe) }
+                            @for o in onglets.iter() {
+                                a href=(o.lien()) aria-current=[(onglet == Some(*o)).then_some("page")] {
+                                    span.mi { (o.icone()) }
+                                    span { (o.titre()) }
                                 }
                             }
                         }
-                        div.side-foot {
-                            div.uptime { span { "session" } code #uptime { "00:00:00" } }
-                            a href="/" target="_blank" rel="noopener" { "voir le site" (icons::external()) }
-                            form method="post" action="/admin/logout" { button.exit type="submit" { "[ exit ]" } }
+                    }
+                    div.side-foot {
+                        a.side-link href="/" target="_blank" rel="noopener" { (icons::globe()) span { "Voir le site" } (icons::external()) }
+                        div.me {
+                            span.me-av { img src="/assets/icone.png" alt="" width="20" height="20"; }
+                            div {
+                                strong { "Équipe Mistly" }
+                                span { i.dot {} "session " code #uptime { "00:00:00" } }
+                            }
+                            form method="post" action="/admin/logout" {
+                                button.me-out type="submit" aria-label="Se déconnecter" title="Se déconnecter" { (icons::arrow_right()) }
+                            }
                         }
                     }
                 }
                 main.content {
-                    @if let Some(o) = onglet {
-                        @let (chemin, commande) = o.invite();
-                        div.prompt aria-hidden="true" {
-                            span.u { "admin@mistly" } span.d { ":" } span.p { (chemin) } span.d { "$ " }
-                            span.c { (commande) } i.cursor {}
+                    header.topbar {
+                        nav.tb-crumbs aria-label="Fil d'Ariane" {
+                            span { "Admin" }
+                            (icons::chevron())
+                            strong { @if let Some(o) = onglet { (o.titre()) } @else { (titre) } }
                         }
+                        form.tb-search method="get" action="/admin/players" role="search" {
+                            (icons::search())
+                            input #tb-q type="search" name="q" placeholder="Rechercher un joueur…" aria-label="Rechercher un joueur" autocomplete="off";
+                            kbd { "/" }
+                        }
+                        span.tb-live { i {} "En ligne" }
                     }
                     @if let Some(f) = flash {
-                        @if let Some(m) = f.ok { div.flash.ok role="status" { span.k { "[ OK ]" } span { (m) } } }
-                        @if let Some(m) = f.err { div.flash.err role="alert" { span.k { "[FAIL]" } span { (m) } } }
+                        @if let Some(m) = f.ok { div.flash.ok role="status" { (icons::check()) span { (m) } } }
+                        @if let Some(m) = f.err { div.flash.err role="alert" { (icons::alert()) span { (m) } } }
                     }
-                    (corps)
+                    div.page { (corps) }
                 }
             }
         }
@@ -216,18 +248,28 @@ fn entete(titre: &str, sous: Option<&str>) -> Markup {
     }
 }
 
-/// Une barre en caractères : `██████░░░░` (sur `largeur` cases).
-fn jauge(n: u64, max: u64, largeur: usize) -> String {
-    let plein = ((n as f64 / max.max(1) as f64) * largeur as f64).round() as usize;
-    let plein = plein.min(largeur).max(usize::from(n > 0));
-    "█".repeat(plein) + &"░".repeat(largeur - plein)
-}
-
-/// Une courbe en caractères : `▁▂▄▇█▅▃`.
-fn courbe(valeurs: &[u64]) -> String {
-    const NIVEAUX: [char; 8] = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
-    let max = valeurs.iter().copied().max().unwrap_or(0).max(1);
-    valeurs.iter().map(|&v| NIVEAUX[((v * 7 + max / 2) / max) as usize]).collect()
+/// Une courbe pleine (SVG) : les valeurs de gauche à droite, dans un cadre de 600 × 140.
+fn aire(valeurs: &[u64]) -> Markup {
+    let (l, h) = (600.0_f64, 140.0_f64);
+    let max = valeurs.iter().copied().max().unwrap_or(0).max(1) as f64;
+    let n = valeurs.len().max(2) as f64 - 1.0;
+    let points: Vec<(f64, f64)> = valeurs.iter().enumerate().map(|(i, v)| (i as f64 / n * l, h - 8.0 - (*v as f64 / max) * (h - 22.0))).collect();
+    let ligne: String = points.iter().enumerate().map(|(i, (x, y))| format!("{}{x:.1},{y:.1}", if i == 0 { "M" } else { " L" })).collect();
+    let plein = format!("{ligne} L{l},{h} L0,{h} Z");
+    html! {
+        svg.area viewBox=(format!("0 0 {l} {h}")) preserveAspectRatio="none" aria-hidden="true" {
+            defs {
+                linearGradient #aire-g x1="0" y1="0" x2="0" y2="1" {
+                    stop offset="0" stop-color="#8eaaf0" stop-opacity=".45" {}
+                    stop offset="1" stop-color="#8eaaf0" stop-opacity="0" {}
+                }
+            }
+            @for k in 1..4 { line x1="0" x2=(l) y1=(k as f64 * h / 4.0) y2=(k as f64 * h / 4.0) {} }
+            path.fill d=(plein) {}
+            path.stroke d=(ligne) {}
+            @if let Some((x, y)) = points.last() { circle cx=(format!("{x:.1}")) cy=(format!("{y:.1}")) r="4" {} }
+        }
+    }
 }
 
 // ---------- Connexion ----------
@@ -309,12 +351,17 @@ pub fn connexion(erreur: Option<&str>, scene: &str) -> Markup {
 // ---------- Vue d'ensemble ----------
 
 pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Option<&Value>, journal: &[Entree]) -> Markup {
-    let carte = |valeur: String, libelle: &str, detail: Option<String>, id: Option<&str>| {
+    let carte = |valeur: String, libelle: &str, detail: Option<String>, id: Option<&str>, icone: Markup, teinte: &str| {
         html! {
-            div.stat {
+            div.stat.(teinte) {
+                div.stat-top {
+                    span.stat-ic { (icone) }
+                    span.stat-l { (libelle) }
+                }
                 strong id=[id] { (valeur) }
-                span { (libelle) }
                 @if let Some(d) = detail { small { (d) } }
+                // la courbe des dernières minutes, dessinée par admin.js
+                @if let Some(i) = id { svg.mini data-spark=(i) viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true" {} }
             }
         }
     };
@@ -325,21 +372,21 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
         html! {
             (entete("Vue d'ensemble", Some("Les chiffres en direct se mettent à jour toutes les 15 secondes.")))
             div.stats {
-                (carte(c.launchers.to_string(), "launchers ouverts", Some(format!("{} en partie · record {}", c.en_partie, c.record)), Some("n-launchers")))
-                (carte(c.client.to_string(), "en jeu avec Mistly Client", None, Some("n-client")))
-                (carte(c.joueurs.to_string(), "joueurs dans la base", Some(format!("{} actifs sur 24 h", c.actifs_24h)), None))
-                (carte(format!("+{}", c.nouveaux_24h), "nouveaux sur 24 h", Some(format!("+{} sur 7 jours", c.nouveaux_7j)), None))
-                (carte(c.version.clone().unwrap_or_else(|| "?".into()), "dernière version", None, None))
-                (carte(c.dispo.map_or_else(|| "?".into(), |d| format!("{d:.1} %")), "disponibilité (30 j)", Some(format!("{} banni(s)", c.bannis)), None))
+                (carte(c.launchers.to_string(), "Launchers ouverts", Some(format!("{} en partie · record {}", c.en_partie, c.record)), Some("n-launchers"), icons::download(), "t-green"))
+                (carte(c.client.to_string(), "En jeu avec Mistly Client", Some("relayés par le site".into()), Some("n-client"), icons::user(), "t-blue"))
+                (carte(c.joueurs.to_string(), "Joueurs dans la base", Some(format!("{} actifs sur 24 h", c.actifs_24h)), None, icons::layers(), "t-violet"))
+                (carte(format!("+{}", c.nouveaux_24h), "Nouveaux sur 24 h", Some(format!("+{} sur 7 jours", c.nouveaux_7j)), None, icons::sparkles(), "t-pink"))
+                (carte(c.version.clone().unwrap_or_else(|| "?".into()), "Dernière version", Some("du launcher".into()), None, icons::tag(), "t-amber"))
+                (carte(c.dispo.map_or_else(|| "?".into(), |d| format!("{d:.1} %")), "Disponibilité (30 j)", Some(format!("{} banni(s)", c.bannis)), None, icons::globe(), "t-cyan"))
             }
 
             div.grid2 {
                 section.panel {
-                    div.panel-head { h2 { "En jeu maintenant" } span.live { i {} "direct" } }
+                    div.panel-head { h2 { (icons::user()) "En jeu maintenant" } span.live { i {} "direct" } }
                     (table_en_ligne(en_ligne))
                 }
                 section.panel {
-                    div.panel-head { h2 { "Derniers changements" } a.more href="/admin/log" { "Tout le journal" (icons::arrow_right()) } }
+                    div.panel-head { h2 { (icons::notes()) "Derniers changements" } a.more href="/admin/log" { "Tout le journal" (icons::arrow_right()) } }
                     @if journal.is_empty() {
                         p.empty { "Aucun changement pour l'instant." }
                     } @else {
@@ -350,7 +397,7 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
 
             @if let Some(t) = telemetrie {
                 section.panel {
-                    div.panel-head { h2 { "Télémétrie (30 jours)" } span.muted { "seulement les joueurs qui l'ont acceptée" } }
+                    div.panel-head { h2 { (icons::bolt()) "Télémétrie (30 jours)" } span.muted { "seulement les joueurs qui l'ont acceptée" } }
                     (telemetrie_bloc(t))
                 }
             }
@@ -405,23 +452,26 @@ fn telemetrie_bloc(t: &Value) -> Markup {
                 h3 { (titre) }
                 @if l.is_empty() { p.empty { "—" } }
                 @for (k, n) in l.iter().take(8) {
-                    div.bar { span.k { (k) } code.track { (jauge(*n, max, 18)) } span.n { (n) } }
+                    div.bar { span.k title=(k) { (k) } span.track { i style=(format!("width:{:.1}%", (*n as f64 / max as f64 * 100.0).max(2.0))) {} } span.n { (n) } }
                 }
             }
         }
     };
     html! {
         div.tele-top {
-            div { strong { (t["installs"].as_u64().unwrap_or(0)) } span { "installations actives" } }
-            div { strong { (t["events"]["game_start"].as_u64().unwrap_or(0)) } span { "parties lancées" } }
-            div { strong { (paires(&t["crashes_by_loader"]).iter().map(|x| x.1).sum::<u64>()) } span { "plantages" } }
-            div { strong { (t["reports"].as_u64().unwrap_or(0)) } span { "rapports de logs" } }
+            div { span.tt-ic.t-blue { (icons::download()) } strong { (t["installs"].as_u64().unwrap_or(0)) } span { "installations actives" } }
+            div { span.tt-ic.t-green { (icons::bolt()) } strong { (t["events"]["game_start"].as_u64().unwrap_or(0)) } span { "parties lancées" } }
+            div { span.tt-ic.t-red { (icons::alert()) } strong { (paires(&t["crashes_by_loader"]).iter().map(|x| x.1).sum::<u64>()) } span { "plantages" } }
+            div { span.tt-ic.t-amber { (icons::notes()) } strong { (t["reports"].as_u64().unwrap_or(0)) } span { "rapports de logs" } }
         }
         @if jours.len() >= 2 {
-            div.spark title=(format!("Installations actives par jour (max {max})")) {
-                span.k { "installs/jour" }
-                code { (courbe(&jours.iter().map(|j| j.1).collect::<Vec<_>>())) }
-                span.k { (jours.first().map_or("", |j| j.0.as_str())) " → " (jours.last().map_or("", |j| j.0.as_str())) }
+            div.chart {
+                div.chart-head {
+                    span { "Installations actives par jour" }
+                    span.muted { "max " (max) }
+                }
+                (aire(&jours.iter().map(|j| j.1).collect::<Vec<_>>()))
+                div.chart-axis { span { (jours.first().map_or("", |j| j.0.as_str())) } span { (jours.last().map_or("", |j| j.0.as_str())) } }
             }
         }
         div.grid3 {
@@ -582,7 +632,7 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
 
             div.grid2 {
                 section.panel {
-                    div.panel-head { h2 { "Cosmétiques" } a.more href="/admin/cosmetics" { "Règles" (icons::arrow_right()) } }
+                    div.panel-head { h2 { (icons::sparkles()) "Cosmétiques" } a.more href="/admin/cosmetics" { "Règles" (icons::arrow_right()) } }
                     @if f.banned { p.note-bad { "Banni : aucun cosmétique n'est relayé tant que le bannissement dure." } }
                     table.tbl.cos {
                         thead { tr { th { "Cosmétique" } th { "État" } th {} } }
@@ -610,13 +660,13 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
                     }
                 }
                 section.panel {
-                    div.panel-head { h2 { "Note de l'équipe" } }
+                    div.panel-head { h2 { (icons::notes()) "Note de l'équipe" } }
                     form.note method="post" action=(action) {
                         input type="hidden" name="action" value="note";
                         textarea name="note" rows="6" maxlength=(crate::registre::MAX_NOTE) placeholder="Visible seulement ici." { (f.note) }
                         button.btn.sm type="submit" { "Enregistrer la note" }
                     }
-                    div.panel-head.sub { h2 { "Historique" } }
+                    div.panel-head.sub { h2 { (icons::refresh()) "Historique" } }
                     @if journal.is_empty() {
                         p.empty { "Aucun changement sur ce joueur." }
                     } @else {
@@ -684,7 +734,7 @@ pub fn cosmetiques(flash: &Flash, lignes: &[RegleCosmetique], early: &Early) -> 
                 }
             }
             section.panel {
-                div.panel-head { h2 { "Date des premiers joueurs" } }
+                div.panel-head { h2 { (icons::crown()) "Date des premiers joueurs" } }
                 p.muted {
                     "Les comptes vus pour la première fois avant cette date ont droit aux cosmétiques réglés sur « Premiers joueurs » (la cape early player). "
                     @match &early.date {
