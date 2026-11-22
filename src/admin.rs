@@ -234,10 +234,11 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
     }
     if !a.mot_de_passe_juste(&f.password) {
         a.rate(&adresse);
-        eprintln!("Tableau de bord : mot de passe refusé");
+        eprintln!("Tableau de bord : mot de passe refusé ({adresse})");
+        state.registre.modifier_par(Some(&adresse), "Failed sign-in (wrong password)", |_| ());
         return retour("/admin/login", false, "Wrong password.");
     }
-    state.registre.modifier("Signed in to the dashboard", |_| ());
+    state.registre.modifier_par(Some(&adresse), "Signed in to the dashboard", |_| ());
     let mut res = redirection("/admin");
     let c = format!("{COOKIE}={}; Path=/; Max-Age={SESSION}; HttpOnly; Secure; SameSite=Strict", a.nouvelle_session());
     if let Ok(v) = HeaderValue::from_str(&c) {
@@ -248,6 +249,7 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
 
 pub async fn deconnexion(State(state): State<Arc<AppState>>, entetes: HeaderMap) -> Response {
     garde!(state, entetes, post);
+    state.registre.modifier_par(Some(&crate::presence::adresse(&entetes)), "Signed out", |_| ());
     let mut res = redirection("/admin/login");
     let c = format!("{COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
     if let Ok(v) = HeaderValue::from_str(&c) {
@@ -376,6 +378,7 @@ pub struct Ajout {
 /// Ajoute un joueur par son pseudo ou son UUID (pour lui donner un cosmétique avant qu'il ne joue).
 pub async fn ajouter(State(state): State<Arc<AppState>>, entetes: HeaderMap, Form(a): Form<Ajout>) -> Response {
     garde!(state, entetes, post);
+    let ip = crate::presence::adresse(&entetes);
     let saisie = a.name.trim();
     let (uuid, nom) = if let Some(uuid) = uuid_normalise(saisie) {
         (uuid, None)
@@ -392,7 +395,7 @@ pub async fn ajouter(State(state): State<Arc<AppState>>, entetes: HeaderMap, For
         return retour("/admin/players", false, "Enter a Minecraft username or a UUID.");
     };
     let affiche = format!("{} ({})", nom.as_deref().unwrap_or("?"), avec_tirets(&uuid));
-    state.registre.modifier(&format!("Player added: {affiche}"), |b| {
+    state.registre.modifier_par(Some(&ip), &format!("Player added: {affiche}"), |b| {
         let f = b.players.entry(uuid.clone()).or_default();
         if f.name.is_none() {
             f.name = nom;
@@ -443,6 +446,7 @@ pub struct Action {
 
 pub async fn agir(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(uuid): Path<String>, Form(a): Form<Action>) -> Response {
     garde!(state, entetes, post);
+    let ip = crate::presence::adresse(&entetes);
     let Some(uuid) = uuid_normalise(&uuid) else {
         return StatusCode::NOT_FOUND.into_response();
     };
@@ -460,7 +464,7 @@ pub async fn agir(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(u
                 "revoke" => "Taken",
                 _ => "Reset to default",
             };
-            r.modifier(&format!("{verbe} to {qui}: {}", c.nom), |b| {
+            r.modifier_par(Some(&ip), &format!("{verbe} to {qui}: {}", c.nom), |b| {
                 if let Some(f) = b.players.get_mut(&uuid) {
                     f.granted.remove(c.id);
                     f.revoked.remove(c.id);
@@ -475,26 +479,26 @@ pub async fn agir(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(u
             format!("{verbe}: {}.", c.nom)
         }
         ("ban", _) => {
-            r.modifier(&format!("Banned: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = true));
+            r.modifier_par(Some(&ip), &format!("Banned: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = true));
             state.client.expulser(&uuid);
             "Player banned from the Mistly network.".into()
         }
         ("unban", _) => {
-            r.modifier(&format!("Unbanned: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = false));
+            r.modifier_par(Some(&ip), &format!("Unbanned: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = false));
             "Ban lifted.".into()
         }
         ("kick", _) => {
-            r.modifier(&format!("Kicked: {qui}"), |_| ());
+            r.modifier_par(Some(&ip), &format!("Kicked: {qui}"), |_| ());
             state.client.expulser(&uuid);
             "Player disconnected from the Mistly network (their game reconnects by itself).".into()
         }
         ("note", _) => {
             let note: String = a.note.unwrap_or_default().trim().chars().take(registre::MAX_NOTE).collect();
-            r.modifier(&format!("Note changed: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.note = note));
+            r.modifier_par(Some(&ip), &format!("Note changed: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.note = note));
             "Note saved.".into()
         }
         ("forget", _) => {
-            r.modifier(&format!("Record deleted: {qui}"), |b| b.players.remove(&uuid));
+            r.modifier_par(Some(&ip), &format!("Record deleted: {qui}"), |b| b.players.remove(&uuid));
             state.client.expulser(&uuid);
             return retour("/admin/players", true, "Record deleted.");
         }
@@ -536,22 +540,23 @@ pub struct ChangementRegle {
 
 pub async fn changer_regle(State(state): State<Arc<AppState>>, entetes: HeaderMap, Form(c): Form<ChangementRegle>) -> Response {
     garde!(state, entetes, post);
+    let ip = crate::presence::adresse(&entetes);
     if let Some(date) = c.early_before {
         let date = date.trim().to_string();
         if date.is_empty() {
-            state.registre.modifier("Early players date: the EARLY_BEFORE one", |b| b.early_before = None);
+            state.registre.modifier_par(Some(&ip), "Early players date: the EARLY_BEFORE one", |b| b.early_before = None);
             return retour("/admin/cosmetics", true, "The date is back to the EARLY_BEFORE one.");
         }
         if registre::date_unix(&date).is_none() {
             return retour("/admin/cosmetics", false, "Invalid date (YYYY-MM-DD).");
         }
-        state.registre.modifier(&format!("Early players date: {date}"), |b| b.early_before = Some(date));
+        state.registre.modifier_par(Some(&ip), &format!("Early players date: {date}"), |b| b.early_before = Some(date));
         return retour("/admin/cosmetics", true, "Early players date saved.");
     }
     let (Some(cos), Some(regle)) = (c.cosmetic.as_deref().and_then(registre::cosmetique), c.rule.as_deref().and_then(Regle::depuis)) else {
         return retour("/admin/cosmetics", false, "Invalid choice.");
     };
-    state.registre.modifier(&format!("{} : {}", cos.nom, regle.libelle()), |b| {
+    state.registre.modifier_par(Some(&ip), &format!("{} : {}", cos.nom, regle.libelle()), |b| {
         if regle == cos.regle_par_defaut {
             b.cosmetics.remove(cos.id);
         } else {
@@ -574,6 +579,7 @@ pub async fn boutique(State(state): State<Arc<AppState>>, entetes: HeaderMap, Qu
 /// Enregistre les réglages de toute la boutique (`<article>.prix`, `.statut`, `.nouveau`…).
 pub async fn enregistrer_boutique(State(state): State<Arc<AppState>>, entetes: HeaderMap, Form(champs): Form<Vec<(String, String)>>) -> Response {
     garde!(state, entetes, post);
+    let ip = crate::presence::adresse(&entetes);
     use crate::boutique::{Reglage, Statut};
     let mut reglages: std::collections::BTreeMap<String, Reglage> = std::collections::BTreeMap::new();
     for l in crate::views::shop::pour_admin() {
@@ -597,8 +603,92 @@ pub async fn enregistrer_boutique(State(state): State<Arc<AppState>>, entetes: H
     if let Err(e) = crate::boutique::remplacer(reglages) {
         return retour("/admin/shop", false, &format!("Could not save the shop: {e}"));
     }
-    state.registre.modifier("Shop settings saved", |_| ());
+    state.registre.modifier_par(Some(&ip), "Shop settings saved", |_| ());
     retour("/admin/shop", true, "Shop saved.")
+}
+
+// ---------- Docs de l'équipe ----------
+
+pub async fn docs(State(state): State<Arc<AppState>>, entetes: HeaderMap) -> Response {
+    garde!(state, entetes);
+    let dossier = std::env::var("MISTY_CACHE_DIR").ok().filter(|d| !d.is_empty());
+    let taille = |nom: &str| -> Option<u64> {
+        let p = std::path::Path::new(dossier.as_deref()?).join(nom);
+        let m = std::fs::metadata(&p).ok()?;
+        if m.is_dir() {
+            Some(std::fs::read_dir(&p).ok()?.flatten().filter_map(|e| e.metadata().ok()).map(|m| m.len()).sum())
+        } else {
+            Some(m.len())
+        }
+    };
+    let fichiers = [
+        ("joueurs.json", "Player records, cosmetic rules, early date and this log"),
+        ("boutique.json", "Shop settings (prices, status, hidden items)"),
+        ("telemetry", "Telemetry events and log reports (90 days)"),
+        ("misty-site-releases.json", "Launcher releases cached from GitHub"),
+        ("misty-site-client-releases.json", "Mistly Client releases cached from GitHub"),
+        ("misty-site-downloads", "Copy of the latest launcher files (served by /download)"),
+    ]
+    .into_iter()
+    .map(|(n, r)| (n, r, taille(n)))
+    .collect();
+    let tele = state.telemetrie.dossier();
+    let jours = std::fs::read_dir(&tele).map(|l| l.flatten().filter(|e| e.file_name().to_string_lossy().starts_with("events-")).count()).unwrap_or(0);
+    let rapports = std::fs::read_dir(tele.join("reports")).map(|l| l.flatten().count()).unwrap_or(0);
+    let lignes = state.status.lignes();
+    let en_ligne = lignes.iter().filter(|l| l.actuel.map(|m| m.etat) == Some(crate::status::Etat::EnLigne)).count();
+    let (launchers, en_partie) = state.presence.compte();
+    let regle = |k: &str| std::env::var(k).ok().is_some_and(|v| !v.trim().is_empty());
+    let reglages = vec![
+        ("ADMIN_PASSWORD", regle("ADMIN_PASSWORD"), "Opens this dashboard (12 characters or more)"),
+        ("MISTY_CACHE_DIR", regle("MISTY_CACHE_DIR"), "Data folder (/app/data in Docker)"),
+        ("SITE_URL", regle("SITE_URL"), "Public address (default https://mistly.cc)"),
+        ("GITHUB_TOKEN", regle("GITHUB_TOKEN"), "GitHub API: releases, deployments, contributor stats"),
+        ("TELEMETRY_TOKEN", regle("TELEMETRY_TOKEN"), "Reads /api/telemetry/summary and reports"),
+        ("DISCORD_WEBHOOK", regle("DISCORD_WEBHOOK"), "Team channel: reports and daily summary"),
+        ("VERIFY_SECRET", regle("VERIFY_SECRET"), "Mistly Bot captcha (with DISCORD_TOKEN)"),
+        ("DISCORD_TOKEN", regle("DISCORD_TOKEN"), "Mistly Bot token, to give the verified role"),
+        ("DISCORD_CLIENT_SECRET", regle("DISCORD_CLIENT_SECRET"), "Captcha inside Discord (Activity)"),
+        ("EARLY_BEFORE", regle("EARLY_BEFORE"), "Default early players date (the dashboard's wins)"),
+        ("STATUS_URL", regle("STATUS_URL"), "Sends /status to status.mistly.cc"),
+        ("SHOP_URL", regle("SHOP_URL"), "Sends /shop to shop.mistly.cc"),
+        ("DOCS_URL", regle("DOCS_URL"), "Sends /docs to docs.mistly.cc"),
+        ("DONATE_URL", regle("DONATE_URL"), "Donate button (Buy Me a Coffee by default, empty hides it)"),
+        ("INDEXNOW_KEY", regle("INDEXNOW_KEY"), "Announces new pages to Bing and Yandex"),
+        ("GOOGLE_SITE_VERIFICATION", regle("GOOGLE_SITE_VERIFICATION"), "Google Search Console"),
+    ];
+    let d = vue::Diag {
+        launchers,
+        en_partie,
+        client: state.client.liste_en_ligne().len(),
+        fiches: state.registre.copie().players.len(),
+        dossier,
+        fichiers,
+        github: vec![
+            ("Launcher releases", state.github.repo().to_string(), state.github.sante()),
+            ("Mistly Client releases", state.client_releases.repo().to_string(), state.client_releases.sante()),
+        ],
+        deploiements: state
+            .deploiements
+            .liste()
+            .into_iter()
+            .map(|(p, repo, e)| {
+                let nom = match p {
+                    crate::deploiements::Projet::Launcher => "Launcher",
+                    crate::deploiements::Projet::Client => "Mistly Client",
+                    crate::deploiements::Projet::Site => "Website",
+                };
+                (nom, repo, e.map(|l| l.len()))
+            })
+            .collect(),
+        contributeurs: crate::contributeurs::de("Claude").is_some(),
+        services: (en_ligne, lignes.len()),
+        age_statut: state.status.age(),
+        dispo: state.status.dispo_globale(),
+        telemetrie: (jours, rapports, regle("TELEMETRY_TOKEN")),
+        reglages,
+    };
+    page(vue::docs(&d))
 }
 
 // ---------- Rapports de logs ----------
@@ -691,11 +781,12 @@ pub struct Edition {
 
 pub async fn enregistrer_base(State(state): State<Arc<AppState>>, entetes: HeaderMap, Form(e): Form<Edition>) -> Response {
     garde!(state, entetes, post);
+    let ip = crate::presence::adresse(&entetes);
     let nouvelle: registre::Base = match serde_json::from_str(&e.json) {
         Ok(b) => b,
         Err(err) => return retour("/admin/database", false, &format!("Invalid JSON: {err}")),
     };
-    match state.registre.remplacer(nouvelle) {
+    match state.registre.remplacer(nouvelle, Some(&ip)) {
         Ok(()) => {
             for j in state.client.liste_en_ligne() {
                 if state.registre.banni(&j.uuid) {

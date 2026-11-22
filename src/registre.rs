@@ -116,6 +116,10 @@ pub struct Entree {
     /// Secondes Unix
     pub at: u64,
     pub text: String,
+    /// L'adresse IP de qui a fait le changement depuis le tableau de bord (les entrées plus
+    /// anciennes et les changements automatiques n'en ont pas)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
 }
 
 /// Le contenu de `joueurs.json`.
@@ -302,9 +306,14 @@ impl Registre {
 
     /// Change la base depuis le tableau de bord, note le changement au journal et l'écrit tout de suite.
     pub fn modifier<R>(&self, journal: &str, f: impl FnOnce(&mut Base) -> R) -> R {
+        self.modifier_par(None, journal, f)
+    }
+
+    /// Comme `modifier`, en notant au journal l'adresse IP de qui fait le changement.
+    pub fn modifier_par<R>(&self, ip: Option<&str>, journal: &str, f: impl FnOnce(&mut Base) -> R) -> R {
         let mut base = self.base.lock().unwrap();
         let r = f(&mut base);
-        base.log.push(Entree { at: maintenant(), text: journal.to_string() });
+        base.log.push(Entree { at: maintenant(), text: journal.to_string(), ip: ip.map(str::to_string) });
         let trop = base.log.len().saturating_sub(MAX_JOURNAL);
         base.log.drain(..trop);
         drop(base);
@@ -313,9 +322,9 @@ impl Registre {
     }
 
     /// Remplace toute la base (éditeur JSON du tableau de bord). Le journal envoyé est ignoré : on garde le vrai.
-    pub fn remplacer(&self, mut nouvelle: Base) -> Result<(), String> {
+    pub fn remplacer(&self, mut nouvelle: Base, ip: Option<&str>) -> Result<(), String> {
         nouvelle.valider()?;
-        self.modifier("Database replaced from the JSON editor", |base| {
+        self.modifier_par(ip, "Database replaced from the JSON editor", |base| {
             nouvelle.log = std::mem::take(&mut base.log);
             *base = nouvelle;
         });
@@ -474,9 +483,9 @@ mod tests {
         let r = registre(None);
         r.modifier("avant", |_| ());
         let mut nouvelle = Base::default();
-        nouvelle.log.push(Entree { at: 1, text: "faux".into() });
+        nouvelle.log.push(Entree { at: 1, text: "faux".into(), ip: None });
         nouvelle.players.insert(ALEX.into(), Fiche::default());
-        r.remplacer(nouvelle).unwrap();
+        r.remplacer(nouvelle, None).unwrap();
         let b = r.copie();
         assert_eq!(b.players.len(), 1);
         assert_eq!(b.log.iter().map(|e| e.text.as_str()).collect::<Vec<_>>(), ["avant", "Database replaced from the JSON editor"]);

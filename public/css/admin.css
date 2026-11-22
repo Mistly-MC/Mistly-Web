@@ -291,6 +291,47 @@ body.admin.login-page{display:block}
 .log time{font-size:12px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
 .log.full li{grid-template-columns:170px minmax(0,1fr)}
 
+.ip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--lilac);background:rgb(142 170 240 / .12);vertical-align:middle}
+.msgs .ip{margin-left:0;padding:0 6px;font-size:10.5px}
+
+/* ---------- Docs de l'équipe ---------- */
+.doc-toc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.doc-toc a{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;color:var(--sub);background:var(--card);transition:color .15s,background .15s}
+.doc-toc a:hover{color:var(--txt);background:var(--card-2)}
+.diag{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.diag-card{padding:16px 18px;border-radius:18px;background:var(--card-2)}
+.diag-card h3,.api-g,.cols2 h3{margin-bottom:12px;font-size:14px;font-weight:600}
+.diag-card dl{display:flex;flex-direction:column;gap:10px}
+.diag-card dl div{display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.diag-card dt{color:var(--sub)}
+.diag-card dd{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.gh-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.gh-row>div{display:flex;flex-direction:column;min-width:0}
+.gh-row strong{font-size:13.5px}
+.gh-row small{font-size:11.5px;color:var(--sub)}
+.gh-detail{margin-top:4px;font-size:12.5px;line-height:1.6;color:var(--sub);overflow-wrap:anywhere}
+.files{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.files li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;font-size:12.5px}
+.files code{font-size:12px;color:var(--txt)}
+.files span:not(.tag){grid-column:1;color:var(--sub)}
+.files .tag{grid-column:2;grid-row:1/3}
+.api-g{margin-top:18px}
+.tbl.api{table-layout:fixed}
+.tbl.api td{vertical-align:top}
+.tbl.api td.m{width:90px}
+.tbl.api td.who{width:150px;text-align:right}
+.tbl.api code{font-size:12.5px;color:var(--txt)}
+.tbl.api p{margin-top:4px;font-size:13px;color:var(--sub)}
+.verb{display:inline-block;padding:3px 9px;border-radius:7px;font-family:var(--mono);font-size:11px;font-weight:700;color:#0b1224;background:var(--mint)}
+.verb.post{background:var(--lilac)}
+.note-small{margin-top:14px;font-size:12.5px}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.dots{display:flex;flex-direction:column;gap:9px;font-size:13.5px;color:var(--sub)}
+.dots li{position:relative;padding-left:16px}
+.dots li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--lilac)}
+.dots code{font-size:12px;color:var(--txt)}
+@media (max-width:1100px){.diag,.cols2{grid-template-columns:minmax(0,1fr)}}
+
 /* ---------- Cosmétiques ---------- */
 .rule select{min-width:210px;cursor:pointer;border-radius:999px}
 .legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}

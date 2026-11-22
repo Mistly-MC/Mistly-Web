@@ -117,6 +117,20 @@ struct Etat {
     etag: Option<String>,
     /// Échecs consécutifs (0 = la dernière tentative a réussi, ou aucune tentative encore)
     echecs: u32,
+    /// Dernière lecture réussie chez GitHub (API ou flux Atom), et dernière erreur
+    reussite: Option<std::time::SystemTime>,
+    erreur: Option<String>,
+}
+
+/// L'état des données GitHub, pour la page de diagnostic du tableau de bord.
+pub struct Sante {
+    pub versions: usize,
+    pub derniere: Option<String>,
+    pub echecs: u32,
+    /// Secondes depuis la dernière lecture réussie
+    pub depuis: Option<u64>,
+    pub erreur: Option<String>,
+    pub jeton: bool,
 }
 
 pub struct GitHub {
@@ -185,6 +199,18 @@ impl GitHub {
         }
     }
 
+    pub fn sante(&self) -> Sante {
+        let e = self.etat.lock().unwrap();
+        Sante {
+            versions: e.liste.as_ref().map_or(0, |l| l.len()),
+            derniere: e.liste.as_deref().and_then(|l| latest(l)).map(|r| r.tag_name.clone()),
+            echecs: e.echecs,
+            depuis: e.reussite.and_then(|t| t.elapsed().ok()).map(|d| d.as_secs()),
+            erreur: e.erreur.clone(),
+            jeton: self.token.is_some(),
+        }
+    }
+
     pub fn repo(&self) -> &str {
         &self.repo
     }
@@ -247,6 +273,8 @@ impl GitHub {
                     eprintln!("GitHub de nouveau joignable (après {} échec(s))", e.echecs);
                 }
                 e.echecs = 0;
+                e.reussite = Some(std::time::SystemTime::now());
+                e.erreur = None;
                 if let Reponse::Nouvelle(liste, etag) = reponse {
                     if let Ok(json) = serde_json::to_vec(&liste) {
                         let _ = std::fs::write(&self.fichier_cache, json);
@@ -257,6 +285,7 @@ impl GitHub {
             }
             Err(err) => {
                 e.echecs += 1;
+                e.erreur = Some(err.to_string());
                 // une ligne au premier échec, puis une toutes les 10 tentatives
                 if e.echecs == 1 || e.echecs % 10 == 0 {
                     let servie = if e.liste.is_some() {

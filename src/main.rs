@@ -281,6 +281,7 @@ async fn main() {
         .route("/admin/players/{uuid}", get(admin::fiche).post(admin::agir).layer(DefaultBodyLimit::max(16 * 1024)))
         .route("/admin/cosmetics", get(admin::cosmetiques).post(admin::changer_regle).layer(DefaultBodyLimit::max(4 * 1024)))
         .route("/admin/shop", get(admin::boutique).post(admin::enregistrer_boutique).layer(DefaultBodyLimit::max(64 * 1024)))
+        .route("/admin/docs", get(admin::docs))
         .route("/admin/reports", get(admin::rapports))
         .route("/admin/log", get(admin::journal))
         .route("/admin/database", get(admin::base).post(admin::enregistrer_base).layer(DefaultBodyLimit::max(64 * 1024 * 1024)))

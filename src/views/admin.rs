@@ -73,6 +73,7 @@ enum Onglet {
     Joueurs,
     Cosmetiques,
     Boutique,
+    Docs,
     Rapports,
     Journal,
     Base,
@@ -143,6 +144,7 @@ impl Onglet {
             Onglet::Joueurs => "Players",
             Onglet::Cosmetiques => "Cosmetics",
             Onglet::Boutique => "Shop",
+            Onglet::Docs => "Docs",
             Onglet::Rapports => "Reports",
             Onglet::Journal => "Log",
             Onglet::Base => "Database",
@@ -154,6 +156,7 @@ impl Onglet {
             Onglet::Joueurs => icons::user(),
             Onglet::Cosmetiques => icons::sparkles(),
             Onglet::Boutique => icons::bag(),
+            Onglet::Docs => icons::bolt(),
             Onglet::Rapports => icons::alert(),
             Onglet::Journal => icons::notes(),
             Onglet::Base => icons::archive(),
@@ -165,6 +168,7 @@ impl Onglet {
             Onglet::Joueurs => "/admin/players",
             Onglet::Cosmetiques => "/admin/cosmetics",
             Onglet::Boutique => "/admin/shop",
+            Onglet::Docs => "/admin/docs",
             Onglet::Rapports => "/admin/reports",
             Onglet::Journal => "/admin/log",
             Onglet::Base => "/admin/database",
@@ -174,7 +178,7 @@ impl Onglet {
 
 fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Markup) -> Markup {
     let v = ASSET_VERSION.as_str();
-    let onglets = [Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Boutique, Onglet::Rapports, Onglet::Journal, Onglet::Base];
+    let onglets = [Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Boutique, Onglet::Rapports, Onglet::Journal, Onglet::Base, Onglet::Docs];
     html! {
         (DOCTYPE)
         html lang="en" data-theme="dark" {
@@ -385,7 +389,7 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
                                 @for e in journal.iter().take(6) {
                                     li {
                                         span.msg-ic { (icons::notes()) }
-                                        div { strong { (e.text) } time { (il_y_a(e.at)) } }
+                                        div { strong { (e.text) } time { (il_y_a(e.at)) @if let Some(ip) = &e.ip { " · " code.ip { (ip) } } } }
                                     }
                                 }
                             }
@@ -706,7 +710,7 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
                     @if journal.is_empty() {
                         p.empty { "No changes on this player." }
                     } @else {
-                        ul.log { @for e in journal { li { time title=(date(e.at)) { (il_y_a(e.at)) } span { (e.text) } } } }
+                        ul.log { @for e in journal { li { time title=(date(e.at)) { (il_y_a(e.at)) } span { (e.text) @if let Some(ip) = &e.ip { " " code.ip title="IP address" { (ip) } } } } } }
                     }
                 }
             }
@@ -846,6 +850,242 @@ pub fn boutique(flash: &Flash, lignes: &[crate::views::shop::LigneAdmin]) -> Mar
     )
 }
 
+// ---------- Docs de l'équipe ----------
+
+/// Ce que la page de diagnostic montre en direct.
+pub struct Diag {
+    pub launchers: usize,
+    pub en_partie: usize,
+    pub client: usize,
+    pub fiches: usize,
+    pub dossier: Option<String>,
+    /// (fichier ou dossier dans le dossier de données, taille en octets s'il existe)
+    pub fichiers: Vec<(&'static str, &'static str, Option<u64>)>,
+    /// (nom, dépôt, état)
+    pub github: Vec<(&'static str, String, crate::github::Sante)>,
+    /// (projet, dépôt, exécutions lues)
+    pub deploiements: Vec<(&'static str, String, Option<usize>)>,
+    pub contributeurs: bool,
+    pub services: (usize, usize),
+    pub age_statut: Option<u64>,
+    pub dispo: Option<f32>,
+    /// (jours de télémétrie sur le disque, rapports gardés, lecture par jeton possible)
+    pub telemetrie: (usize, usize, bool),
+    /// (variable, réglée)
+    pub reglages: Vec<(&'static str, bool, &'static str)>,
+}
+
+/// Une route de l'API : méthode, chemin, qui peut l'appeler, ce qu'elle fait.
+type Route = (&'static str, &'static str, &'static str, &'static str);
+/// Les routes de l'API, par groupe, pour la page Docs.
+const API: [(&str, &[Route]); 6] = [
+    ("Website & launcher", &[
+        ("GET", "/api/latest", "public", "Latest launcher release: version, date, notes and file sizes. Used by the launcher's updater and the website. 503 while GitHub was never reached."),
+        ("GET", "/download/{setup|portable|linux}", "public", "Downloads the latest launcher file: server copy first, then relayed from GitHub, then a redirect to GitHub."),
+        ("GET", "/status.json", "public", "Every checked service with its state, latency and 30-day uptime."),
+        ("GET", "/api/online", "public", "Launchers open right now (seen in the last 3 minutes) and how many are in a game."),
+        ("POST", "/api/presence", "launcher", "Heartbeat sent every 60 s by each open launcher: a random per-launch session id and whether a game is running. Kept in memory only."),
+        ("GET", "/skin/{name} · /cape/{name} · /player/{name}", "public", "Minecraft skin, cape and profile relayed from Mojang (fallback mc-heads.net), for the shop's 3D preview and player heads."),
+    ]),
+    ("Mistly Client (in game)", &[
+        ("POST", "/api/client/login", "game", "The game proves its account like on a Minecraft server (joinServer / hasJoined at Mojang) and gets a token. The Minecraft token never leaves the game."),
+        ("POST", "/api/client/presence", "token", "Heartbeat every minute with what the player wears (back: cape or elytra; head: hat)."),
+        ("POST", "/api/client/players", "token", "Among the given players (those on the same server), who plays with Mistly and what they wear."),
+        ("GET", "/api/client/early/{uuid}", "public", "Whether this account gets the early player cape."),
+        ("GET", "/api/client/cosmetics/{uuid}", "public", "The cosmetics this account may wear (rules, given or taken cosmetics, bans)."),
+    ]),
+    ("Telemetry", &[
+        ("POST", "/api/telemetry", "launcher", "One event (game start, game end or crash, update…) from players who accepted telemetry."),
+        ("POST", "/api/telemetry/report", "launcher", "The last console lines of a game (sent by the player, or after a crash). Answers the report code (MR-XXXXXXX)."),
+        ("GET", "/api/telemetry/summary", "TELEMETRY_TOKEN", "30-day summary: installs, events, versions, games and crashes by loader, reports. Bearer token."),
+        ("GET", "/api/telemetry/report/{code}", "TELEMETRY_TOKEN", "One log report. Bearer token. Also readable here in Reports."),
+    ]),
+    ("Discord bot (captcha)", &[
+        ("GET", "/verify", "public", "Captcha page a new member opens from Mistly Bot."),
+        ("POST", "/verify/new · /verify/answer", "public", "New puzzle, and the answer check (then the bot gives the role)."),
+        ("GET", "/verify/captcha/{id}/{file}", "public", "Puzzle images."),
+        ("POST", "/api/verify/config", "VERIFY_SECRET", "The bot sends each server's settings (role to give)."),
+        ("GET/POST", "/activity · /activity/start · /activity/log", "Discord", "The same captcha inside Discord (Activity)."),
+    ]),
+    ("Pages & search engines", &[
+        ("GET", "/docs/search.json", "public", "Full-text index of the documentation, for the docs search box."),
+        ("GET", "/sitemap.xml · /robots.txt · /indexnow.txt", "public", "Search engines. IndexNow announces new pages to Bing and Yandex when INDEXNOW_KEY is set."),
+        ("GET", "/site.webmanifest", "public", "Web app manifest (icon, name, colors)."),
+    ]),
+    ("Dashboard (this site, a0 only)", &[
+        ("GET/POST", "/admin/login · /admin/logout", "password", "Signed session cookie (HMAC, 12 h, HttpOnly, Secure, SameSite=Strict). 8 wrong passwords per address lock it for 15 minutes."),
+        ("GET", "/admin/online.json", "session", "Live numbers of the overview, refreshed every 15 s."),
+        ("GET/POST", "/admin/players · /admin/players/{uuid}", "session", "Player list and record: give or take cosmetics, ban, kick, note, delete."),
+        ("GET/POST", "/admin/cosmetics · /admin/shop", "session", "Cosmetic rules, early players date, shop prices and status."),
+        ("GET/POST", "/admin/database · /admin/database.json", "session", "Edit or download joueurs.json."),
+    ]),
+];
+
+pub fn docs(d: &Diag) -> Markup {
+    let pastille = |ok: bool, oui: &str, non: &str| html! { @if ok { span.tag.on { (oui) } } @else { span.tag.bad { (non) } } };
+    let taille = |o: u64| if o < 1024 { format!("{o} B") } else if o < 1024 * 1024 { format!("{:.1} KB", o as f64 / 1024.0) } else { format!("{:.1} MB", o as f64 / 1048576.0) };
+    shell(
+        "Docs",
+        Some(Onglet::Docs),
+        None,
+        html! {
+            (entete("Docs", Some("For the team: the live state of the site, every API endpoint, how telemetry works and where data is kept. Secrets are never shown here, only whether they are set.")))
+            nav.doc-toc {
+                a href="#diag" { "Live diagnostics" } a href="#api" { "API endpoints" } a href="#telemetry" { "Telemetry" }
+                a href="#data" { "Data files" } a href="#settings" { "Settings" } a href="#domains" { "Domains" }
+            }
+
+            section.panel #diag {
+                div.panel-head { h2 { (icons::bolt()) "Live diagnostics" } span.live { i {} "live" } }
+                div.diag {
+                    div.diag-card {
+                        h3 { "Mistly network" }
+                        dl {
+                            div { dt { "Open launchers" } dd { (d.launchers) " · " (d.en_partie) " in game" } }
+                            div { dt { "Mistly Client players online" } dd { (d.client) } }
+                            div { dt { "Player records" } dd { (d.fiches) } }
+                            div { dt { "Status checks" } dd {
+                                (d.services.0) "/" (d.services.1) " up · checked " (d.age_statut.map_or_else(|| "not yet".into(), |s| format!("{s} s ago")))
+                            } }
+                            div { dt { "30-day uptime" } dd { (d.dispo.map_or_else(|| "—".into(), |v| format!("{v:.2} %"))) } }
+                        }
+                    }
+                    div.diag-card {
+                        h3 { "GitHub data" }
+                        @for (nom, repo, s) in &d.github {
+                            div.gh-row {
+                                div {
+                                    strong { (nom) }
+                                    small.mono { (repo) }
+                                }
+                                @if s.versions > 0 && s.echecs == 0 { span.tag.on { "OK" } } @else if s.versions > 0 { span.tag.take { "stale" } } @else { span.tag.bad { "no data" } }
+                            }
+                            p.gh-detail {
+                                (s.versions) " release(s) · latest " code { (s.derniere.as_deref().unwrap_or("—")) }
+                                " · last fetched " (s.depuis.map_or_else(|| "never".into(), |x| if x < 60 { "just now".into() } else { format!("{} min ago", x / 60) }))
+                                @if s.echecs > 0 { " · " span.bad-txt { (s.echecs) " failure(s) in a row" } }
+                                @if let Some(e) = &s.erreur { br; span.bad-txt.mono { (e) } }
+                            }
+                        }
+                        @for (nom, repo, n) in &d.deploiements {
+                            div.gh-row {
+                                div { strong { (nom) " deployments" } small.mono { (repo) } }
+                                @match n { Some(n) => span.tag.on { (n) " runs" }, None => span.tag.take { "not read yet" } }
+                            }
+                        }
+                        div.gh-row {
+                            div { strong { "Contributor stats (footer)" } small.mono { "stats/contributors" } }
+                            (pastille(d.contributeurs, "loaded", "not yet"))
+                        }
+                        div.gh-row {
+                            div { strong { "GITHUB_TOKEN" } small { "5,000 requests/h instead of 60" } }
+                            (pastille(d.github.first().is_some_and(|g| g.2.jeton), "set", "not set"))
+                        }
+                    }
+                    div.diag-card {
+                        h3 { "Data folder" }
+                        p.gh-detail {
+                            @match &d.dossier {
+                                Some(dir) => { code { (dir) } " · must be a persistent volume (Coolify: Persistent Storage), or everything below is lost on each deploy." }
+                                None => { span.bad-txt { "MISTY_CACHE_DIR is not set: nothing is saved to disk." } }
+                            }
+                        }
+                        ul.files {
+                            @for (nom, role, t) in &d.fichiers {
+                                li {
+                                    code { (nom) }
+                                    span { (role) }
+                                    @match t { Some(o) => span.tag.on { (taille(*o)) }, None => span.tag { "missing" } }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            section.panel #api {
+                div.panel-head { h2 { (icons::layers()) "API endpoints" } span.muted { "Base: https://mistly.cc (the old misty-launcher.online still serves the API and downloads)" } }
+                @for (groupe, routes) in API {
+                    h3.api-g { (groupe) }
+                    table.tbl.api {
+                        tbody {
+                            @for (methode, chemin, qui, quoi) in routes.iter() {
+                                tr {
+                                    td.m { span.verb.(methode.split('/').next().unwrap_or("").to_lowercase()) { (methode) } }
+                                    td { code { (chemin) } p { (quoi) } }
+                                    td.who { span.tag.give { (qui) } }
+                                }
+                            }
+                        }
+                    }
+                }
+                p.muted.note-small { "Rate limits (per address, in memory): telemetry 240 events and 12 reports per hour, Mistly Client a few calls per minute. No IP address is stored by the public API; only dashboard actions record the IP of the team member who made them, in the log." }
+            }
+
+            section.panel #telemetry {
+                div.panel-head { h2 { (icons::bolt()) "Telemetry" } }
+                div.cols2 {
+                    div {
+                        h3 { "What is sent" }
+                        ul.dots {
+                            li { "Only from players who said yes on the launcher's Privacy screen (Settings → Privacy shows exactly what is sent)." }
+                            li { "Only these fields are kept, anything else is dropped: a random installation id (players can draw a new one), the launcher version, the system, the RAM and the language." }
+                            li { "Events: a short name and a few flat fields. Counted here: " code { "game_start" } " (with the loader), " code { "game_end" } " (crashed or not) and " code { "update" } "." }
+                            li { "Log reports: the last console lines, when the player clicks “Send logs” or after a crash. Each gets a code like " code { "MR-ABCD234" } " the player gives on Discord." }
+                            li { "Never kept: IP addresses (only used in memory to limit the rate)." }
+                        }
+                    }
+                    div {
+                        h3 { "Where it goes" }
+                        ul.dots {
+                            li { code { "telemetry/events-YYYY-MM-DD.jsonl" } " : one line per event, one file per day." }
+                            li { code { "telemetry/reports/MR-XXXXXXX.json" } " : one file per report (log capped at 700 KB)." }
+                            li { "Everything older than 90 days is deleted automatically." }
+                            li { "On disk now: " strong { (d.telemetrie.0) } " day(s) of events, " strong { (d.telemetrie.1) } " report(s)." }
+                            li { "Read with " code { "TELEMETRY_TOKEN" } " (" (if d.telemetrie.2 { "set" } else { "not set: the read endpoints answer 404" }) "), or here: Overview and Reports." }
+                            li { "With " code { "DISCORD_WEBHOOK" } ", each report and a daily summary (8 am, Paris) are posted to the team's Discord channel." }
+                        }
+                    }
+                }
+            }
+
+            section.panel #data {
+                div.panel-head { h2 { (icons::archive()) "Data files" } }
+                p.muted { "Everything lives in the data folder above. joueurs.json and boutique.json are written on every change; new players are saved every 20 s and when the container stops." }
+            }
+
+            section.panel #settings {
+                div.panel-head { h2 { (icons::tag()) "Settings (environment variables)" } span.muted { "set in Coolify; values are never shown" } }
+                table.tbl {
+                    tbody {
+                        @for (nom, ok, role) in &d.reglages {
+                            tr {
+                                td { code { (nom) } }
+                                td.muted { (role) }
+                                td.num { @if *ok { span.tag.on { "set" } } @else { span.tag { "not set" } } }
+                            }
+                        }
+                    }
+                }
+            }
+
+            section.panel #domains {
+                div.panel-head { h2 { (icons::globe()) "Domains" } }
+                table.tbl {
+                    tbody {
+                        tr { td { code { "mistly.cc" } } td.muted { "The website. /admin answers 404 here." } }
+                        tr { td { code { "a0.mistly.cc" } } td.muted { "This dashboard." } }
+                        tr { td { code { "status.mistly.cc" } } td.muted { "Status page at the root (STATUS_URL makes /status redirect there)." } }
+                        tr { td { code { "shop.mistly.cc" } } td.muted { "The shop at the root, /capes, /item/<id>… (SHOP_URL)." } }
+                        tr { td { code { "docs.mistly.cc" } } td.muted { "The documentation at the root (DOCS_URL)." } }
+                        tr { td { code { "misty-launcher.online" } } td.muted { "Old domain: pages redirect to mistly.cc, the API and downloads still answer (old launchers)." } }
+                    }
+                }
+            }
+        },
+    )
+}
+
 // ---------- Rapports ----------
 
 pub fn rapports(erreur: Option<&str>, recents: &[Value], detail: Option<&Value>) -> Markup {
@@ -924,7 +1164,7 @@ pub fn journal(log: &[Entree]) -> Markup {
                 @if log.is_empty() {
                     p.empty { "The log is empty." }
                 } @else {
-                    ul.log.full { @for e in log.iter().rev() { li { time { (date(e.at)) } span { (e.text) } } } }
+                    ul.log.full { @for e in log.iter().rev() { li { time { (date(e.at)) } span { (e.text) @if let Some(ip) = &e.ip { " " code.ip title="IP address" { (ip) } } } } } }
                 }
             }
         },
