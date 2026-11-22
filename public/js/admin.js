@@ -210,16 +210,110 @@
           online.innerHTML = '<p class="empty">Personne n\'est en jeu avec Mistly Client.</p>';
           return;
         }
+        // le même gabarit que la page (liste_en_ligne dans views/admin.rs)
         const rows = d.players.map((p) => {
           const wear = [p.cosmetic, p.hat].filter(Boolean).map((c) => names[c] || c).join(" + ") || "—";
           const label = p.name || p.uuid.slice(0, 8) + "…";
-          return `<tr><td><a class="who" href="/admin/players/${esc(p.uuid)}"><canvas class="head" width="8" height="8" ${p.name ? `data-name="${esc(p.name)}"` : ""} style="width:24px;height:24px" aria-hidden="true"></canvas><span>${esc(label)}</span></a></td><td class="muted">${esc(wear)}</td><td class="num muted">${since(p.since)}</td></tr>`;
+          return `<li><canvas class="head" width="8" height="8" ${p.name ? `data-name="${esc(p.name)}"` : ""} style="width:34px;height:34px" aria-hidden="true"></canvas><a href="/admin/players/${esc(p.uuid)}"><strong>${esc(label)}</strong><span>${esc(wear)}</span></a><span class="since">${since(p.since)}</span></li>`;
         }).join("");
-        online.innerHTML = `<table class="tbl"><thead><tr><th>Joueur</th><th>Porte</th><th class="num">Depuis</th></tr></thead><tbody>${rows}</tbody></table>`;
+        online.innerHTML = `<ul class="msgs">${rows}</ul>`;
         heads(online);
       } catch {}
     };
     setInterval(tick, 15000);
+  }
+
+  // Vue d'ensemble : la courbe d'activité (installations et événements par jour). Des courbes
+  // lisses avec un point par jour, une bulle au survol, et la période choisie (7, 14 ou 30 jours).
+  const chart = document.getElementById("chart");
+  if (chart && chart.dataset.series) {
+    let data = null;
+    try { data = JSON.parse(chart.dataset.series); } catch {}
+    const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+    const jour = (d) => { const [, m, j] = d.split("-"); return `${+j} ${MOIS[+m - 1]}`; };
+    const NS = "http://www.w3.org/2000/svg";
+    const el = (nom, attrs) => { const e = document.createElementNS(NS, nom); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    // une courbe lisse qui passe par chaque point (Catmull-Rom vers Bézier)
+    const lisse = (pts) => {
+      if (pts.length < 2) return "";
+      let d = `M${pts[0][0]},${pts[0][1]}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+        const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+        const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+        d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+      }
+      return d;
+    };
+    const dessinerCourbe = (n) => {
+      if (!data || data.labels.length < 2) return;
+      const labels = data.labels.slice(-n), A = data.a.slice(-n), B = data.b.slice(-n);
+      const W = chart.clientWidth, H = chart.clientHeight, g = 34, b = 26, h = 10;
+      const L = W - g - 8, Hh = H - b - h;
+      // chaque courbe sur sa propre échelle (les événements sont bien plus nombreux)
+      const maxA = Math.max(...A, 1), maxB = Math.max(...B, 1);
+      const x = (i) => g + (labels.length === 1 ? L / 2 : i / (labels.length - 1) * L);
+      const yA = (v) => h + Hh - v / maxA * Hh * .92;
+      const yB = (v) => h + Hh - v / maxB * Hh * .92;
+      const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, "aria-hidden": "true" });
+      const defs = el("defs", {});
+      const grad = el("linearGradient", { id: "g-a", x1: 0, y1: 0, x2: 0, y2: 1 });
+      grad.append(el("stop", { offset: 0, "stop-color": "#a99cf0", "stop-opacity": .28 }), el("stop", { offset: 1, "stop-color": "#a99cf0", "stop-opacity": 0 }));
+      defs.append(grad); svg.append(defs);
+      // la grille et ses valeurs (installations)
+      const grille = el("g", { class: "grid" });
+      for (let k = 0; k <= 4; k++) {
+        const yy = h + Hh - k / 4 * Hh * .92;
+        grille.append(el("line", { x1: g, x2: W - 8, y1: yy, y2: yy }));
+        const t = el("text", { x: g - 10, y: yy + 4, "text-anchor": "end", class: "lbl" });
+        t.textContent = Math.round(maxA * k / 4);
+        grille.append(t);
+      }
+      svg.append(grille);
+      // les dates en bas (6 au plus)
+      const pas = Math.max(1, Math.ceil(labels.length / 6));
+      labels.forEach((d, i) => {
+        if (i % pas && i !== labels.length - 1) return;
+        const t = el("text", { x: x(i), y: H - 6, "text-anchor": "middle", class: "lbl" });
+        t.textContent = jour(d);
+        svg.append(t);
+      });
+      const pa = A.map((v, i) => [x(i), yA(v)]), pb = B.map((v, i) => [x(i), yB(v)]);
+      svg.append(el("path", { d: `${lisse(pa)} L${x(A.length - 1)},${h + Hh} L${x(0)},${h + Hh} Z`, class: "f-a" }));
+      for (const [pts, c] of [[pb, "c-b"], [pa, "c-a"]]) svg.append(el("path", { d: lisse(pts), class: `${c} curve` }));
+      // un point par jour (un sur deux au-delà de 14 jours)
+      const tous = labels.length <= 14 ? 1 : 2;
+      pa.forEach((p, i) => { if (i % tous === 0) svg.append(el("circle", { cx: p[0], cy: p[1], r: 4.5, class: "d-a" })); });
+      pb.forEach((p, i) => { if (i % tous === 0) svg.append(el("circle", { cx: p[0], cy: p[1], r: 4.5, class: "d-b" })); });
+      const ligne = el("line", { y1: h, y2: h + Hh, class: "hover-line", visibility: "hidden" });
+      svg.append(ligne);
+      chart.replaceChildren(svg);
+      // le tracé se dessine de gauche à droite
+      svg.querySelectorAll(".curve").forEach(p => p.style.setProperty("--len", Math.ceil(p.getTotalLength())));
+      // la bulle au survol : le jour le plus proche
+      const bulle = document.createElement("div");
+      bulle.className = "chart-tip"; bulle.hidden = true;
+      chart.append(bulle);
+      svg.addEventListener("pointermove", (e) => {
+        const r = svg.getBoundingClientRect();
+        const i = Math.max(0, Math.min(labels.length - 1, Math.round((e.clientX - r.left - g) / L * (labels.length - 1))));
+        ligne.setAttribute("x1", x(i)); ligne.setAttribute("x2", x(i)); ligne.setAttribute("visibility", "visible");
+        bulle.innerHTML = `<b>${jour(labels[i])}</b><span><i style="background:#a99cf0"></i>${A[i]} installations</span><span><i style="background:#f2a7dc"></i>${B[i]} événements</span>`;
+        bulle.style.left = x(i) + "px";
+        bulle.style.top = Math.min(yA(A[i]), yB(B[i])) + "px";
+        bulle.hidden = false;
+      });
+      svg.addEventListener("pointerleave", () => { bulle.hidden = true; ligne.setAttribute("visibility", "hidden"); });
+    };
+    let periode = 30;
+    document.querySelectorAll("[data-jours]").forEach(b => b.addEventListener("click", () => {
+      periode = +b.dataset.jours;
+      document.querySelectorAll("[data-jours]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      dessinerCourbe(periode);
+    }));
+    dessinerCourbe(periode);
+    let attente = 0;
+    addEventListener("resize", () => { clearTimeout(attente); attente = setTimeout(() => dessinerCourbe(periode), 150); });
   }
 
   // Rapport : couleur des erreurs, filtre et copie

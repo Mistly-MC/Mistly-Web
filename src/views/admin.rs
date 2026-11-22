@@ -163,10 +163,7 @@ impl Onglet {
 
 fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Markup) -> Markup {
     let v = ASSET_VERSION.as_str();
-    let groupes: [(&str, &[Onglet]); 2] = [
-        ("Pilotage", &[Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques]),
-        ("Données", &[Onglet::Rapports, Onglet::Journal, Onglet::Base]),
-    ];
+    let onglets = [Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Rapports, Onglet::Journal, Onglet::Base];
     html! {
         (DOCTYPE)
         html lang="fr" data-theme="dark" {
@@ -183,92 +180,58 @@ fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Mark
                 script src=(format!("/js/admin.js?v={v}")) defer {}
             }
             body.admin {
-                div.adm-glow aria-hidden="true" {}
-                aside.side {
-                    a.brand href="/admin" {
-                        img src="/assets/icone.png" alt="" width="30" height="30";
-                        span { strong { "Mistly" } em { "Admin" } }
-                    }
-                    nav.menu aria-label="Tableau de bord" {
-                        @for (groupe, onglets) in groupes {
-                            span.menu-t { (groupe) }
-                            @for o in onglets.iter() {
-                                a href=(o.lien()) aria-current=[(onglet == Some(*o)).then_some("page")] {
-                                    span.mi { (o.icone()) }
-                                    span { (o.titre()) }
+                div.frame {
+                    // La barre latérale : des icônes, leur nom en bulle au survol
+                    aside.rail {
+                        a.rail-logo href="/admin" title="Mistly Admin" {
+                            img src="/assets/icone.png" alt="" width="34" height="34";
+                            span { "MISTLY" }
+                        }
+                        nav.rail-nav aria-label="Tableau de bord" {
+                            @for o in onglets {
+                                a href=(o.lien()) aria-current=[(onglet == Some(o)).then_some("page")] aria-label=(o.titre()) {
+                                    (o.icone())
+                                    span.tip { (o.titre()) }
                                 }
                             }
                         }
+                        div.rail-foot {
+                            a href="/" target="_blank" rel="noopener" aria-label="Voir le site" { (icons::globe()) span.tip { "Voir le site" } }
+                        }
                     }
-                    div.side-foot {
-                        a.side-link href="/" target="_blank" rel="noopener" { (icons::globe()) span { "Voir le site" } (icons::external()) }
-                        div.me {
-                            span.me-av { img src="/assets/icone.png" alt="" width="20" height="20"; }
-                            div {
-                                strong { "Équipe Mistly" }
-                                span { i.dot {} "session " code #uptime { "00:00:00" } }
+                    main.content {
+                        header.topbar {
+                            h1.tb-title { @if let Some(o) = onglet { (o.titre()) } @else { (titre) } }
+                            form.tb-search method="get" action="/admin/players" role="search" {
+                                input #tb-q type="search" name="q" placeholder="Rechercher un joueur…" aria-label="Rechercher un joueur" autocomplete="off";
+                                (icons::search())
                             }
-                            form method="post" action="/admin/logout" {
-                                button.me-out type="submit" aria-label="Se déconnecter" title="Se déconnecter" { (icons::arrow_right()) }
+                            div.tb-right {
+                                span.tb-live title="Session" { i {} code #uptime { "00:00:00" } }
+                                span.tb-av { img src="/assets/icone.png" alt="" width="22" height="22"; }
+                                form method="post" action="/admin/logout" {
+                                    button.tb-out type="submit" aria-label="Se déconnecter" title="Se déconnecter" { (icons::arrow_right()) }
+                                }
                             }
                         }
-                    }
-                }
-                main.content {
-                    header.topbar {
-                        nav.tb-crumbs aria-label="Fil d'Ariane" {
-                            span { "Admin" }
-                            (icons::chevron())
-                            strong { @if let Some(o) = onglet { (o.titre()) } @else { (titre) } }
+                        div.scroll {
+                            @if let Some(f) = flash {
+                                @if let Some(m) = f.ok { div.flash.ok role="status" { (icons::check()) span { (m) } } }
+                                @if let Some(m) = f.err { div.flash.err role="alert" { (icons::alert()) span { (m) } } }
+                            }
+                            div.page { (corps) }
                         }
-                        form.tb-search method="get" action="/admin/players" role="search" {
-                            (icons::search())
-                            input #tb-q type="search" name="q" placeholder="Rechercher un joueur…" aria-label="Rechercher un joueur" autocomplete="off";
-                            kbd { "/" }
-                        }
-                        span.tb-live { i {} "En ligne" }
                     }
-                    @if let Some(f) = flash {
-                        @if let Some(m) = f.ok { div.flash.ok role="status" { (icons::check()) span { (m) } } }
-                        @if let Some(m) = f.err { div.flash.err role="alert" { (icons::alert()) span { (m) } } }
-                    }
-                    div.page { (corps) }
                 }
             }
         }
     }
 }
 
-fn entete(titre: &str, sous: Option<&str>) -> Markup {
+/// Sous la barre du haut (qui porte déjà le titre) : la phrase qui présente la page.
+fn entete(_titre: &str, sous: Option<&str>) -> Markup {
     html! {
-        header.page-head {
-            h1 { (titre) }
-            @if let Some(s) = sous { p { (s) } }
-        }
-    }
-}
-
-/// Une courbe pleine (SVG) : les valeurs de gauche à droite, dans un cadre de 600 × 140.
-fn aire(valeurs: &[u64]) -> Markup {
-    let (l, h) = (600.0_f64, 140.0_f64);
-    let max = valeurs.iter().copied().max().unwrap_or(0).max(1) as f64;
-    let n = valeurs.len().max(2) as f64 - 1.0;
-    let points: Vec<(f64, f64)> = valeurs.iter().enumerate().map(|(i, v)| (i as f64 / n * l, h - 8.0 - (*v as f64 / max) * (h - 22.0))).collect();
-    let ligne: String = points.iter().enumerate().map(|(i, (x, y))| format!("{}{x:.1},{y:.1}", if i == 0 { "M" } else { " L" })).collect();
-    let plein = format!("{ligne} L{l},{h} L0,{h} Z");
-    html! {
-        svg.area viewBox=(format!("0 0 {l} {h}")) preserveAspectRatio="none" aria-hidden="true" {
-            defs {
-                linearGradient #aire-g x1="0" y1="0" x2="0" y2="1" {
-                    stop offset="0" stop-color="#8eaaf0" stop-opacity=".45" {}
-                    stop offset="1" stop-color="#8eaaf0" stop-opacity="0" {}
-                }
-            }
-            @for k in 1..4 { line x1="0" x2=(l) y1=(k as f64 * h / 4.0) y2=(k as f64 * h / 4.0) {} }
-            path.fill d=(plein) {}
-            path.stroke d=(ligne) {}
-            @if let Some((x, y)) = points.last() { circle cx=(format!("{x:.1}")) cy=(format!("{y:.1}")) r="4" {} }
-        }
+        @if let Some(s) = sous { p.page-sub { (s) } }
     }
 }
 
@@ -351,17 +314,19 @@ pub fn connexion(erreur: Option<&str>, scene: &str) -> Markup {
 // ---------- Vue d'ensemble ----------
 
 pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Option<&Value>, journal: &[Entree]) -> Markup {
-    let carte = |valeur: String, libelle: &str, detail: Option<String>, id: Option<&str>, icone: Markup, teinte: &str| {
+    // Une grande carte pastel : l'icône dans un rond, le titre, le chiffre en direct, des détails
+    let carte = |teinte: &str, icone: Markup, titre: &str, valeur: String, id: Option<&str>, details: Vec<(Markup, String)>| {
         html! {
-            div.stat.(teinte) {
-                div.stat-top {
-                    span.stat-ic { (icone) }
-                    span.stat-l { (libelle) }
+            div.ov-card.(teinte) {
+                div.ov-card-head {
+                    span.ov-ic { (icone) }
+                    span { (titre) }
                 }
-                strong id=[id] { (valeur) }
-                @if let Some(d) = detail { small { (d) } }
-                // la courbe des dernières minutes, dessinée par admin.js
+                strong.ov-num id=[id] { (valeur) }
                 @if let Some(i) = id { svg.mini data-spark=(i) viewBox="0 0 120 32" preserveAspectRatio="none" aria-hidden="true" {} }
+                ul {
+                    @for (ic, texte) in details { li { (ic) span { (texte) } } }
+                }
             }
         }
     };
@@ -370,65 +335,82 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
         Some(Onglet::Accueil),
         Some(flash),
         html! {
-            (entete("Vue d'ensemble", Some("Les chiffres en direct se mettent à jour toutes les 15 secondes.")))
-            div.stats {
-                (carte(c.launchers.to_string(), "Launchers ouverts", Some(format!("{} en partie · record {}", c.en_partie, c.record)), Some("n-launchers"), icons::download(), "t-green"))
-                (carte(c.client.to_string(), "En jeu avec Mistly Client", Some("relayés par le site".into()), Some("n-client"), icons::user(), "t-blue"))
-                (carte(c.joueurs.to_string(), "Joueurs dans la base", Some(format!("{} actifs sur 24 h", c.actifs_24h)), None, icons::layers(), "t-violet"))
-                (carte(format!("+{}", c.nouveaux_24h), "Nouveaux sur 24 h", Some(format!("+{} sur 7 jours", c.nouveaux_7j)), None, icons::sparkles(), "t-pink"))
-                (carte(c.version.clone().unwrap_or_else(|| "?".into()), "Dernière version", Some("du launcher".into()), None, icons::tag(), "t-amber"))
-                (carte(c.dispo.map_or_else(|| "?".into(), |d| format!("{d:.1} %")), "Disponibilité (30 j)", Some(format!("{} banni(s)", c.bannis)), None, icons::globe(), "t-cyan"))
-            }
-
-            div.grid2 {
-                section.panel {
-                    div.panel-head { h2 { (icons::user()) "En jeu maintenant" } span.live { i {} "direct" } }
-                    (table_en_ligne(en_ligne))
-                }
-                section.panel {
-                    div.panel-head { h2 { (icons::notes()) "Derniers changements" } a.more href="/admin/log" { "Tout le journal" (icons::arrow_right()) } }
-                    @if journal.is_empty() {
-                        p.empty { "Aucun changement pour l'instant." }
-                    } @else {
-                        ul.log { @for e in journal { li { time { (il_y_a(e.at)) } span { (e.text) } } } }
+            div.ov {
+                div.ov-main {
+                    div.ov-cards {
+                        (carte("p-lilac", icons::download(), "Launchers ouverts", c.launchers.to_string(), Some("n-launchers"), vec![
+                            (icons::check(), format!("{} en partie maintenant", c.en_partie)),
+                            (icons::check(), format!("Record : {} en même temps", c.record)),
+                            (icons::check(), format!("Version {}", c.version.as_deref().unwrap_or("?"))),
+                        ]))
+                        (carte("p-pink", icons::user(), "Mistly Client", c.client.to_string(), Some("n-client"), vec![
+                            (icons::check(), format!("{} joueurs dans la base", c.joueurs)),
+                            (icons::check(), format!("{} actifs sur 24 h", c.actifs_24h)),
+                            (icons::check(), format!("{} banni(s)", c.bannis)),
+                        ]))
+                        (carte("p-peach", icons::sparkles(), "Croissance", format!("+{}", c.nouveaux_24h), None, vec![
+                            (icons::check(), "nouveaux joueurs sur 24 h".into()),
+                            (icons::check(), format!("+{} sur 7 jours", c.nouveaux_7j)),
+                            (icons::check(), format!("Disponibilité : {}", c.dispo.map_or_else(|| "?".into(), |d| format!("{d:.1} %")))),
+                        ]))
+                    }
+                    @if let Some(t) = telemetrie { (telemetrie_bloc(t)) } @else {
+                        section.ov-panel { p.empty { "La télémétrie n'est pas disponible." } }
                     }
                 }
-            }
-
-            @if let Some(t) = telemetrie {
-                section.panel {
-                    div.panel-head { h2 { (icons::bolt()) "Télémétrie (30 jours)" } span.muted { "seulement les joueurs qui l'ont acceptée" } }
-                    (telemetrie_bloc(t))
+                aside.ov-side {
+                    div.side-sec {
+                        div.side-head { h2 { "En jeu maintenant" } span.live { i {} "direct" } }
+                        (liste_en_ligne(en_ligne))
+                    }
+                    div.side-sec {
+                        div.side-head { h2 { "Derniers changements" } a.more href="/admin/log" { "Tout voir" } }
+                        @if journal.is_empty() {
+                            p.empty { "Aucun changement pour l'instant." }
+                        } @else {
+                            ul.msgs {
+                                @for e in journal.iter().take(6) {
+                                    li {
+                                        span.msg-ic { (icons::notes()) }
+                                        div { strong { (e.text) } time { (il_y_a(e.at)) } }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    div.side-sec {
+                        div.side-head { h2 { "Ouvrir un rapport" } }
+                        form.quick method="get" action="/admin/reports" {
+                            input type="text" name="code" placeholder="MR-ABCD234" aria-label="Code du rapport" autocomplete="off" spellcheck="false";
+                            button type="submit" aria-label="Ouvrir" { (icons::arrow_right()) }
+                        }
+                    }
                 }
             }
         },
     )
 }
 
-fn table_en_ligne(en_ligne: &[Ligne]) -> Markup {
+/// Les joueurs en jeu : une ligne par joueur (tête, pseudo, ce qu'il porte, depuis quand).
+/// admin.js la remplace toutes les 15 secondes avec le même gabarit.
+fn liste_en_ligne(en_ligne: &[Ligne]) -> Markup {
     html! {
         div #online {
             @if en_ligne.is_empty() {
                 p.empty { "Personne n'est en jeu avec Mistly Client." }
             } @else {
-                table.tbl {
-                    thead { tr { th { "Joueur" } th { "Porte" } th.num { "Depuis" } } }
-                    tbody {
-                        @for l in en_ligne {
-                            tr {
-                                td {
-                                    a.who href=(format!("/admin/players/{}", l.uuid)) {
-                                        (tete(l.nom.as_deref(), 24))
-                                        span { (nom_ou_uuid(l.nom.as_deref(), &l.uuid)) }
-                                        @if l.note { span.tag title="A une note" { "note" } }
-                                    }
-                                }
-                                td.muted {
+                ul.msgs {
+                    @for l in en_ligne {
+                        li {
+                            (tete(l.nom.as_deref(), 34))
+                            a href=(format!("/admin/players/{}", l.uuid)) {
+                                strong { (nom_ou_uuid(l.nom.as_deref(), &l.uuid)) @if l.note { " " span.tag title="A une note" { "note" } } }
+                                span {
                                     @let porte: Vec<&str> = [l.cosmetique, l.chapeau].into_iter().filter(|c| !c.is_empty()).map(nom_cosmetique).collect();
                                     @if porte.is_empty() { "—" } @else { (porte.join(" + ")) }
                                 }
-                                td.num.muted { (duree(l.depuis)) }
                             }
+                            span.since { (duree(l.depuis)) }
                         }
                     }
                 }
@@ -440,44 +422,78 @@ fn table_en_ligne(en_ligne: &[Ligne]) -> Markup {
 fn telemetrie_bloc(t: &Value) -> Markup {
     let paires = |v: &Value| -> Vec<(String, u64)> {
         let mut l: Vec<(String, u64)> = v.as_object().map(|o| o.iter().map(|(k, v)| (k.clone(), v.as_u64().unwrap_or(0))).collect()).unwrap_or_default();
-        l.sort_by(|a, b| b.1.cmp(&a.1));
+        l.sort_by_key(|x| std::cmp::Reverse(x.1));
         l
     };
-    let jours: Vec<(String, u64)> = t["per_day"].as_object().map(|o| o.iter().map(|(k, v)| (k.clone(), v["installs"].as_u64().unwrap_or(0))).collect()).unwrap_or_default();
-    let max = jours.iter().map(|j| j.1).max().unwrap_or(0).max(1);
-    let barres = |titre: &str, l: Vec<(String, u64)>| {
-        let max = l.first().map(|x| x.1).unwrap_or(0).max(1);
+    // Les deux courbes (installations et événements par jour), dessinées par admin.js
+    let jours: Vec<(String, u64, u64)> = t["per_day"]
+        .as_object()
+        .map(|o| o.iter().map(|(k, v)| (k.clone(), v["installs"].as_u64().unwrap_or(0), v["events"].as_u64().unwrap_or(0))).collect())
+        .unwrap_or_default();
+    let series = serde_json::json!({
+        "labels": jours.iter().map(|j| j.0.clone()).collect::<Vec<_>>(),
+        "a": jours.iter().map(|j| j.1).collect::<Vec<_>>(),
+        "b": jours.iter().map(|j| j.2).collect::<Vec<_>>(),
+    });
+    let plantages: u64 = paires(&t["crashes_by_loader"]).iter().map(|x| x.1).sum();
+    let versions = paires(&t["launcher_versions"]);
+    let loaders = paires(&t["games_by_loader"]);
+    let crashs = paires(&t["crashes_by_loader"]);
+    // Une ligne de la répartition : l'icône dans un rond, le nom, le nombre, une pastille
+    let ligne = |teinte: &str, ic: Markup, nom: &str, detail: String, pastille: String| {
         html! {
-            div.bars {
-                h3 { (titre) }
-                @if l.is_empty() { p.empty { "—" } }
-                @for (k, n) in l.iter().take(8) {
-                    div.bar { span.k title=(k) { (k) } span.track { i style=(format!("width:{:.1}%", (*n as f64 / max as f64 * 100.0).max(2.0))) {} } span.n { (n) } }
-                }
+            li.rep {
+                span.rep-ic.(teinte) { (ic) }
+                div { strong { (nom) } span { (detail) } }
+                span.pill.(teinte) { (pastille) }
             }
         }
     };
     html! {
-        div.tele-top {
-            div { span.tt-ic.t-blue { (icons::download()) } strong { (t["installs"].as_u64().unwrap_or(0)) } span { "installations actives" } }
-            div { span.tt-ic.t-green { (icons::bolt()) } strong { (t["events"]["game_start"].as_u64().unwrap_or(0)) } span { "parties lancées" } }
-            div { span.tt-ic.t-red { (icons::alert()) } strong { (paires(&t["crashes_by_loader"]).iter().map(|x| x.1).sum::<u64>()) } span { "plantages" } }
-            div { span.tt-ic.t-amber { (icons::notes()) } strong { (t["reports"].as_u64().unwrap_or(0)) } span { "rapports de logs" } }
-        }
-        @if jours.len() >= 2 {
-            div.chart {
-                div.chart-head {
-                    span { "Installations actives par jour" }
-                    span.muted { "max " (max) }
+        section.ov-panel.ov-chart {
+            div.chart-head {
+                div {
+                    h2 { "Activité" }
+                    div.legend-line {
+                        span.k-a { i {} "Installations actives" }
+                        span.k-b { i {} "Événements" }
+                    }
                 }
-                (aire(&jours.iter().map(|j| j.1).collect::<Vec<_>>()))
-                div.chart-axis { span { (jours.first().map_or("", |j| j.0.as_str())) } span { (jours.last().map_or("", |j| j.0.as_str())) } }
+                div.tabs role="group" aria-label="Période" {
+                    button type="button" data-jours="7" { "7 jours" }
+                    button type="button" data-jours="14" { "14 jours" }
+                    button type="button" data-jours="30" aria-pressed="true" { "30 jours" }
+                }
+            }
+            div.chart-box #chart data-series=(series.to_string()) {
+                @if jours.len() < 2 { p.empty { "Pas encore assez de jours pour tracer une courbe." } }
+            }
+            div.ov-mini {
+                div { span { "Installations" } strong { (t["installs"].as_u64().unwrap_or(0)) } }
+                div { span { "Parties lancées" } strong { (t["events"]["game_start"].as_u64().unwrap_or(0)) } }
+                div { span { "Plantages" } strong { (plantages) } }
+                div { span { "Rapports" } strong { (t["reports"].as_u64().unwrap_or(0)) } }
             }
         }
-        div.grid3 {
-            (barres("Versions du launcher", paires(&t["launcher_versions"])))
-            (barres("Parties par loader", paires(&t["games_by_loader"])))
-            (barres("Plantages par loader", paires(&t["crashes_by_loader"])))
+        section.ov-panel {
+            div.panel-head { h2 { "Répartition" } span.muted { "30 derniers jours, joueurs qui ont accepté la télémétrie" } }
+            div.rep-cols {
+                div {
+                    h3 { "Versions du launcher" }
+                    @if versions.is_empty() { p.empty { "—" } }
+                    ul { @for (k, n) in versions.iter().take(4) { (ligne("p-lilac", icons::tag(), &format!("Launcher {k}"), format!("{n} installation(s)"), format!("{n}"))) } }
+                }
+                div {
+                    h3 { "Parties par loader" }
+                    @if loaders.is_empty() { p.empty { "—" } }
+                    ul {
+                        @for (k, n) in loaders.iter().take(4) {
+                            @let c = crashs.iter().find(|x| x.0 == *k).map_or(0, |x| x.1);
+                            (ligne(if c > 0 { "p-pink" } else { "p-mint" }, icons::package(), k, format!("{n} partie(s) · {c} plantage(s)"), format!("{n}")))
+                        }
+                    }
+                }
+            }
         }
     }
 }
