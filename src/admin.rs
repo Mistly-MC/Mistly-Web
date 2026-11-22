@@ -230,12 +230,12 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
     }
     let adresse = crate::presence::adresse(&entetes);
     if !a.peut_essayer(&adresse) {
-        return retour("/admin/login", false, "Trop d'essais. Réessaie dans 15 minutes.");
+        return retour("/admin/login", false, "Too many attempts. Try again in 15 minutes.");
     }
     if !a.mot_de_passe_juste(&f.password) {
         a.rate(&adresse);
         eprintln!("Tableau de bord : mot de passe refusé");
-        return retour("/admin/login", false, "Mot de passe incorrect.");
+        return retour("/admin/login", false, "Wrong password.");
     }
     state.registre.modifier("Connexion au tableau de bord", |_| ());
     let mut res = redirection("/admin");

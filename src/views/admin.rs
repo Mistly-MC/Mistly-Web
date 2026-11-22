@@ -285,13 +285,13 @@ pub fn connexion(erreur: Option<&str>, scene: &str) -> Markup {
     };
     html! {
         (DOCTYPE)
-        html lang="fr" data-theme="dark" {
+        html lang="en" data-theme="dark" {
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 meta name="robots" content="noindex, nofollow";
                 meta name="color-scheme" content="dark";
-                title { "Connexion · Mistly Admin" }
+                title { "Sign in · Mistly Admin" }
                 link rel="icon" href="/assets/icone.png";
                 link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
                 link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
@@ -305,42 +305,42 @@ pub fn connexion(erreur: Option<&str>, scene: &str) -> Markup {
                         div.lg-main {
                             img.lg-logo src="/assets/icone.png" alt="" width="56" height="56";
                             h1 { "Mistly " strong { "Admin" } }
-                            p.lg-sub { "Tableau de bord de l'équipe." }
+                            p.lg-sub { "The team dashboard." }
                             form.lg-form #login method="post" action="/admin/login" data-error=[erreur.map(|_| "1")] {
-                                label.sr for="pw" { "Mot de passe" }
+                                label.sr for="pw" { "Password" }
                                 div.lg-field {
                                     (icons::lock())
-                                    input #pw type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required autofocus spellcheck="false";
-                                    button.lg-eye type="button" aria-label="Afficher le mot de passe" aria-pressed="false" { "voir" }
+                                    input #pw type="password" name="password" placeholder="Password" autocomplete="current-password" required autofocus spellcheck="false";
+                                    button.lg-eye type="button" aria-label="Show the password" aria-pressed="false" { "show" }
                                 }
                                 @if let Some(e) = erreur { p.lg-err role="alert" { (icons::alert()) (e) } }
                                 button.lg-btn.solid type="submit" {
-                                    span.t { "Se connecter" }
+                                    span.t { "Sign in" }
                                     (icons::arrow_right())
                                 }
                             }
                             a.lg-btn href="https://github.com/Mistly-MC/Mistly-Web" target="_blank" rel="noopener" {
-                                span.t { "Voir le code" }
+                                span.t { "View the code" }
                                 span.lg-gh { (icons::github()) "GitHub" }
                             }
                             div.lg-social {
                                 (lien(super::layout::DISCORD_URL, "Discord", icons::discord()))
                                 (lien(super::layout::GITHUB_ORG_URL, "GitHub", icons::github()))
-                                (lien("/status", "Statut", icons::globe()))
-                                (lien("/", "Site", icons::external()))
+                                (lien("/status", "Status", icons::globe()))
+                                (lien("/", "Website", icons::external()))
                             }
                         }
                         nav.lg-foot {
-                            a href="/privacy" { "Confidentialité" }
-                            a href="/terms" { "Conditions" }
-                            a href="/status" { "Statut" }
+                            a href="/privacy?lang=en" { "Privacy" }
+                            a href="/terms?lang=en" { "Terms" }
+                            a href="/status?lang=en" { "Status" }
                         }
                     }
                     div.lg-art aria-hidden="true" {
                         div.lg-sky { (PreEscaped(scene)) }
                         canvas.adm-bg {}
-                        div.lg-badge { img src="/assets/icone.png" alt="" width="18" height="18"; span { "Accès réservé à l'équipe" } }
-                        p.lg-quote { "Léger comme la brume." }
+                        div.lg-badge { img src="/assets/icone.png" alt="" width="18" height="18"; span { "Team access only" } }
+                        p.lg-quote { "Light as the mist." }
                     }
                 }
             }

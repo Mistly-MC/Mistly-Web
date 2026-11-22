@@ -293,7 +293,9 @@ body.admin.login-page{display:block}
 .lg-field{display:flex;align-items:center;gap:10px;height:44px;padding:0 6px 0 14px;border-radius:10px;border:1px solid rgb(var(--fg-rgb) / .1);background:#111114;transition:border-color .15s,box-shadow .15s}
 .lg-field:focus-within{border-color:rgb(184 204 244 / .5);box-shadow:0 0 0 3px rgb(184 204 244 / .12)}
 .lg-field>.ic{width:15px;height:15px;color:var(--dim);flex:none}
-.lg-field input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;font:inherit;font-size:14px;color:var(--text)}
+.admin .lg-field input,.admin .lg-field input:focus{flex:1;min-width:0;height:100%;padding:0;background:none;border:0;border-radius:0;outline:0;box-shadow:none;font:inherit;font-size:14px;color:var(--text)}
+/* le remplissage automatique du navigateur garde le fond du champ */
+.lg-field input:-webkit-autofill,.lg-field input:-webkit-autofill:hover,.lg-field input:-webkit-autofill:focus{-webkit-text-fill-color:var(--text);-webkit-box-shadow:0 0 0 1000px #111114 inset;caret-color:var(--text);transition:background-color 9999s}
 .lg-field input::placeholder{color:var(--dim)}
 .lg-eye{flex:none;padding:4px 8px;border-radius:6px;border:0;background:none;font-family:var(--mono);font-size:11px;color:var(--dim);cursor:pointer}
 .lg-eye:hover,.lg-eye[aria-pressed="true"]{color:var(--text);background:rgb(var(--fg-rgb) / .06)}

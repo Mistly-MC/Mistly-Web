@@ -320,7 +320,9 @@ a.soon-card{text-decoration:none}
 .shop .px{font-family:var(--pixel);font-weight:400;letter-spacing:.02em}
 
 /* ---------- La barre de la boutique, collée sous la navigation ---------- */
-.sx-bar{position:sticky;top:68px;z-index:40;border-bottom:1px solid var(--line);background:rgb(var(--bg-rgb) / .78);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
+/* collée sous la navigation, dans la colonne du site (entre ses deux traits) */
+.sx-bar{position:sticky;top:68px;z-index:40}
+.sx-bar-in{border-bottom:1px solid var(--line);background:rgb(var(--bg-rgb) / .82);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
 .sx-bar-in{display:flex;align-items:center;justify-content:space-between;gap:16px;height:58px;padding:0 22px}
 .sx-tabs{position:relative;display:flex;align-items:center;gap:2px;min-width:0;overflow-x:auto;scrollbar-width:none}
 .sx-tabs::-webkit-scrollbar{display:none}
@@ -500,6 +502,7 @@ a.soon-card{text-decoration:none}
   background:rgb(var(--fg-rgb) / .05) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center/14px;border:1px solid var(--line-2)}
 .sx-list{margin-top:20px}
 .sx-wishlist{margin-top:24px}
+.sx-wish-empty[hidden]{display:none}
 .sx-wish-empty{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 20px;text-align:center;color:var(--muted)}
 .sx-wish-empty .ico{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;color:#ff7a9c;background:rgb(255 122 156 / .1);border:1px solid rgb(255 122 156 / .3)}
 .sx-wish-empty .ico .ic{width:28px;height:28px}

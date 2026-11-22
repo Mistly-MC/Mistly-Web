@@ -29,33 +29,38 @@
       return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
     };
     const fbm = (x, y) => noise(x, y) * .55 + noise(x * 2.1, y * 2.1) * .3 + noise(x * 4.3, y * 4.3) * .15;
-    let mx = -1e4, my = -1e4;
-    addEventListener("pointermove", e => { const r = bg.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
+    // La brume dérive seule : sans suivre la souris, elle reste fluide. Les caractères sont rangés
+    // par opacité (8 niveaux) pour changer de couleur le moins souvent possible.
+    const NIVEAUX = 8;
     const draw = (t) => {
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.clearRect(0, 0, W, H);
       g.font = "12px 'Geist Mono', ui-monospace, monospace";
       g.textBaseline = "top";
       const s = t / 1000;
+      const lots = Array.from({ length: NIVEAUX }, () => []);
       for (let y = 0; y < rows; y++) {
         // Plus dense vers le bas, comme une mer de nuages
         const bas = login ? .35 + (y / rows) * .8 : .35 + (y / rows) * .5;
         for (let x = 0; x < cols; x++) {
-          let n = fbm(x * .055 + s * .05, y * .1 - s * .018) * bas;
-          const dx = x * CW - mx, dy = y * CH - my, dd = dx * dx + dy * dy;
-          if (dd < 22000) n += (1 - dd / 22000) * .35;
+          const n = fbm(x * .055 + s * .05, y * .1 - s * .018) * bas;
           if (n < .22) continue;
           const k = Math.min(RAMP.length - 1, Math.floor((n - .22) * RAMP.length * 2.2));
-          g.fillStyle = `rgba(206,218,245,${Math.min(.42, (n - .2) * (login ? .9 : .6))})`;
-          g.fillText(RAMP[k], x * CW, y * CH);
+          const a = Math.min(.42, (n - .2) * (login ? .9 : .6));
+          lots[Math.min(NIVEAUX - 1, Math.floor(a / .42 * NIVEAUX))].push(RAMP[k], x * CW, y * CH);
         }
       }
+      lots.forEach((l, i) => {
+        if (!l.length) return;
+        g.fillStyle = `rgba(206,218,245,${((i + .5) / NIVEAUX * .42).toFixed(3)})`;
+        for (let j = 0; j < l.length; j += 3) g.fillText(l[j], l[j + 1], l[j + 2]);
+      });
     };
     if (calme) draw(0);
     else {
       let last = 0;
       const loop = (t) => {
-        if (!document.hidden && t - last > 66) { draw(t); last = t; }
+        if (!document.hidden && t - last > 33) { draw(t); last = t; }
         requestAnimationFrame(loop);
       };
       requestAnimationFrame(loop);
@@ -84,7 +89,7 @@
       const voir = pw.type === "password";
       pw.type = voir ? "text" : "password";
       eye.setAttribute("aria-pressed", String(voir));
-      eye.textContent = voir ? "cacher" : "voir";
+      eye.textContent = voir ? "hide" : "show";
       pw.focus();
     });
     if (login.dataset.error === "1") { login.classList.add("denied"); pw.select(); }
