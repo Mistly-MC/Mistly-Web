@@ -1,15 +1,19 @@
-//! Boutique de cosmétiques, rangée comme un magasin : peu de texte, des catégories, des cartes.
+//! Boutique de cosmétiques, rangée comme un magasin.
 //!
-//! - `/shop` : l'accueil. Le titre et la recherche, la barre des catégories, les nouveautés,
-//!   « Découvrir » (une bannière par catégorie), puis chaque catégorie en rangée de cartes.
-//! - `/shop/<catégorie>` (`capes`, `hats`, `pets`, `emotes`) : la même tête, et toutes les cartes de
-//!   la catégorie.
+//! Toutes les pages ont la barre de la boutique (collée sous la navigation) : les catégories (une
+//! pastille glisse sur l'onglet choisi, et le contenu change sans recharger la page), la recherche
+//! et la wishlist. Ensuite :
+//! - `/shop` : un carrousel des articles à la une, « Que cherches-tu ? » (les catégories en
+//!   mosaïque), les populaires (une rangée qui défile), les nouveautés et les articles vus
+//!   récemment (gardés dans le navigateur).
+//! - `/shop/<catégorie>` (`capes`, `hats`, `pets`, `emotes`) : ses cartes, à trier et à filtrer.
+//! - `/shop/wishlist` : les articles gardés d'un clic sur leur cœur (dans le navigateur).
 //! - `/shop/item/<article>` : la page d'un article. L'aperçu 3D à gauche (site.js le porte dès que le
-//!   joueur est chargé), et en dessous « Personnaliser l'aperçu » (couleurs, taille, pseudo…) ; la
-//!   fiche à droite (statut, une phrase, le bouton pour l'obtenir), puis des articles proches.
+//!   joueur est chargé) et « Personnaliser l'aperçu » ; la fiche à droite (statut, wishlist,
+//!   partage, le bouton pour l'obtenir), puis des articles proches.
 //!
-//! Servie sur `/shop` et à la racine du sous-domaine `shop.<domaine>` : les liens passent par
-//! `Page::boutique`.
+//! boutique.js anime tout cela. Servie sur `/shop` et à la racine du sous-domaine `shop.<domaine>` :
+//! les liens passent par `Page::boutique`.
 
 use super::icons;
 use super::layout::{self, Head, Page};
@@ -64,13 +68,13 @@ impl Catalogue {
         }
     }
 
-    /// L'image de sa bannière (« Découvrir »).
+    /// L'image de sa tuile dans « Que cherches-tu ? ».
     fn image(self) -> &'static str {
         match self {
-            Self::Capes => "cape-mistly",
-            Self::Hats => "cloudly",
+            Self::Capes => "cape-early",
+            Self::Hats => "oreilles-de-lapin",
             Self::Pets => "minime",
-            Self::Emotes => "calin",
+            Self::Emotes => "victoire",
         }
     }
 }
@@ -157,48 +161,70 @@ pub fn objet(cle: &str) -> Option<Objet> {
     objets().into_iter().find(|o| o.cle == cle)
 }
 
-/// Les nouveautés, en tête de la boutique.
+fn liste(cles: &[&str]) -> Vec<Objet> {
+    cles.iter().filter_map(|c| objet(c)).collect()
+}
+
+/// Les nouveautés, les populaires et les diapositives du carrousel.
 const NOUVEAUTES: [&str; 5] = ["hug", "wings", "minime", "bunny", "piggyback"];
+const POPULAIRES: [&str; 7] = ["cape", "elytra", "cloudly", "early", "hug", "bunny", "wave"];
+/// (article, image) : les images sont en 600 × 475
+const CARROUSEL: [(&str, &str); 4] = [("hug", "calin"), ("early", "cape-early"), ("cloudly", "cloudly"), ("minime", "minime")];
 
 /// Adresse d'une image de présentation (public/assets/presentation, 600 × 475).
 fn photo(nom: &str) -> String {
     format!("/assets/presentation/{nom}.jpg?v={}", layout::ASSET_VERSION.as_str())
 }
 
-/// La tête de la boutique : le titre et la recherche, puis la barre des catégories.
-fn tete(p: &Page, actif: Option<Catalogue>) -> Markup {
+/// Où l'on est dans la boutique (l'onglet allumé).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Ici {
+    Accueil,
+    Categorie(Catalogue),
+    Wishlist,
+}
+
+/// La barre de la boutique : les onglets (et leur pastille), la recherche, la wishlist. Les
+/// textes dont boutique.js a besoin sont dans ses `data-`.
+fn barre(p: &Page, ici: Ici) -> Markup {
     let tr = p.tr;
     html! {
-        section.shop-top.sx-top {
-            div.col {
-                div.sx-head {
-                    div {
-                        h1 { (tr.shop_label) }
-                        p { (tr.shop_mega_p) }
+        div.sx-bar #sx-bar data-added=(tr.shop_wish_added) data-removed=(tr.shop_wish_removed) data-copied=(tr.shop_link_copied)
+            data-add=(tr.shop_wish_add) data-remove=(tr.shop_wish_remove) {
+            div.col.sx-bar-in {
+                nav.sx-tabs aria-label=(tr.shop_categories) {
+                    span.sx-pill aria-hidden="true" {}
+                    a href=(p.boutique("")) data-onglet aria-current=[(ici == Ici::Accueil).then_some("page")] { (icons::sparkles()) span { (tr.shop_tab_featured) } }
+                    @for c in Catalogue::ALL {
+                        a href=(p.boutique(c.slug())) data-onglet aria-current=[(ici == Ici::Categorie(c)).then_some("page")] { (c.icone()) span { (c.nom(tr)) } }
                     }
+                }
+                div.sx-tools {
                     label.sx-search {
                         (icons::search())
                         input #sx-q type="search" placeholder=(tr.shop_search) aria-label=(tr.shop_search) autocomplete="off" spellcheck="false";
+                        kbd { "/" }
                     }
-                }
-                nav.sx-tabs aria-label=(tr.shop_categories) {
-                    a href=(p.boutique("")) aria-current=[actif.is_none().then_some("page")] { (icons::sparkles()) (tr.shop_tab_featured) }
-                    span.sx-sep aria-hidden="true" {}
-                    @for c in Catalogue::ALL {
-                        a href=(p.boutique(c.slug())) aria-current=[(actif == Some(c)).then_some("page")] { (c.icone()) (c.nom(tr)) }
+                    a.sx-wishbtn href=(p.boutique("wishlist")) data-onglet aria-current=[(ici == Ici::Wishlist).then_some("page")] aria-label=(tr.shop_wishlist) title=(tr.shop_wishlist) {
+                        (icons::heart())
+                        span.sx-wish-n hidden { "0" }
                     }
                 }
             }
         }
+        div.sx-toast #sx-toast role="status" aria-live="polite" hidden {}
     }
 }
 
-/// Une carte : l'image et son étiquette, le nom et le statut. Elle ouvre la page de l'article.
-fn carte(p: &Page, o: &Objet) -> Markup {
+/// Une carte : l'image et son étiquette, le cœur de la wishlist, le nom et le statut. Toute la
+/// carte ouvre la page de l'article.
+fn carte(p: &Page, o: &Objet, ordre: usize) -> Markup {
     let tr = p.tr;
     let s = o.statut();
+    let nom = o.nom(tr);
     html! {
-        a.sx-card href=(p.boutique(&format!("item/{}", o.cle))) data-nom=(o.nom(tr).to_lowercase()) {
+        div.sx-card data-cle=(o.cle) data-nom=(nom.to_lowercase()) data-ordre=(ordre) data-dispo=(if s.disponible() { "1" } else { "0" }) data-cat=(o.cat.slug()) {
+            a.sx-link href=(p.boutique(&format!("item/{}", o.cle))) aria-label=(nom) {}
             span.sx-art {
                 @if presentation(&o.art()).is_some() {
                     (art_carte(&o.art(), 60, 96))
@@ -209,28 +235,30 @@ fn carte(p: &Page, o: &Objet) -> Markup {
                 span.sx-badge.(s.classe()) { (s.badge(tr)) }
                 span.sx-cat { (o.cat.nom(tr)) }
             }
+            button.sx-heart type="button" data-wish=(o.cle) aria-pressed="false" aria-label=(tr.shop_wish_add) title=(tr.shop_wish_add) { (icons::heart()) }
             span.sx-foot {
-                strong { (o.nom(tr)) }
+                strong { (nom) }
                 span.sx-state.(s.classe()) { @if s.disponible() { (icons::check()) } (s.badge(tr)) }
             }
         }
     }
 }
 
-/// Une rangée titrée de cartes, avec « Tout voir ».
-fn rangee(p: &Page, titre: &str, tout: Option<&str>, objets: &[Objet]) -> Markup {
+/// Un titre de section, en police pixel, avec sa phrase et un lien « Tout voir ».
+fn titre_section(p: &Page, titre: &str, phrase: Option<&str>, tout: Option<&str>) -> Markup {
     html! {
-        section.sx-row {
-            div.sx-row-head {
-                h2 { (titre) sup { "(" (objets.len()) ")" } }
-                @if let Some(lien) = tout { a.sx-all href=(lien) { (p.tr.shop_view_all) (icons::arrow_right()) } }
+        div.sx-row-head {
+            div {
+                h2.px { (titre) }
+                @if let Some(s) = phrase { p { (s) } }
             }
-            div.sx-grid { @for o in objets { (carte(p, o)) } }
+            @if let Some(lien) = tout { a.sx-all href=(lien) data-onglet { (p.tr.shop_view_all) (icons::arrow_right()) } }
         }
     }
 }
 
-fn page_boutique(p: &Page, titre: &str, description: &str, main: Markup, scripts: &[&str]) -> Markup {
+fn page_boutique(p: &Page, titre: &str, description: &str, main: Markup, item: bool) -> Markup {
+    let scripts: &[&str] = if item { &["/vendor/skinview3d/skinview3d.bundle.js", "/js/boutique.js"] } else { &["/js/boutique.js"] };
     layout::render(
         p,
         Head { title: titre, description, jsonld: None, css: &["home", "patch-notes", "shop"], scripts, body_class: "shop" },
@@ -238,50 +266,164 @@ fn page_boutique(p: &Page, titre: &str, description: &str, main: Markup, scripts
     )
 }
 
+/// Toutes les cartes, cachées : boutique.js y prend celles des articles vus récemment et de la
+/// wishlist.
+fn reserve(p: &Page) -> Markup {
+    html! { div.sx-pool hidden { @for (i, o) in objets().iter().enumerate() { (carte(p, o, i)) } } }
+}
+
 /// L'accueil de la boutique.
 pub fn render(p: &Page) -> Markup {
     let tr = p.tr;
     let tous = objets();
-    let nouveautes: Vec<Objet> = NOUVEAUTES.iter().filter_map(|c| objet(c)).collect();
     let main = html! {
-        (tete(p, None))
-        div.col.sx-body {
-            (rangee(p, &tr.shop_new_t, None, &nouveautes))
-            section.sx-row {
-                div.sx-row-head { h2 { (tr.shop_discover) } }
-                div.sx-banners {
-                    @for c in Catalogue::ALL {
-                        @let n = tous.iter().filter(|o| o.cat == c).count();
-                        a.sx-banner href=(p.boutique(c.slug())) {
-                            img src=(photo(c.image())) alt="" width="600" height="475" loading="lazy";
-                            span.sx-banner-txt { strong { (c.nom(tr)) } span { (n) " " (tr.shop_items) } }
+        (barre(p, Ici::Accueil))
+        div #sx-page data-titre=(tr.shop_title) {
+            // Le carrousel : les diapositives voisines dépassent sur les côtés
+            section.sx-hero {
+                div.col {
+                    div.sx-carousel #sx-carousel aria-roledescription="carousel" {
+                        div.sx-track {
+                            @for (i, (cle, image)) in CARROUSEL.iter().enumerate() {
+                                @if let Some(o) = objet(cle) {
+                                    @let s = o.statut();
+                                    a.sx-slide href=(p.boutique(&format!("item/{cle}"))) aria-roledescription="slide" aria-label=(format!("{} / {}", i + 1, CARROUSEL.len())) {
+                                        img src=(photo(image)) alt="" width="600" height="475" loading=(if i == 0 { "eager" } else { "lazy" });
+                                        span.sx-slide-txt {
+                                            span.sx-kicker.(s.classe()) { (s.badge(tr)) " · " (o.cat.nom(tr)) }
+                                            strong.px { (o.nom(tr)) }
+                                            span.sx-slide-p { (o.texte(tr)) }
+                                            span.btn.play.sm { (tr.shop_try_on) (icons::arrow_right()) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        button.sx-nav.prev type="button" aria-label=(tr.shop_prev) { (icons::arrow_left()) }
+                        button.sx-nav.next type="button" aria-label=(tr.shop_next) { (icons::arrow_right()) }
+                        div.sx-dots role="tablist" {
+                            @for i in 0..CARROUSEL.len() {
+                                button type="button" role="tab" aria-label=(format!("{} / {}", i + 1, CARROUSEL.len())) aria-selected=(if i == 0 { "true" } else { "false" }) {}
+                            }
                         }
                     }
                 }
             }
-            @for c in Catalogue::ALL {
-                @let liste: Vec<Objet> = tous.iter().filter(|o| o.cat == c).copied().collect();
-                (rangee(p, c.nom(tr), Some(&p.boutique(c.slug())), &liste))
+            div.col.sx-body {
+                // Que cherches-tu ? Les catégories en mosaïque
+                section.sx-row.sx-bento-sec {
+                    (titre_section(p, &tr.shop_looking, Some(&tr.shop_looking_p), None))
+                    div.sx-bento {
+                        @for (c, classe) in [(Catalogue::Capes, "b-capes"), (Catalogue::Emotes, "b-emotes"), (Catalogue::Hats, "b-hats"), (Catalogue::Pets, "b-pets")] {
+                            @let n = tous.iter().filter(|o| o.cat == c).count();
+                            a.sx-tile.(classe) href=(p.boutique(c.slug())) data-onglet {
+                                span.sx-tile-txt { strong.px { (c.nom(tr)) } span { (icons::layers()) (n) } }
+                                img src=(photo(c.image())) alt="" width="600" height="475" loading="lazy";
+                            }
+                        }
+                        a.sx-tile.b-all href=(p.boutique("capes")) data-onglet {
+                            span.sx-fan aria-hidden="true" {
+                                @for image in ["elytres-mistly", "cloudly", "cape-mistly"] {
+                                    img src=(photo(image)) alt="" width="600" height="475" loading="lazy";
+                                }
+                            }
+                            span.sx-tile-txt { strong.px { (tr.shop_all_cosmetics) } span { (icons::layers()) (tous.len()) } }
+                            (icons::arrow_right())
+                        }
+                    }
+                }
+                // Populaires : une rangée qui défile, avec des flèches
+                section.sx-row {
+                    (titre_section(p, &tr.shop_popular, Some(&tr.shop_popular_p), None))
+                    div.sx-scroller {
+                        button.sx-nav.prev type="button" aria-label=(tr.shop_prev) { (icons::arrow_left()) }
+                        div.sx-strip { @for (i, o) in liste(&POPULAIRES).iter().enumerate() { (carte(p, o, i)) } }
+                        button.sx-nav.next type="button" aria-label=(tr.shop_next) { (icons::arrow_right()) }
+                    }
+                }
+                section.sx-row {
+                    (titre_section(p, &tr.shop_new_t, None, None))
+                    div.sx-grid.cinq { @for (i, o) in liste(&NOUVEAUTES).iter().enumerate() { (carte(p, o, i)) } }
+                }
+                // Vus récemment : rempli par boutique.js, caché tant qu'il est vide
+                section.sx-row.sx-recent hidden {
+                    (titre_section(p, &tr.shop_recent, None, None))
+                    div.sx-grid {}
+                }
+                p.sx-empty hidden { (tr.shop_no_result) }
+                (reserve(p))
             }
-            p.sx-empty hidden { (tr.shop_no_result) }
         }
     };
-    page_boutique(p, &tr.shop_title, &tr.shop_sub, main, &["/js/boutique.js"])
+    page_boutique(p, &tr.shop_title, &tr.shop_sub, main, false)
 }
 
-/// Une catégorie de la boutique.
+/// Le haut d'une page de liste (catégorie, wishlist) : le titre en police pixel et le nombre.
+fn entete_liste(titre: &str, n: usize) -> Markup {
+    html! {
+        div.sx-pagehead {
+            h1.px { (titre) }
+            span.sx-count { (icons::layers()) span.n { (n) } }
+        }
+    }
+}
+
+/// Une catégorie de la boutique : ses cartes, à trier et à filtrer.
 pub fn render_catalogue(p: &Page, cat: Catalogue) -> Markup {
     let tr = p.tr;
     let liste: Vec<Objet> = objets().into_iter().filter(|o| o.cat == cat).collect();
+    let titre = format!("{} – {}", cat.nom(tr), tr.shop_title);
     let main = html! {
-        (tete(p, Some(cat)))
-        div.col.sx-body {
-            (rangee(p, cat.nom(tr), None, &liste))
-            p.sx-empty hidden { (tr.shop_no_result) }
+        (barre(p, Ici::Categorie(cat)))
+        div #sx-page data-titre=(titre) {
+            div.col.sx-body {
+                (entete_liste(cat.nom(tr), liste.len()))
+                div.sx-toolbar {
+                    div.sx-chips role="group" {
+                        button type="button" data-filtre="all" aria-pressed="true" { (tr.shop_filter_all) }
+                        button type="button" data-filtre="1" aria-pressed="false" { (icons::check()) (tr.shop_available) }
+                        button type="button" data-filtre="0" aria-pressed="false" { (tr.shop_badge) }
+                    }
+                    label.sx-sort {
+                        span { (tr.shop_sort) }
+                        select #sx-sort {
+                            option value="reco" { (tr.shop_sort_reco) }
+                            option value="az" { (tr.shop_sort_az) }
+                            option value="dispo" { (tr.shop_sort_avail) }
+                        }
+                    }
+                }
+                section.sx-row.sx-list {
+                    div.sx-grid { @for (i, o) in liste.iter().enumerate() { (carte(p, o, i)) } }
+                }
+                p.sx-empty hidden { (tr.shop_no_result) }
+            }
         }
     };
-    let titre = format!("{} – {}", cat.nom(tr), tr.shop_title);
-    page_boutique(p, &titre, &tr.shop_mega_p, main, &["/js/boutique.js"])
+    page_boutique(p, &titre, &tr.shop_mega_p, main, false)
+}
+
+/// La wishlist : les cartes des articles gardés (boutique.js les montre d'après le navigateur).
+pub fn render_wishlist(p: &Page) -> Markup {
+    let tr = p.tr;
+    let titre = format!("{} – {}", tr.shop_wishlist, tr.shop_title);
+    let main = html! {
+        (barre(p, Ici::Wishlist))
+        div #sx-page data-titre=(titre) {
+            div.col.sx-body {
+                (entete_liste(&tr.shop_wishlist, 0))
+                section.sx-row.sx-wishlist {
+                    div.sx-grid { @for (i, o) in objets().iter().enumerate() { (carte(p, o, i)) } }
+                }
+                div.sx-wish-empty hidden {
+                    span.ico { (icons::heart()) }
+                    p { (tr.shop_wish_empty) }
+                    a.btn.play href=(p.boutique("")) data-onglet { (icons::sparkles()) span { (tr.shop_tab_featured) } }
+                }
+            }
+        }
+    };
+    page_boutique(p, &titre, &tr.shop_wish_empty, main, false)
 }
 
 /// La page d'un article : l'aperçu 3D (porté d'office) et ses réglages, la fiche, puis des
@@ -289,8 +431,11 @@ pub fn render_catalogue(p: &Page, cat: Catalogue) -> Markup {
 pub fn render_objet(p: &Page, o: &Objet, player: Option<&str>, value: &str, invalid: bool) -> Markup {
     let tr = p.tr;
     let s = o.statut();
+    let tous = objets();
+    let i = tous.iter().position(|x| x.cle == o.cle).unwrap_or(0);
+    let precedent = tous[(i + tous.len() - 1) % tous.len()];
+    let suivant = tous[(i + 1) % tous.len()];
     let proches: Vec<Objet> = {
-        let tous = objets();
         let mut l: Vec<Objet> = tous.iter().filter(|x| x.cat == o.cat && x.cle != o.cle).copied().collect();
         l.extend(tous.iter().filter(|x| x.cat != o.cat).copied());
         l.truncate(4);
@@ -298,7 +443,8 @@ pub fn render_objet(p: &Page, o: &Objet, player: Option<&str>, value: &str, inva
     };
     let ici = p.boutique(&format!("item/{}", o.cle));
     let main = html! {
-        section.studio.sx-item data-catalogue=(o.cat.slug()) {
+        (barre(p, Ici::Categorie(o.cat)))
+        section.studio.sx-item data-catalogue=(o.cat.slug()) data-item=(o.cle) {
             div.col {
                 nav.sx-crumbs aria-label="Breadcrumb" {
                     a href=(p.boutique("")) { (tr.shop_label) }
@@ -309,8 +455,12 @@ pub fn render_objet(p: &Page, o: &Objet, player: Option<&str>, value: &str, inva
                 }
                 div.sx-title {
                     a.sx-back href=(p.boutique(o.cat.slug())) data-retour aria-label=(tr.shop_back) { (icons::arrow_left()) }
-                    h1 { (o.nom(tr)) }
+                    h1.px { (o.nom(tr)) }
                     span.sx-badge.(s.classe()) { (s.badge(tr)) }
+                    div.sx-step {
+                        a href=(p.boutique(&format!("item/{}", precedent.cle))) aria-label=(format!("{} : {}", tr.shop_prev, precedent.nom(tr))) title=(precedent.nom(tr)) { (icons::arrow_left()) }
+                        a href=(p.boutique(&format!("item/{}", suivant.cle))) aria-label=(format!("{} : {}", tr.shop_next, suivant.nom(tr))) title=(suivant.nom(tr)) { (icons::arrow_right()) }
+                    }
                 }
                 div.sx-item-grid {
                     div.sx-left {
@@ -348,14 +498,21 @@ pub fn render_objet(p: &Page, o: &Objet, player: Option<&str>, value: &str, inva
                         } @else {
                             button.btn.sx-get type="button" disabled { (tr.shop_soon) }
                         }
+                        div.sx-actions {
+                            button.btn.sx-wishbig type="button" data-wish=(o.cle) aria-pressed="false" { (icons::heart()) span { (tr.shop_wish_add) } }
+                            button.btn.sx-share type="button" data-share=(o.nom(tr)) aria-label=(tr.shop_share) title=(tr.shop_share) { (icons::copy()) span { (tr.shop_share) } }
+                        }
                     }
                 }
-                (rangee(p, &tr.shop_more, Some(&p.boutique(o.cat.slug())), &proches))
+                section.sx-row {
+                    (titre_section(p, &tr.shop_more, None, Some(&p.boutique(o.cat.slug()))))
+                    div.sx-grid { @for (i, x) in proches.iter().enumerate() { (carte(p, x, i)) } }
+                }
             }
         }
     };
     let titre = format!("{} – {}", o.nom(tr), tr.shop_title);
-    page_boutique(p, &titre, o.texte(tr), main, &["/vendor/skinview3d/skinview3d.bundle.js"])
+    page_boutique(p, &titre, o.texte(tr), main, true)
 }
 
 /// Réglages de l'article porté, montrés par site.js quand ils servent : la taille du chapeau

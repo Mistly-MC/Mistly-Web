@@ -119,7 +119,7 @@ fn appel(p: &Page, linux: bool) -> Markup {
                         p { (tr.cta_text) }
                         div.actions {
                             (bouton_principal(p, linux))
-                            a.btn href="/docs" { (tr.nav_docs) (icons::arrow_right()) }
+                            a.btn href=(p.lien("/docs")) { (tr.nav_docs) (icons::arrow_right()) }
                         }
                     }
                 }

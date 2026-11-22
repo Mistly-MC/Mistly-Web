@@ -13,6 +13,9 @@
 //! - `STATUS_URL` (facultatif, ex. `https://status.mistly.cc`) : la page de statut sur son
 //!   sous-domaine ; les liens « Statut » y mènent et `/status` y redirige. Le sous-domaine
 //!   `status.<domaine>` sert la page de statut à sa racine, réglée ou non
+//! - `DOCS_URL` (facultatif, ex. `https://docs.mistly.cc`) : la documentation sur son sous-domaine ;
+//!   ses liens y mènent et `/docs` y redirige. Le sous-domaine `docs.<domaine>` sert la doc à sa
+//!   racine (`/`, `/installation`…), réglée ou non
 //! - `SHOP_URL` (facultatif, ex. `https://shop.mistly.cc`) : la boutique sur son sous-domaine ;
 //!   ses liens y mènent et `/shop` y redirige. Le sous-domaine `shop.<domaine>` sert la boutique à
 //!   sa racine (`/`, `/capes`…), réglée ou non
@@ -218,6 +221,7 @@ async fn main() {
         .route("/shop", get(routes::shop))
         .route("/shop/{cat}", get(routes::shop_catalogue))
         .route("/shop/item/{cle}", get(routes::shop_item))
+        .route("/shop/wishlist", get(routes::shop_wishlist))
         .route("/skin/{name}", get(routes::skin))
         .route("/cape/{name}", get(routes::cape))
         .route("/player/{name}", get(routes::player))

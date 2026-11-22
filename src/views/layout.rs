@@ -43,6 +43,12 @@ pub static SHOP_URL: LazyLock<Option<String>> = LazyLock::new(|| {
     std::env::var("SHOP_URL").ok().map(|v| v.trim().trim_end_matches('/').to_string()).filter(|v| !v.is_empty())
 });
 
+/// Adresse de la documentation sur son sous-domaine (`DOCS_URL`, ex. `https://docs.mistly.cc`).
+/// Réglée, les liens de la doc y mènent et `/docs` y redirige ; sinon elle reste sur `/docs`.
+pub static DOCS_URL: LazyLock<Option<String>> = LazyLock::new(|| {
+    std::env::var("DOCS_URL").ok().map(|v| v.trim().trim_end_matches('/').to_string()).filter(|v| !v.is_empty())
+});
+
 /// Lien vers la page de statut.
 pub fn status_href() -> &'static str {
     STATUS_URL.as_deref().unwrap_or("/status")
@@ -80,6 +86,8 @@ pub struct Page<'a> {
     /// La page est servie sur le sous-domaine de la boutique (`shop.<domaine>`) : ses liens
     /// internes se passent de `/shop`.
     pub boutique: bool,
+    /// La page est servie sur le sous-domaine de la documentation (`docs.<domaine>`).
+    pub docs: bool,
 }
 
 impl Page<'_> {
@@ -99,7 +107,33 @@ impl Page<'_> {
         }
     }
 
+    /// Un lien vers la documentation : `""` (l'accueil) ou une page (`installation`, avec une
+    /// ancre éventuelle). Comme pour la boutique : à la racine du sous-domaine quand on y est, sur
+    /// `DOCS_URL` quand elle est réglée, sinon sur `/docs`.
+    pub fn doc(&self, page: &str) -> String {
+        let page = page.trim_start_matches('/');
+        let suite = if page.is_empty() { String::new() } else { format!("/{page}") };
+        if self.docs {
+            if suite.is_empty() { "/".into() } else { suite }
+        } else if let Some(url) = DOCS_URL.as_deref() {
+            format!("{url}{}", if suite.is_empty() { "/" } else { &suite })
+        } else {
+            format!("{}/docs{suite}", self.base)
+        }
+    }
+
+    /// Un lien interne (`/docs`…). La doc et la boutique suivent leur sous-domaine ; le reste est
+    /// absolu sur les sous-domaines (où `/#features` mènerait ailleurs). Une adresse complète
+    /// est gardée telle quelle.
     pub fn lien(&self, chemin: &str) -> String {
+        for (prefixe, docs) in [("/docs", true), ("/shop", false)] {
+            if let Some(reste) = chemin.strip_prefix(prefixe)
+                && (reste.is_empty() || reste.starts_with('/') || reste.starts_with('?') || reste.starts_with('#'))
+            {
+                let reste = reste.trim_start_matches('/');
+                return if docs { self.doc(reste) } else { self.boutique(reste) };
+            }
+        }
         if chemin.starts_with('/') { format!("{}{chemin}", self.base) } else { chemin.to_string() }
     }
     pub fn github_url(&self) -> String {

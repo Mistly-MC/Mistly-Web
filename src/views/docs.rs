@@ -35,7 +35,7 @@ pub fn index(p: &Page, set: &DocSet) -> Markup {
                             ul.cells.c3.doc-cards {
                                 @for d in pages {
                                     li data-search=(search_text(d)) data-slug=(d.slug) {
-                                        a href=(format!("/docs/{}", d.slug)) {
+                                        a href=(p.lien(&format!("/docs/{}", d.slug))) {
                                             // Comme les cartes de la boutique : un bruit ASCII qui ondule derrière
                                             pre.ascii-noise aria-hidden="true" {}
                                             span.card-body {
@@ -88,7 +88,7 @@ pub fn page(p: &Page, set: &DocSet, idx: usize) -> Markup {
                     (sidebar(p, set, &d.slug))
                 }
                 nav.crumbs aria-label="Breadcrumb" {
-                    a href="/docs" { (tr.docs_label) }
+                    a href=(p.lien("/docs")) { (tr.docs_label) }
                     span { "/" }
                     span { (d.section.label(tr)) }
                 }
@@ -98,10 +98,10 @@ pub fn page(p: &Page, set: &DocSet, idx: usize) -> Markup {
                 div.md-doc { (PreEscaped(&d.html)) }
                 nav.pager {
                     @if let Some(pv) = prev {
-                        a.prev href=(format!("/docs/{}", pv.slug)) { span.small { "← " (tr.docs_prev) } strong { (pv.title) } }
+                        a.prev href=(p.lien(&format!("/docs/{}", pv.slug))) { span.small { "← " (tr.docs_prev) } strong { (pv.title) } }
                     } @else { span {} }
                     @if let Some(nx) = next {
-                        a.next href=(format!("/docs/{}", nx.slug)) { span.small { (tr.docs_next) " →" } strong { (nx.title) } }
+                        a.next href=(p.lien(&format!("/docs/{}", nx.slug))) { span.small { (tr.docs_next) " →" } strong { (nx.title) } }
                     }
                 }
                 div.doc-foot {
@@ -178,7 +178,7 @@ fn sidebar(p: &Page, set: &DocSet, current: &str) -> Markup {
                         ul {
                             @for d in pages {
                                 li data-search=(search_text(d)) data-slug=(d.slug) {
-                                    a href=(format!("/docs/{}", d.slug)) aria-current=[(d.slug == current).then_some("page")] { (d.title) }
+                                    a href=(p.lien(&format!("/docs/{}", d.slug))) aria-current=[(d.slug == current).then_some("page")] { (d.title) }
                                 }
                             }
                         }

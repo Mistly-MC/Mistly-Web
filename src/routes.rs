@@ -61,6 +61,7 @@ fn page<'a>(state: &'a AppState, lang: Lang, path: &'a str, count: Option<usize>
         site_url: &state.site_url,
         base: "",
         boutique: false,
+        docs: false,
     }
 }
 
@@ -164,7 +165,11 @@ pub async fn docs_index(
 ) -> Response {
     let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
     let count = state.github.releases().await.map(|l| l.len());
-    let p = page(&state, lang, "/docs", count);
+    let mut p = page(&state, lang, "/docs", count);
+    if sous_domaine_docs(&headers) {
+        p.base = &state.site_url;
+        p.docs = true;
+    }
     html_response(
         StatusCode::OK,
         docs_view::index(&p, docs::get(lang)),
@@ -186,8 +191,12 @@ pub async fn docs_page(
         return not_found(State(state), uri, headers).await;
     };
     let count = state.github.releases().await.map(|l| l.len());
-    let path = uri.path().to_string();
-    let p = page(&state, lang, &path, count);
+    let path = format!("/docs/{slug}");
+    let mut p = page(&state, lang, &path, count);
+    if sous_domaine_docs(&headers) {
+        p.base = &state.site_url;
+        p.docs = true;
+    }
     html_response(
         StatusCode::OK,
         docs_view::page(&p, set, idx),
@@ -343,6 +352,13 @@ pub async fn shop_catalogue(
     let p = page_boutique(&state, lang, &chemin, &headers).await;
     let (_, _, _, nouveau) = joueur_boutique(&headers, &q);
     reponse_boutique(shop::render_catalogue(&p, cat), lang, remember, nouveau)
+}
+
+/// `/shop/wishlist` : les articles gardés (la liste est dans le navigateur).
+pub async fn shop_wishlist(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let p = page_boutique(&state, lang, "/shop/wishlist", &headers).await;
+    reponse_boutique(shop::render_wishlist(&p), lang, remember, None)
 }
 
 /// `/shop/item/<article>` : la page d'un article, essayé en 3D sur le pseudo saisi ou retenu.
@@ -906,6 +922,15 @@ fn redirection_permanente(cible: &str) -> Response {
     res
 }
 
+/// La requête arrive-t-elle sur le sous-domaine de la documentation (`docs.<domaine>`) ?
+fn sous_domaine_docs(entetes: &HeaderMap) -> bool {
+    entetes
+        .get("x-forwarded-host")
+        .or_else(|| entetes.get(header::HOST))
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|h| h.to_ascii_lowercase().starts_with("docs."))
+}
+
 /// La requête arrive-t-elle sur le sous-domaine de la boutique (`shop.<domaine>`) ?
 fn sous_domaine_boutique(entetes: &HeaderMap) -> bool {
     entetes
@@ -948,6 +973,37 @@ pub async fn domaine_principal(
             .iter()
             .any(|p| chemin.starts_with(p));
     if let Some(h) = &hote
+        && h.starts_with("docs.")
+        && req.method() == axum::http::Method::GET
+    {
+        let utile = ["/css/", "/js/", "/assets/", "/vendor/", "/skin/", "/site.webmanifest", "/robots.txt"]
+            .iter()
+            .any(|p| chemin.starts_with(p));
+        if utile {
+            return next.run(req).await;
+        }
+        let q = Query::<PageQuery>::try_from_uri(req.uri()).unwrap_or(Query(PageQuery::default()));
+        let entetes = req.headers().clone();
+        let uri = req.uri().clone();
+        // (le routage est déjà fait quand ce middleware tourne : on appelle les pages directement)
+        match chemin {
+            "/" => return docs_index(State(state.clone()), q, entetes).await,
+            "/search.json" => return docs_search_index(q, entetes).await,
+            _ => {}
+        }
+        let requete = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
+        if let Some(reste) = chemin.strip_prefix("/docs")
+            && (reste.is_empty() || reste.starts_with('/'))
+        {
+            return redirection_permanente(&format!("/{}{requete}", reste.trim_start_matches('/')));
+        }
+        let slug = chemin.trim_start_matches('/');
+        if !slug.contains('/') && docs::get(Lang::En).find(slug).is_some() {
+            return docs_page(State(state.clone()), Path(slug.to_string()), q, uri, entetes).await;
+        }
+        return redirection_permanente(&format!("{}{}", state.site_url, req.uri().path_and_query().map_or("/", |p| p.as_str())));
+    }
+    if let Some(h) = &hote
         && h.starts_with("shop.")
         && req.method() == axum::http::Method::GET
     {
@@ -964,6 +1020,9 @@ pub async fn domaine_principal(
         // (le routage est déjà fait quand ce middleware tourne : on appelle les pages directement)
         if chemin == "/" {
             return shop(State(state.clone()), q, entetes).await;
+        }
+        if chemin == "/wishlist" {
+            return shop_wishlist(State(state.clone()), q, entetes).await;
         }
         if let Some(cle) = chemin.strip_prefix("/item/") {
             return shop_item(State(state.clone()), Path(cle.to_string()), q, uri, entetes).await;
@@ -1006,6 +1065,14 @@ pub async fn domaine_principal(
             return res;
         }
         return next.run(req).await;
+    }
+    // Avec DOCS_URL réglée, /docs et ses pages partent vers le sous-domaine de la doc
+    if let Some(reste) = chemin.strip_prefix("/docs")
+        && (reste.is_empty() || reste.starts_with('/'))
+        && let Some(url) = crate::views::layout::DOCS_URL.as_deref()
+    {
+        let requete = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
+        return redirection_permanente(&format!("{url}/{}{requete}", reste.trim_start_matches('/')));
     }
     // Avec SHOP_URL réglée, /shop et ses catégories partent vers le sous-domaine de la boutique
     if let Some(reste) = chemin.strip_prefix("/shop")
