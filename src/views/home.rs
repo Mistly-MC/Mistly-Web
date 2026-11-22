@@ -85,7 +85,7 @@ fn hero(p: &Page, linux: bool) -> Markup {
             div.col.hero-in {
                 div.hero-logo {
                     img src="/assets/icone.png" alt="Mistly Launcher" width="84" height="84";
-                    span aria-hidden="true" { "MISTLY" }
+                    span.hero-word aria-hidden="true" { "MISTLY" sup.beta { "BETA" } }
                 }
                 h1 { (tr.hero_title_1) " " span.soft { (tr.hero_title_2) } }
                 div.actions {

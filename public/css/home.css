@@ -13,7 +13,10 @@
 /* Le nom en grand, en pixels, avec le nuage */
 .hero-logo{display:flex;align-items:center;gap:clamp(12px,1.8vw,22px);margin:clamp(22px,3.5vw,34px) 0 clamp(14px,2vw,20px)}
 .hero-logo img{width:clamp(48px,5.6vw,78px);height:auto;image-rendering:pixelated;filter:drop-shadow(0 6px 24px rgba(160,190,255,.4))}
-.hero-logo span{font-family:var(--pixel);font-weight:700;font-size:clamp(44px,7.4vw,104px);line-height:.9;color:var(--text);text-shadow:0 6px 40px rgba(120,160,255,.35)}
+.hero-logo .hero-word{position:relative}
+/* « BETA » en petit, en haut à droite du nom */
+.hero-logo .beta{position:absolute;left:100%;top:-.1em;margin-left:.12em;padding:3px 7px 2px;border-radius:6px;font-family:var(--mono);font-size:clamp(9px,.95vw,12px);font-weight:600;letter-spacing:.14em;line-height:1.2;color:var(--accent-2);text-shadow:none;background:rgb(142 170 240 / .14);border:1px solid rgb(142 170 240 / .4);box-shadow:0 0 18px rgb(142 170 240 / .25)}
+.hero-logo span.hero-word{font-family:var(--pixel);font-weight:700;font-size:clamp(44px,7.4vw,104px);line-height:.9;color:var(--text);text-shadow:0 6px 40px rgba(120,160,255,.35)}
 .hero h1{font-size:clamp(17px,1.8vw,22px);line-height:1.4;font-weight:500;letter-spacing:-.01em;color:var(--text-2);text-shadow:0 2px 20px rgb(var(--bg-rgb) / .8)}
 .hero h1 .soft{color:var(--soft)}
 .actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:26px}
@@ -184,3 +187,5 @@ main>section:not(.hero):not(.shop-top),main>.hatch{background:var(--bg);position
 .sim-view.sim-sortante{position:absolute;inset:0;z-index:1}
 .sim-nuage{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;border-radius:11px}
 .sim-hot{z-index:3}
+:root[data-theme="light"] .hero-logo .beta{color:#3554a8;background:rgb(53 84 168 / .1);border-color:rgb(53 84 168 / .35);box-shadow:none}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .hero-logo .beta{color:#3554a8;background:rgb(53 84 168 / .1);border-color:rgb(53 84 168 / .35);box-shadow:none}}
