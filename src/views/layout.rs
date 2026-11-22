@@ -25,6 +25,12 @@ static VERIFS: LazyLock<(Option<String>, Option<String>, Option<String>)> = Lazy
 /// Serveur Discord de Mistly.
 pub const DISCORD_URL: &str = "https://discord.gg/rdQJUgvUh3";
 
+/// Page de dons (Buy Me a Coffee). `DONATE_URL` la remplace ; vide, le bouton disparaît.
+pub static DONATE_URL: LazyLock<Option<String>> = LazyLock::new(|| match std::env::var("DONATE_URL") {
+    Ok(v) => Some(v.trim().to_string()).filter(|v| !v.is_empty()),
+    Err(_) => Some("https://buymeacoffee.com/EnderMythex".to_string()),
+});
+
 /// L'organisation GitHub de Mistly (launcher, client, site).
 pub const GITHUB_ORG_URL: &str = "https://github.com/Mistly-MC";
 
@@ -231,6 +237,10 @@ fn docs_menu(p: &Page) -> Markup {
                     a href="/patch-notes" { (icons::notes()) span { (tr.nav_patch_notes) } }
                     a href="/status" { (icons::globe()) span { (tr.nav_status) } }
                     a href="/shop" { (icons::bag()) span { (tr.nav_shop) } }
+                    a href="/brand" { (icons::palette()) span { (tr.nav_brand) } }
+                    @if let Some(url) = DONATE_URL.as_deref() {
+                        a href=(url) target="_blank" rel="noopener" { (icons::heart()) span { (tr.nav_donate) } }
+                    }
                     a href=(DISCORD_URL) target="_blank" rel="noopener" { (icons::discord()) span { "Discord" } }
                     a href=(GITHUB_ORG_URL) target="_blank" rel="noopener" { (icons::github()) span { "GitHub" } }
                 }
@@ -258,6 +268,9 @@ fn nav(p: &Page) -> Markup {
                     }
                 }
                 div.nav-right {
+                    @if let Some(url) = DONATE_URL.as_deref() {
+                        a.gh.donate href=(url) target="_blank" rel="noopener" aria-label=(tr.nav_donate) title=(tr.nav_donate) { (icons::heart()) span { (tr.nav_donate) } }
+                    }
                     a.gh.dc href=(DISCORD_URL) target="_blank" rel="noopener" aria-label="Discord" title="Discord" { (icons::discord()) }
                     a.gh href=(GITHUB_ORG_URL) target="_blank" rel="noopener" aria-label="GitHub" { (icons::github()) span { "GitHub" } }
                     button.theme-toggle type="button" data-theme-toggle aria-label=(tr.nav_theme) title=(tr.nav_theme) {
@@ -293,6 +306,10 @@ fn mobile_menu(p: &Page) -> Markup {
                     @if let Some(n) = p.release_count { span.count { (n) } }
                 }
                 a href="/status" aria-current=[here("/status")] { (tr.nav_status) }
+                a href="/brand" aria-current=[here("/brand")] { (tr.nav_brand) }
+                @if let Some(url) = DONATE_URL.as_deref() {
+                    a href=(url) target="_blank" rel="noopener" { (tr.nav_donate) (icons::external()) }
+                }
                 a href=(DISCORD_URL) target="_blank" rel="noopener" { "Discord" (icons::external()) }
                 a href=(p.github_url()) target="_blank" rel="noopener" { "GitHub" (icons::external()) }
             }
@@ -366,6 +383,7 @@ fn footer(p: &Page) -> Markup {
                             li { a href="/shop" { (tr.nav_shop) } }
                             li { a href="/patch-notes" { (tr.nav_patch_notes) } }
                             li { a href="/status" { (tr.nav_status) } }
+                            li { a href="/brand" { (tr.nav_brand) } }
                         }
                     }
                     div {
@@ -401,6 +419,13 @@ fn footer(p: &Page) -> Markup {
                             (icons::discord())
                             span { strong { (tr.discord_join) } small { (tr.discord_sub) } }
                             (icons::external())
+                        }
+                        @if let Some(url) = DONATE_URL.as_deref() {
+                            a.donate-cta href=(url) target="_blank" rel="noopener" {
+                                (icons::coffee())
+                                span { strong { (tr.nav_donate) } small { "Buy Me a Coffee" } }
+                                (icons::external())
+                            }
                         }
                     }
                 }

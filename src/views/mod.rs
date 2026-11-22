@@ -1,6 +1,7 @@
 //! Pages HTML, générées côté serveur avec `maud`.
 
 pub mod admin;
+pub mod brand;
 pub mod docs;
 pub mod home;
 pub mod icons;

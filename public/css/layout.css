@@ -208,3 +208,17 @@ body:not(:has(.hero,.docs-hero,.shop-top)) .page-sky{height:520px;opacity:.5}
 .links .mega .feat{background:linear-gradient(115deg,rgb(255 255 255 / .1) 0 52%,transparent 52%),var(--c)}
 .links .mega .feat{align-items:flex-start;justify-content:flex-start;white-space:normal;text-align:left;color:#fff;padding:14px 16px 26px}
 .links .mega .feat:hover{color:#fff}
+
+/* ---------- Dons (Buy Me a Coffee) ---------- */
+.gh.donate:hover{color:#ff8fab;background:rgb(255 143 171 / .1)}
+.gh.donate:hover .ic{animation:beat .9s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}30%{transform:scale(1.18)}60%{transform:scale(.96)}}
+.donate-cta{display:flex;align-items:center;gap:12px;margin-top:8px;padding:11px 13px;border-radius:10px;border:1px solid var(--line-2);color:var(--text);transition:border-color .15s,background .15s}
+.donate-cta:hover{border-color:rgb(255 221 0 / .55);background:rgb(255 221 0 / .07)}
+.donate-cta>.ic:first-child{width:22px;height:22px;color:#ffdd00;flex:none}
+.donate-cta span{display:flex;flex-direction:column;min-width:0;flex:1}
+.donate-cta strong{font-size:13.5px;font-weight:600}
+.donate-cta small{font-size:12px;color:var(--muted)}
+.donate-cta>.ic:last-child{width:12px;height:12px;opacity:.6;flex:none}
+:root[data-theme="light"] .donate-cta>.ic:first-child{color:#b58a00}
+@media (prefers-reduced-motion:reduce){.gh.donate:hover .ic{animation:none}}

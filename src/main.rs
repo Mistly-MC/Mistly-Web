@@ -196,6 +196,8 @@ async fn main() {
         .route("/docs/search.json", get(routes::docs_search_index))
         .route("/docs/{slug}", get(routes::docs_page))
         .route("/status", get(routes::status_page))
+        .route("/brand", get(routes::brand))
+        .route("/media-kit", get(routes::brand_alias))
         // Les outils ont été retirés du site : les anciens liens mènent à l'accueil
         .route("/tools", get(routes::outils_retires))
         .route("/tools/{*reste}", get(routes::outils_retires))

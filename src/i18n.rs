@@ -462,6 +462,8 @@ traductions! {
     pub shop_cat_bundles: String,
     pub shop_cat_bundles_p: String,
     pub nav_status: String,
+    pub nav_donate: String,
+    pub nav_brand: String,
     pub st_title: String,
     pub st_label: String,
     pub st_h1_1: String,

@@ -219,6 +219,21 @@ pub async fn license(State(state): State<Arc<AppState>>, Query(q): Query<PageQue
     legal_page(&state, q, &headers, crate::legal::Kind::License).await
 }
 
+/// `/brand` : kit média et charte graphique.
+pub async fn brand(State(state): State<Arc<AppState>>, Query(q): Query<PageQuery>, headers: HeaderMap) -> Response {
+    let (lang, remember) = i18n::negotiate(q.lang.as_deref(), &headers);
+    let count = state.github.releases().await.map(|l| l.len());
+    let p = page(&state, lang, "/brand", count);
+    html_response(StatusCode::OK, crate::views::brand::render(&p), lang, remember)
+}
+
+/// `/media-kit` : l'autre nom courant de la page, redirigé vers `/brand`.
+pub async fn brand_alias() -> Response {
+    let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
+    res.headers_mut().insert(header::LOCATION, HeaderValue::from_static("/brand"));
+    res
+}
+
 /// `/tools` et `/tools/…` : les outils ont été retirés, redirection permanente vers l'accueil.
 pub async fn outils_retires() -> Response {
     let mut res = StatusCode::MOVED_PERMANENTLY.into_response();
