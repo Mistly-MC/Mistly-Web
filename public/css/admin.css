@@ -287,18 +287,23 @@ body.admin.login-page{display:block}
 
 /* ---------- Journal ---------- */
 .log{display:flex;flex-direction:column;gap:8px;font-size:13.5px}
-.log li{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:14px;padding:11px 14px;border-radius:14px;background:var(--card-2)}
+.log li{display:grid;grid-template-columns:110px minmax(0,1fr) auto;align-items:center;gap:14px;padding:11px 14px;border-radius:14px;background:var(--card-2)}
 .log time{font-size:12px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
-.log.full li{grid-template-columns:170px minmax(0,1fr)}
+.log.full li{grid-template-columns:170px minmax(0,1fr) auto}
+/* l'adresse IP : sa colonne, tout à droite */
+.log .ip{justify-self:end;margin-left:0}
+.log .ip:empty{display:none}
+.msgs .ip{flex:none;margin-left:auto}
 
 .ip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--lilac);background:rgb(142 170 240 / .12);vertical-align:middle}
-.msgs .ip{margin-left:0;padding:0 6px;font-size:10.5px}
+.msgs .ip{padding:1px 7px;font-size:10.5px}
 
 /* ---------- To-do ---------- */
-.todo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.todo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:start}
 .todo-col{--c:var(--lilac);display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:22px;background:var(--card)}
 .todo-col.p-pink{--c:var(--pink)}
 .todo-col.p-peach{--c:var(--peach)}
+.todo-col.p-mint{--c:var(--mint)}
 .todo-col header{display:flex;align-items:center;gap:10px}
 .todo-col h2{font-size:16px;font-weight:600}
 .todo-n{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
@@ -329,7 +334,8 @@ body.admin.login-page{display:block}
 .todo-done summary::before{content:"›";display:inline-block;transition:transform .2s}
 .todo-done[open] summary::before{transform:rotate(90deg)}
 .todo-done summary span{padding:1px 8px;border-radius:999px;font-size:11.5px;background:rgb(255 255 255 / .06)}
-@media (max-width:1100px){.todo{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1400px){.todo{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:800px){.todo{grid-template-columns:minmax(0,1fr)}}
 
 /* ---------- Docs de l'équipe ---------- */
 .doc-toc{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}

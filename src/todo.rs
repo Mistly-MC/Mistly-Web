@@ -1,5 +1,5 @@
-//! La liste des choses à faire de l'équipe (page « To-do » du tableau de bord), en trois parties :
-//! Mistly Launcher, Mistly Client et Mistly Web.
+//! La liste des choses à faire de l'équipe (page « To-do » du tableau de bord), en quatre parties :
+//! Mistly Launcher, Mistly Client, Mistly Web et les cosmétiques.
 //!
 //! Gardée dans `todo.json` (dans `MISTY_CACHE_DIR`), écrit à chaque changement. Sans ce dossier
 //! (tests), rien n'est écrit. La première fois, la liste part de quelques tâches du projet.
@@ -15,16 +15,18 @@ pub enum Projet {
     Launcher,
     Client,
     Web,
+    Cosmetics,
 }
 
 impl Projet {
-    pub const TOUS: [Projet; 3] = [Projet::Launcher, Projet::Client, Projet::Web];
+    pub const TOUS: [Projet; 4] = [Projet::Launcher, Projet::Client, Projet::Web, Projet::Cosmetics];
 
     pub fn code(self) -> &'static str {
         match self {
             Projet::Launcher => "launcher",
             Projet::Client => "client",
             Projet::Web => "web",
+            Projet::Cosmetics => "cosmetics",
         }
     }
 
@@ -37,6 +39,7 @@ impl Projet {
             Projet::Launcher => "Mistly Launcher",
             Projet::Client => "Mistly Client",
             Projet::Web => "Mistly Web",
+            Projet::Cosmetics => "Cosmetics",
         }
     }
 }
@@ -76,6 +79,11 @@ fn depart() -> Vec<Tache> {
         (Projet::Web, "DNS + Coolify domains for a0, status, shop and docs"),
         (Projet::Web, "Set GITHUB_TOKEN in Coolify"),
         (Projet::Web, "Payments to open the shop"),
+        (Projet::Cosmetics, "Bunny ears in Mistly Client"),
+        (Projet::Cosmetics, "Minime (pet on the shoulder) in Mistly Client"),
+        (Projet::Cosmetics, "Emotes in game (Hug, Wave, Piggyback…)"),
+        (Projet::Cosmetics, "Effects (particles and trails)"),
+        (Projet::Cosmetics, "Name tags"),
     ]
     .into_iter()
     .enumerate()
@@ -84,10 +92,26 @@ fn depart() -> Vec<Tache> {
 }
 
 static TACHES: LazyLock<RwLock<Vec<Tache>>> = LazyLock::new(|| {
-    let lues = match fichier() {
+    let mut lues: Vec<Tache> = match fichier() {
         Some(f) if f.exists() => std::fs::read(&f).ok().and_then(|o| serde_json::from_slice(&o).ok()).unwrap_or_default(),
         _ => depart(),
     };
+    // Une liste créée avant la colonne des cosmétiques la reçoit une fois (un fichier témoin évite
+    // de la remettre si l'équipe a supprimé ces tâches)
+    if let Some(f) = fichier() {
+        let temoin = f.with_file_name("todo-cosmetics.done");
+        if !temoin.exists() {
+            if !lues.iter().any(|t| t.projet == Projet::Cosmetics) {
+                let premier = lues.iter().map(|t| t.id).max().unwrap_or(0) + 1;
+                let nouvelles: Vec<Tache> = depart().into_iter().filter(|t| t.projet == Projet::Cosmetics).collect();
+                for (id, t) in (premier..).zip(nouvelles) {
+                    lues.push(Tache { id, ..t });
+                }
+            }
+            ecrire(&lues);
+            let _ = std::fs::write(&temoin, b"");
+        }
+    }
     RwLock::new(lues)
 });
 

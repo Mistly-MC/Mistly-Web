@@ -393,7 +393,8 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
                                 @for e in journal.iter().take(6) {
                                     li {
                                         span.msg-ic { (icons::notes()) }
-                                        div { strong { (e.text) } time { (il_y_a(e.at)) @if let Some(ip) = &e.ip { " · " code.ip { (ip) } } } }
+                                        div { strong { (e.text) } time { (il_y_a(e.at)) } }
+                                        @if let Some(ip) = &e.ip { code.ip title="IP address" { (ip) } }
                                     }
                                 }
                             }
@@ -714,7 +715,7 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
                     @if journal.is_empty() {
                         p.empty { "No changes on this player." }
                     } @else {
-                        ul.log { @for e in journal { li { time title=(date(e.at)) { (il_y_a(e.at)) } span { (e.text) @if let Some(ip) = &e.ip { " " code.ip title="IP address" { (ip) } } } } } }
+                        ul.log { @for e in journal { li { time title=(date(e.at)) { (il_y_a(e.at)) } span { (e.text) } code.ip title="IP address" { (e.ip.as_deref().unwrap_or("")) } } } }
                     }
                 }
             }
@@ -1092,7 +1093,7 @@ pub fn docs(d: &Diag) -> Markup {
 
 // ---------- To-do ----------
 
-/// La liste des choses à faire : une colonne par projet. Dans chacune, un champ pour ajouter, les
+/// La liste des choses à faire : une colonne par projet (et une pour les cosmétiques). Dans chacune, un champ pour ajouter, les
 /// tâches à faire (bouton « Done ») puis celles terminées (on peut les rouvrir).
 pub fn todo(flash: &Flash, taches: &[crate::todo::Tache]) -> Markup {
     use crate::todo::Projet;
@@ -1112,7 +1113,7 @@ pub fn todo(flash: &Flash, taches: &[crate::todo::Tache]) -> Markup {
         html! {
             (entete("To-do", Some("What's left to do on each project. Every change goes to the log with who made it.")))
             div.todo {
-                @for (p, teinte, ic) in [(Projet::Launcher, "p-lilac", icons::download()), (Projet::Client, "p-pink", icons::sparkles()), (Projet::Web, "p-peach", icons::globe())] {
+                @for (p, teinte, ic) in [(Projet::Launcher, "p-lilac", icons::download()), (Projet::Client, "p-pink", icons::sparkles()), (Projet::Web, "p-peach", icons::globe()), (Projet::Cosmetics, "p-mint", icons::shirt())] {
                     @let a_faire: Vec<&crate::todo::Tache> = taches.iter().filter(|t| t.projet == p && t.fait.is_none()).collect();
                     @let faites: Vec<&crate::todo::Tache> = { let mut f: Vec<_> = taches.iter().filter(|t| t.projet == p && t.fait.is_some()).collect(); f.sort_by_key(|t| std::cmp::Reverse(t.fait)); f };
                     section.todo-col.(teinte) {
@@ -1240,7 +1241,7 @@ pub fn journal(log: &[Entree]) -> Markup {
                 @if log.is_empty() {
                     p.empty { "The log is empty." }
                 } @else {
-                    ul.log.full { @for e in log.iter().rev() { li { time { (date(e.at)) } span { (e.text) @if let Some(ip) = &e.ip { " " code.ip title="IP address" { (ip) } } } } } }
+                    ul.log.full { @for e in log.iter().rev() { li { time { (date(e.at)) } span { (e.text) } code.ip title="IP address" { (e.ip.as_deref().unwrap_or("")) } } } }
                 }
             }
         },
