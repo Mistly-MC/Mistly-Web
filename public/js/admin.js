@@ -99,6 +99,8 @@
     });
   }
 
+  // ---------- Ce qui suit ne sert qu'au tableau de bord (pas à la page de connexion) ----------
+
   // Têtes : visage + calque du chapeau, depuis le skin relayé par le site (/skin/<pseudo>).
   const skins = new Map();
   const skin = (name) => {
@@ -129,73 +131,57 @@
       }).catch(() => {});
     }
   };
-  heads(document);
 
-  // Copier l'UUID
-  for (const b of document.querySelectorAll("[data-copy]")) {
-    b.addEventListener("click", () => {
-      navigator.clipboard?.writeText(b.dataset.copy).then(() => {
-        b.classList.add("done");
-        setTimeout(() => b.classList.remove("done"), 1200);
-      });
-    });
-  }
-
-  // Confirmation avant les actions qui ne se défont pas
-  for (const f of document.querySelectorAll("form[data-confirm]")) {
-    f.addEventListener("submit", (e) => {
-      if (!confirm(f.dataset.confirm)) e.preventDefault();
-    });
-  }
-
-  // Une règle choisie s'applique tout de suite
-  for (const s of document.querySelectorAll("select[data-autosubmit]")) {
-    s.addEventListener("change", () => s.form.requestSubmit());
-  }
-
-  // La barre d'icônes : le rond rose part de l'icône de la page d'avant et glisse jusqu'à
-  // celle de la page ouverte ; un clic le fait partir tout de suite vers la nouvelle.
+  // La barre d'icônes : un seul rond bleu, qui glisse d'une icône à l'autre
   const rail = document.querySelector(".rail-nav");
+  const rond = rail?.querySelector(".rail-pill");
+  const liens = rail ? [...rail.querySelectorAll("a")] : [];
+  const placerRond = (a, anime) => {
+    if (!rond || !a) return;
+    if (!anime) rond.style.transition = "none";
+    rond.style.transform = `translateY(${a.offsetTop}px)`;
+    if (!anime) { void rond.offsetWidth; rond.style.transition = ""; }
+  };
+  // l'icône d'une adresse : la plus longue qui la commence (« /admin » seulement pour elle-même)
+  const icone = (chemin) => {
+    let meilleur = null;
+    for (const a of liens) {
+      const h = new URL(a.href).pathname;
+      const ok = h === "/admin" ? chemin === "/admin" || chemin === "/admin/" : chemin === h || chemin.startsWith(h + "/");
+      if (ok && (!meilleur || h.length > new URL(meilleur.href).pathname.length)) meilleur = a;
+    }
+    return meilleur;
+  };
+  const allumer = (chemin, anime) => {
+    const a = icone(chemin);
+    liens.forEach(x => (x === a ? x.setAttribute("aria-current", "page") : x.removeAttribute("aria-current")));
+    placerRond(a, anime);
+  };
   if (rail) {
-    const rond = rail.querySelector(".rail-pill");
-    const liens = [...rail.querySelectorAll("a")];
-    const vers = (a, anime) => {
-      if (!a) return;
-      if (!anime) rond.style.transition = "none";
-      rond.style.transform = `translateY(${a.offsetTop}px)`;
-      if (!anime) { void rond.offsetWidth; rond.style.transition = ""; }
-    };
-    const ici = liens.findIndex(a => a.hasAttribute("aria-current"));
-    let avant = -1;
-    try { avant = Number(sessionStorage.getItem("adm-rail") ?? -1); } catch {}
-    vers(liens[avant >= 0 && avant < liens.length ? avant : ici], false);
+    allumer(location.pathname, false);
     rail.classList.add("ready");
-    requestAnimationFrame(() => requestAnimationFrame(() => vers(liens[ici], !calme)));
-    try { sessionStorage.setItem("adm-rail", ici); } catch {}
-    liens.forEach(a => a.addEventListener("click", () => {
-      liens.forEach(x => x.removeAttribute("aria-current"));
-      a.setAttribute("aria-current", "page");
-      vers(a, !calme);
-    }));
-    addEventListener("resize", () => vers(liens[ici], false));
-    // Retour arrière : la page revient du cache avec le rond sur l'icône cliquée avant de partir.
-    // On le remet sur celle de la page.
-    addEventListener("pageshow", (e) => {
-      if (!e.persisted) return;
-      liens.forEach((a, i) => (i === ici ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
-      vers(liens[ici], false);
-      try { sessionStorage.setItem("adm-rail", ici); } catch {}
-    });
+    addEventListener("resize", () => allumer(location.pathname, false));
   }
 
   // Barre du haut : « / » place le curseur dans la recherche des joueurs
-  const tbq = document.getElementById("tb-q");
   addEventListener("keydown", e => {
+    const tbq = document.getElementById("tb-q");
     if (e.key === "/" && tbq && !/input|textarea|select/i.test(document.activeElement?.tagName || "")) { e.preventDefault(); tbq.focus(); }
   });
 
   // Les mini-courbes des chiffres en direct : les mesures de la session (gardées pour l'onglet)
   const courbes = {};
+  const dessiner = (id) => {
+    const svg = document.querySelector(`svg[data-spark="${id}"]`);
+    const l = courbes[id];
+    if (!svg || !l) return;
+    const v = l.length > 1 ? l : [l[0], l[0]];
+    const max = Math.max(...v), min = Math.min(...v);
+    // une valeur qui ne bouge pas : une ligne au milieu, sans aplat
+    const y = (x) => (max === min ? 16 : 30 - (x - min) / (max - min) * 26);
+    const pts = v.map((x, i) => `${(i / (v.length - 1) * 120).toFixed(1)},${y(x).toFixed(1)}`).join(" ");
+    svg.innerHTML = (max === min ? "" : `<polygon points="0,32 ${pts} 120,32"/>`) + `<polyline points="${pts}"/>`;
+  };
   const mesure = (id, v) => {
     let l = [];
     try { l = JSON.parse(sessionStorage.getItem("adm-spark-" + id)) || []; } catch {}
@@ -205,63 +191,52 @@
     courbes[id] = l;
     dessiner(id);
   };
-  const dessiner = (id) => {
-    const svg = document.querySelector(`svg[data-spark="${id}"]`);
-    const l = courbes[id];
-    if (!svg || !l) return;
-    const v = l.length > 1 ? l : [l[0], l[0]];
-    const max = Math.max(...v, 1), min = Math.min(...v, 0);
-    const pts = v.map((x, i) => `${(i / (v.length - 1) * 120).toFixed(1)},${(30 - (x - min) / (max - min || 1) * 26).toFixed(1)}`).join(" ");
-    svg.innerHTML = `<polygon points="0,32 ${pts} 120,32"/><polyline points="${pts}"/>`;
-  };
-  document.querySelectorAll("svg[data-spark]").forEach(svg => {
-    const id = svg.dataset.spark;
-    mesure(id, document.getElementById(id)?.textContent);
-  });
 
-  // Vue d'ensemble : chiffres et joueurs en ligne toutes les 15 secondes
-  const online = document.getElementById("online");
-  if (online) {
-    const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-    const names = { misty_cape: "Mistly Cape", misty_elytra: "Mistly Elytra", early_cape: "Early player cape", cloudly: "Cloudly (hat)" };
-    const since = (s) => (s < 60 ? "< 1 min" : s < 3600 ? `${Math.floor(s / 60)} min` : `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`);
-    const tick = async () => {
-      if (document.hidden) return;
-      try {
-        const r = await fetch("/admin/online.json", { cache: "no-store" });
-        if (!r.ok) return;
-        const d = await r.json();
-        const set = (id, v) => {
-          const e = document.getElementById(id);
-          if (!e || e.textContent === String(v)) return;
-          e.textContent = v;
-          e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump");
-        };
-        set("n-launchers", d.launchers);
-        set("n-client", d.players.length);
-        mesure("n-launchers", d.launchers);
-        mesure("n-client", d.players.length);
-        if (!d.players.length) {
-          online.innerHTML = '<p class="empty">Personne n\'est en jeu avec Mistly Client.</p>';
-          return;
-        }
-        // le même gabarit que la page (liste_en_ligne dans views/admin.rs)
-        const rows = d.players.map((p) => {
-          const wear = [p.cosmetic, p.hat].filter(Boolean).map((c) => names[c] || c).join(" + ") || "—";
-          const label = p.name || p.uuid.slice(0, 8) + "…";
-          return `<li><canvas class="head" width="8" height="8" ${p.name ? `data-name="${esc(p.name)}"` : ""} style="width:34px;height:34px" aria-hidden="true"></canvas><a href="/admin/players/${esc(p.uuid)}"><strong>${esc(label)}</strong><span>${esc(wear)}</span></a><span class="since">${since(p.since)}</span></li>`;
-        }).join("");
-        online.innerHTML = `<ul class="msgs">${rows}</ul>`;
-        heads(online);
-      } catch {}
-    };
-    setInterval(tick, 15000);
-  }
+  // Les joueurs en ligne et les chiffres en direct (vue d'ensemble), toutes les 15 secondes
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const names = { misty_cape: "Mistly Cape", misty_elytra: "Mistly Elytra", early_cape: "Early player cape", cloudly: "Cloudly (hat)" };
+  const since = (s) => (s < 60 ? "< 1 min" : s < 3600 ? `${Math.floor(s / 60)} min` : `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`);
+  setInterval(async () => {
+    const online = document.getElementById("online");
+    if (!online || document.hidden) return;
+    try {
+      const r = await fetch("/admin/online.json", { cache: "no-store" });
+      if (!r.ok) return;
+      const d = await r.json();
+      const set = (id, v) => {
+        const e = document.getElementById(id);
+        if (!e || e.textContent === String(v)) return;
+        e.textContent = v;
+        e.classList.remove("bump"); void e.offsetWidth; e.classList.add("bump");
+      };
+      set("n-launchers", d.launchers);
+      set("n-client", d.players.length);
+      mesure("n-launchers", d.launchers);
+      mesure("n-client", d.players.length);
+      if (!d.players.length) {
+        online.innerHTML = '<p class="empty">Nobody is playing with Mistly Client.</p>';
+        return;
+      }
+      // le même gabarit que la page (liste_en_ligne dans views/admin.rs)
+      const rows = d.players.map((p) => {
+        const wear = [p.cosmetic, p.hat].filter(Boolean).map((c) => names[c] || c).join(" + ") || "—";
+        const label = p.name || p.uuid.slice(0, 8) + "…";
+        return `<li><canvas class="head" width="8" height="8" ${p.name ? `data-name="${esc(p.name)}"` : ""} style="width:34px;height:34px" aria-hidden="true"></canvas><a href="/admin/players/${esc(p.uuid)}"><strong>${esc(label)}</strong><span>${esc(wear)}</span></a><span class="since">${since(p.since)}</span></li>`;
+      }).join("");
+      online.innerHTML = `<ul class="msgs">${rows}</ul>`;
+      heads(online);
+    } catch {}
+  }, 15000);
 
+  // La courbe d'activité (vue d'ensemble)
+  let redessiner = null;
+  let attente = 0;
+  addEventListener("resize", () => { clearTimeout(attente); attente = setTimeout(() => redessiner?.(), 150); });
   // Vue d'ensemble : la courbe d'activité (installations et événements par jour). Des courbes
   // lisses avec un point par jour, une bulle au survol, et la période choisie (7, 14 ou 30 jours).
-  const chart = document.getElementById("chart");
-  if (chart && chart.dataset.series) {
+  const courbe = (racine) => {
+    const chart = racine.querySelector("#chart");
+    if (!chart || !chart.dataset.series) { redessiner = null; return; }
     let data = null;
     try { data = JSON.parse(chart.dataset.series); } catch {}
     const MOIS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -341,60 +316,134 @@
       svg.addEventListener("pointerleave", () => { bulle.hidden = true; ligne.setAttribute("visibility", "hidden"); });
     };
     let periode = 30;
-    document.querySelectorAll("[data-jours]").forEach(b => b.addEventListener("click", () => {
+    racine.querySelectorAll("[data-jours]").forEach(b => b.addEventListener("click", () => {
       periode = +b.dataset.jours;
-      document.querySelectorAll("[data-jours]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      racine.querySelectorAll("[data-jours]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
       dessinerCourbe(periode);
     }));
     dessinerCourbe(periode);
-    let attente = 0;
-    addEventListener("resize", () => { clearTimeout(attente); attente = setTimeout(() => dessinerCourbe(periode), 150); });
-  }
+    redessiner = () => dessinerCourbe(periode);
+  };
 
-  // Rapport : couleur des erreurs, filtre et copie
-  const log = document.querySelector(".logview");
-  if (log) {
-    const text = log.textContent;
-    log.textContent = "";
-    for (const line of text.split("\n")) {
-      const s = document.createElement("span");
-      s.className = "l" + (/ERROR|FATAL|Exception|Caused by|^\s+at /.test(line) ? " e" : /WARN/.test(line) ? " w" : "");
-      s.textContent = line + "\n";
-      log.append(s);
-    }
-    log.scrollTop = log.scrollHeight;
-    document.querySelector("[data-filter-errors]")?.addEventListener("change", (e) => log.classList.toggle("only-errors", e.target.checked));
-    const copy = document.querySelector("[data-copy-log]");
-    copy?.addEventListener("click", () => navigator.clipboard?.writeText(text).then(() => {
-      copy.textContent = "Copied";
-      setTimeout(() => (copy.textContent = "Copy"), 1200);
+  // ---------- Ce qui dépend de la page : branché au chargement et après chaque changement ----------
+  const brancher = (racine) => {
+    heads(racine);
+    racine.querySelectorAll("svg[data-spark]").forEach(svg => mesure(svg.dataset.spark, document.getElementById(svg.dataset.spark)?.textContent));
+    racine.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => {
+      navigator.clipboard?.writeText(b.dataset.copy).then(() => {
+        b.classList.add("done");
+        setTimeout(() => b.classList.remove("done"), 1200);
+      });
     }));
-  }
+    // Confirmation avant les actions qui ne se défont pas
+    racine.querySelectorAll("form[data-confirm]").forEach(f => f.addEventListener("submit", (e) => {
+      if (!confirm(f.dataset.confirm)) e.preventDefault();
+    }));
+    // Une règle choisie s'applique tout de suite
+    racine.querySelectorAll("select[data-autosubmit]").forEach(s => s.addEventListener("change", () => s.form.requestSubmit()));
+    courbe(racine);
+    // Rapport : couleur des erreurs, filtre et copie
+    const log = racine.querySelector(".logview");
+    if (log) {
+      const text = log.textContent;
+      log.textContent = "";
+      for (const line of text.split("\n")) {
+        const s = document.createElement("span");
+        s.className = "l" + (/ERROR|FATAL|Exception|Caused by|^\s+at /.test(line) ? " e" : /WARN/.test(line) ? " w" : "");
+        s.textContent = line + "\n";
+        log.append(s);
+      }
+      log.scrollTop = log.scrollHeight;
+      racine.querySelector("[data-filter-errors]")?.addEventListener("change", (e) => log.classList.toggle("only-errors", e.target.checked));
+      const copy = racine.querySelector("[data-copy-log]");
+      copy?.addEventListener("click", () => navigator.clipboard?.writeText(text).then(() => {
+        copy.textContent = "Copied";
+        setTimeout(() => (copy.textContent = "Copy"), 1200);
+      }));
+    }
+    // Base : le JSON est vérifié pendant la frappe
+    const db = racine.querySelector(".dbedit");
+    if (db) {
+      const area = db.querySelector("textarea");
+      const state = racine.querySelector("#json-state");
+      const check = () => {
+        try {
+          JSON.parse(area.value);
+          db.classList.remove("invalid");
+          state.textContent = "Valid JSON";
+          state.className = "good";
+        } catch (e) {
+          db.classList.add("invalid");
+          state.textContent = "Invalid JSON: " + e.message;
+          state.className = "bad";
+        }
+      };
+      area.addEventListener("input", check);
+      db.addEventListener("submit", (e) => { if (db.classList.contains("invalid")) e.preventDefault(); });
+      area.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          area.setRangeText("  ", area.selectionStart, area.selectionEnd, "end");
+        }
+      });
+    }
+  };
 
-  // Base : le JSON est vérifié pendant la frappe
-  const db = document.querySelector(".dbedit");
-  if (db) {
-    const area = db.querySelector("textarea");
-    const state = document.getElementById("json-state");
-    const check = () => {
-      try {
-        JSON.parse(area.value);
-        db.classList.remove("invalid");
-        state.textContent = "JSON valide";
-        state.className = "good";
-      } catch (e) {
-        db.classList.add("invalid");
-        state.textContent = "JSON invalide : " + e.message;
-        state.className = "bad";
-      }
-    };
-    area.addEventListener("input", check);
-    db.addEventListener("submit", (e) => { if (db.classList.contains("invalid")) e.preventDefault(); });
-    area.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        area.setRangeText("  ", area.selectionStart, area.selectionEnd, "end");
-      }
-    });
-  }
+  // ---------- Changer de page sans recharger ----------
+  // Les liens du tableau de bord et les formulaires GET (recherches, filtres) chargent la page
+  // demandée, puis on remplace le contenu et le titre. Les formulaires POST (bannir,
+  // enregistrer…) gardent un envoi normal.
+  const zone = document.querySelector(".scroll");
+  const titre = document.querySelector(".tb-title");
+  let enCours = null;
+  const aller = async (url, pousser) => {
+    if (!zone) { location.href = url; return; }
+    const cible = new URL(url, location.href);
+    allumer(cible.pathname, !calme);
+    zone.classList.add("sortie");
+    const moi = enCours = fetch(cible, { headers: { "X-Requested-With": "admin" } }).then(r => (r.redirected && !new URL(r.url).pathname.startsWith("/admin") ? null : r.ok || r.status === 404 ? r : null)).catch(() => null);
+    const [r] = await Promise.all([moi, new Promise(ok => setTimeout(ok, calme ? 0 : 140))]);
+    if (moi !== enCours) return;
+    if (!r) { location.href = cible.href; return; }
+    const html = await r.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const neuve = doc.querySelector(".scroll");
+    // la session a expiré : la page de connexion s'ouvre normalement
+    if (!neuve) { location.href = r.url || cible.href; return; }
+    zone.innerHTML = neuve.innerHTML;
+    if (titre) titre.textContent = doc.querySelector(".tb-title")?.textContent || "";
+    document.title = doc.title;
+    const finale = new URL(r.url || cible.href);
+    if (pousser) history.pushState({ admin: true }, "", finale.pathname + finale.search + cible.hash);
+    allumer(finale.pathname, !calme);
+    zone.scrollTop = 0;
+    zone.classList.remove("sortie");
+    zone.classList.add("entree");
+    requestAnimationFrame(() => requestAnimationFrame(() => zone.classList.remove("entree")));
+    brancher(zone);
+  };
+  const interne = (u) => u.origin === location.origin && u.pathname.startsWith("/admin") && !/\.json$/.test(u.pathname) && u.pathname !== "/admin/logout";
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest("a[href]");
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || a.target === "_blank" || a.hasAttribute("download")) return;
+    const u = new URL(a.href, location.href);
+    if (!interne(u)) return;
+    if (u.pathname === location.pathname && u.search === location.search && u.hash) return;
+    e.preventDefault();
+    aller(u.href, true);
+  });
+  document.addEventListener("submit", (e) => {
+    const f = e.target;
+    if (e.defaultPrevented || (f.method || "get").toLowerCase() !== "get") return;
+    const u = new URL(f.action || location.href, location.href);
+    if (!interne(u)) return;
+    e.preventDefault();
+    u.search = new URLSearchParams(new FormData(f)).toString();
+    aller(u.href, true);
+  });
+  addEventListener("popstate", () => aller(location.href, false));
+  // Retour arrière depuis une autre page : le rond revient sur la bonne icône
+  addEventListener("pageshow", (e) => { if (e.persisted) allumer(location.pathname, false); });
+
+  brancher(document);
 })();

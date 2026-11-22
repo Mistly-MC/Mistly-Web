@@ -65,7 +65,9 @@ body.admin.login-page{display:block}
 .scroll::-webkit-scrollbar{display:none}
 /* le cadre tient dans la fenêtre : pas de barre de défilement sur la page elle-même */
 @media (min-width:901px){body.admin:not(.login-page){overflow:hidden}}
-.page{max-width:1500px;animation:page-in .45s cubic-bezier(.2,.7,.2,1)}
+.page{animation:page-in .4s cubic-bezier(.2,.7,.2,1)}
+/* changement de page sans recharger (admin.js) : l'ancienne s'efface, la nouvelle entre */
+.scroll.sortie>*{opacity:0;transform:translateY(6px);transition:opacity .14s ease,transform .14s ease}
 @keyframes page-in{from{opacity:0;transform:translateY(8px)}}
 .page-sub{margin:-6px 0 20px;color:var(--sub);font-size:14px;max-width:760px}
 
