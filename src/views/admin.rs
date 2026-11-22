@@ -394,7 +394,6 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
                                     li {
                                         span.msg-ic { (icons::notes()) }
                                         div { strong { (e.text) } time { (il_y_a(e.at)) } }
-                                        @if let Some(ip) = &e.ip { code.ip title="IP address" { (ip) } }
                                     }
                                 }
                             }

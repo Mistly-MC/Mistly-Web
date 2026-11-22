@@ -291,12 +291,10 @@ body.admin.login-page{display:block}
 .log time{font-size:12px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
 .log.full li{grid-template-columns:170px minmax(0,1fr) auto}
 /* l'adresse IP : sa colonne, tout à droite */
-.log .ip{justify-self:end;margin-left:0}
+.log .ip{justify-self:end;margin-left:0;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .log .ip:empty{display:none}
-.msgs .ip{flex:none;margin-left:auto}
 
 .ip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--lilac);background:rgb(142 170 240 / .12);vertical-align:middle}
-.msgs .ip{padding:1px 7px;font-size:10.5px}
 
 /* ---------- To-do ---------- */
 .todo{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:start}
