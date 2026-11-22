@@ -212,7 +212,7 @@ pub async fn page_connexion(State(state): State<Arc<AppState>>, entetes: HeaderM
     if state.admin.connecte(&entetes) {
         return redirection("/admin");
     }
-    page(vue::connexion(m.err.as_deref()))
+    page(vue::connexion(m.err.as_deref(), &state.scene))
 }
 
 #[derive(Deserialize)]

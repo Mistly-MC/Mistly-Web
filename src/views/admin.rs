@@ -5,7 +5,7 @@ use super::layout::ASSET_VERSION;
 use crate::client::avec_tirets;
 use crate::client::EnLigne;
 use crate::registre::{Cosmetique, Entree, Fiche as FicheBase, Place, Regle};
-use maud::{DOCTYPE, Markup, html};
+use maud::{DOCTYPE, Markup, PreEscaped, html};
 use serde_json::Value;
 
 pub struct Flash<'a> {
@@ -234,40 +234,76 @@ fn courbe(valeurs: &[u64]) -> String {
 
 /// La connexion, comme une session SSH : les lignes s'écrivent l'une après l'autre (admin.js),
 /// puis l'invite du mot de passe. Sans JavaScript, tout est affiché d'un coup.
-pub fn connexion(erreur: Option<&str>) -> Markup {
-    shell(
-        "Connexion",
-        None,
-        None,
-        html! {
-            div.ssh-wrap {
-                section.ssh #ssh data-error=[erreur.map(|_| "1")] aria-label="Connexion au tableau de bord" {
-                    div.ssh-bar {
-                        span.dots aria-hidden="true" { i {} i {} i {} }
-                        span.ssh-title { "admin@mistly.cc — ssh — 80×24" }
+/// Connexion : à gauche le nom et le mot de passe, à droite le paysage du launcher (pixel art) sous
+/// une brume de caractères.
+pub fn connexion(erreur: Option<&str>, scene: &str) -> Markup {
+    let v = ASSET_VERSION.as_str();
+    let lien = |href: &str, titre: &str, icone: Markup| {
+        html! { a href=(href) target="_blank" rel="noopener" aria-label=(titre) title=(titre) { (icone) } }
+    };
+    html! {
+        (DOCTYPE)
+        html lang="fr" data-theme="dark" {
+            head {
+                meta charset="utf-8";
+                meta name="viewport" content="width=device-width, initial-scale=1";
+                meta name="robots" content="noindex, nofollow";
+                meta name="color-scheme" content="dark";
+                title { "Connexion · Mistly Admin" }
+                link rel="icon" href="/assets/icone.png";
+                link rel="preload" href="/assets/Geist-latin.woff2" as="font" type="font/woff2" crossorigin;
+                link rel="stylesheet" href=(format!("/css/base.css?v={v}"));
+                link rel="stylesheet" href=(format!("/css/admin.css?v={v}"));
+                script src=(format!("/js/admin.js?v={v}")) defer {}
+            }
+            body.admin.login-page {
+                div.lg {
+                    section.lg-side {
+                        span.lg-host { i {} "mistly.cc / admin" }
+                        div.lg-main {
+                            img.lg-logo src="/assets/icone.png" alt="" width="56" height="56";
+                            h1 { "Mistly " strong { "Admin" } }
+                            p.lg-sub { "Tableau de bord de l'équipe." }
+                            form.lg-form #login method="post" action="/admin/login" data-error=[erreur.map(|_| "1")] {
+                                label.sr for="pw" { "Mot de passe" }
+                                div.lg-field {
+                                    (icons::lock())
+                                    input #pw type="password" name="password" placeholder="Mot de passe" autocomplete="current-password" required autofocus spellcheck="false";
+                                    button.lg-eye type="button" aria-label="Afficher le mot de passe" aria-pressed="false" { "voir" }
+                                }
+                                @if let Some(e) = erreur { p.lg-err role="alert" { (icons::alert()) (e) } }
+                                button.lg-btn.solid type="submit" {
+                                    span.t { "Se connecter" }
+                                    (icons::arrow_right())
+                                }
+                            }
+                            a.lg-btn href="https://github.com/Mistly-MC/Mistly-Web" target="_blank" rel="noopener" {
+                                span.t { "Voir le code" }
+                                span.lg-gh { (icons::github()) "GitHub" }
+                            }
+                            div.lg-social {
+                                (lien(super::layout::DISCORD_URL, "Discord", icons::discord()))
+                                (lien(super::layout::GITHUB_ORG_URL, "GitHub", icons::github()))
+                                (lien("/status", "Statut", icons::globe()))
+                                (lien("/", "Site", icons::external()))
+                            }
+                        }
+                        nav.lg-foot {
+                            a href="/privacy" { "Confidentialité" }
+                            a href="/terms" { "Conditions" }
+                            a href="/status" { "Statut" }
+                        }
                     }
-                    div.ssh-body {
-                        pre.ssh-banner aria-hidden="true" { (super::layout::BANNER) }
-                        div.ssh-lines {
-                            p.l.cmd { span.ps { "~ $" } " " span.typed { "ssh admin@mistly.cc" } }
-                            p.l.dim { "Connecting to mistly.cc port 22…" }
-                            p.l.dim { "Connection established." }
-                            p.l { span.ok { "✓" } " Mistly control panel · accès réservé à l'équipe" }
-                            p.l.dim { "Chaque connexion est enregistrée." }
-                            @if let Some(e) = erreur { p.l.err { "Permission denied — " (e) } }
-                        }
-                        form.ssh-form method="post" action="/admin/login" {
-                            label for="pw" { "admin@mistly.cc's password:" }
-                            input #pw type="password" name="password" autocomplete="current-password" required autofocus spellcheck="false";
-                            button.ssh-go type="submit" { "↵ connexion" }
-                        }
-                        p.ssh-hint { "Entrée pour se connecter" }
-                        div.ssh-out aria-live="polite" {}
+                    div.lg-art aria-hidden="true" {
+                        div.lg-sky { (PreEscaped(scene)) }
+                        canvas.adm-bg {}
+                        div.lg-badge { img src="/assets/icone.png" alt="" width="18" height="18"; span { "Accès réservé à l'équipe" } }
+                        p.lg-quote { "Léger comme la brume." }
                     }
                 }
             }
-        },
-    )
+        }
+    }
 }
 
 // ---------- Vue d'ensemble ----------

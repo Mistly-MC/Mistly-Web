@@ -11,11 +11,13 @@
     const login = document.body.classList.contains("login-page");
     const RAMP = " .·:-=+*#%@";
     const CW = 9, CH = 16;
-    let cols = 0, rows = 0, dpr = 1;
+    // Plein écran, ou la taille de son cadre (page de connexion)
+    let cols = 0, rows = 0, dpr = 1, W = 0, H = 0;
     const size = () => {
       dpr = Math.min(devicePixelRatio || 1, 2);
-      bg.width = innerWidth * dpr; bg.height = innerHeight * dpr;
-      cols = Math.ceil(innerWidth / CW) + 1; rows = Math.ceil(innerHeight / CH) + 1;
+      W = bg.clientWidth || innerWidth; H = bg.clientHeight || innerHeight;
+      bg.width = W * dpr; bg.height = H * dpr;
+      cols = Math.ceil(W / CW) + 1; rows = Math.ceil(H / CH) + 1;
     };
     size();
     addEventListener("resize", size);
@@ -28,10 +30,10 @@
     };
     const fbm = (x, y) => noise(x, y) * .55 + noise(x * 2.1, y * 2.1) * .3 + noise(x * 4.3, y * 4.3) * .15;
     let mx = -1e4, my = -1e4;
-    addEventListener("pointermove", e => { mx = e.clientX; my = e.clientY; });
+    addEventListener("pointermove", e => { const r = bg.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
     const draw = (t) => {
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
-      g.clearRect(0, 0, innerWidth, innerHeight);
+      g.clearRect(0, 0, W, H);
       g.font = "12px 'Geist Mono', ui-monospace, monospace";
       g.textBaseline = "top";
       const s = t / 1000;
@@ -73,47 +75,22 @@
     tic(); setInterval(tic, 1000);
   }
 
-  // Connexion : la session SSH s'écrit ligne après ligne, puis l'invite du mot de passe
-  const ssh = document.getElementById("ssh");
-  if (ssh) {
+  // Connexion : afficher le mot de passe, secousse après un refus, bouton qui patiente à l'envoi
+  const login = document.getElementById("login");
+  if (login) {
     const pw = document.getElementById("pw");
-    const form = ssh.querySelector(".ssh-form");
-    const out = ssh.querySelector(".ssh-out");
-    const lignes = [...ssh.querySelectorAll(".ssh-lines .l")];
-    const attendre = ms => new Promise(r => setTimeout(r, ms));
-    const erreur = ssh.dataset.error === "1";
-    if (erreur) ssh.classList.add("denied");
-    if (!calme && !erreur) {
-      ssh.classList.add("typing");
-      (async () => {
-        const typed = lignes[0].querySelector(".typed");
-        const texte = typed.textContent;
-        typed.textContent = ""; typed.classList.add("run");
-        lignes[0].classList.add("on");
-        await attendre(350);
-        for (const c of texte) { typed.textContent += c; await attendre(38 + Math.random() * 45); }
-        await attendre(260); typed.classList.remove("run");
-        for (const l of lignes.slice(1)) { await attendre(l.classList.contains("dim") ? 280 : 180); l.classList.add("on"); }
-        await attendre(200);
-        ssh.classList.remove("typing");
-        pw.focus();
-      })();
-    } else pw.focus();
-
-    // À l'envoi : « Authenticating » et une barre de progression, puis l'envoi réel
-    let envoye = false;
-    form.addEventListener("submit", async e => {
-      if (envoye || calme) return;
-      e.preventDefault();
-      envoye = true;
-      const l = document.createElement("p");
-      l.className = "l";
-      l.innerHTML = 'Authenticating <span class="prog"></span>';
-      out.append(l);
-      const prog = l.querySelector(".prog");
-      for (let i = 0; i <= 16; i++) { prog.textContent = "[" + "#".repeat(i) + ".".repeat(16 - i) + "]"; await attendre(22); }
+    const eye = login.querySelector(".lg-eye");
+    eye.addEventListener("click", () => {
+      const voir = pw.type === "password";
+      pw.type = voir ? "text" : "password";
+      eye.setAttribute("aria-pressed", String(voir));
+      eye.textContent = voir ? "cacher" : "voir";
+      pw.focus();
+    });
+    if (login.dataset.error === "1") { login.classList.add("denied"); pw.select(); }
+    login.addEventListener("submit", () => {
+      login.querySelector(".lg-btn.solid").classList.add("busy");
       try { sessionStorage.setItem("adm-start", Date.now()); } catch {}
-      form.submit();
     });
   }
 

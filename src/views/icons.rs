@@ -11,6 +11,18 @@ fn icon(paths: &str) -> Markup {
 pub fn download() -> Markup {
     icon(r#"<path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/>"#)
 }
+pub fn heart() -> Markup {
+    icon(r#"<path d="M12 20s-7.5-4.6-9.3-9.4C1.5 7.3 3.7 4 7 4c2 0 3.5 1.1 5 3 1.5-1.9 3-3 5-3 3.3 0 5.5 3.3 4.3 6.6C19.5 15.4 12 20 12 20z"/>"#)
+}
+pub fn coffee() -> Markup {
+    icon(r#"<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 2.5v3M12 2.5v3"/>"#)
+}
+pub fn palette() -> Markup {
+    icon(r#"<path d="M12 3a9 9 0 0 0 0 18c1.1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H17a4 4 0 0 0 4-4c0-4.4-4-8.2-9-8.2z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>"#)
+}
+pub fn lock() -> Markup {
+    icon(r#"<rect x="4" y="10.5" width="16" height="10.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>"#)
+}
 pub fn archive() -> Markup {
     icon(r#"<path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/>"#)
 }
