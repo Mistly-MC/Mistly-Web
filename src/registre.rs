@@ -41,10 +41,10 @@ pub struct Cosmetique {
 
 /// Les cosmétiques Mistly que le mod sait afficher.
 pub const CATALOGUE: &[Cosmetique] = &[
-    Cosmetique { id: "misty_cape", nom: "Cape Mistly", place: Place::Dos, regle_par_defaut: Regle::Everyone },
-    Cosmetique { id: "misty_elytra", nom: "Élytres Mistly", place: Place::Dos, regle_par_defaut: Regle::Everyone },
-    Cosmetique { id: "early_cape", nom: "Cape early player", place: Place::Dos, regle_par_defaut: Regle::Early },
-    Cosmetique { id: "cloudly", nom: "Cloudly (chapeau)", place: Place::Tete, regle_par_defaut: Regle::Everyone },
+    Cosmetique { id: "misty_cape", nom: "Mistly Cape", place: Place::Dos, regle_par_defaut: Regle::Everyone },
+    Cosmetique { id: "misty_elytra", nom: "Mistly Elytra", place: Place::Dos, regle_par_defaut: Regle::Everyone },
+    Cosmetique { id: "early_cape", nom: "Early player cape", place: Place::Dos, regle_par_defaut: Regle::Early },
+    Cosmetique { id: "cloudly", nom: "Cloudly (hat)", place: Place::Tete, regle_par_defaut: Regle::Everyone },
 ];
 
 pub fn cosmetique(id: &str) -> Option<&'static Cosmetique> {
@@ -79,10 +79,10 @@ impl Regle {
 
     pub fn libelle(self) -> &'static str {
         match self {
-            Regle::Everyone => "Tout le monde",
-            Regle::Early => "Premiers joueurs",
-            Regle::Granted => "Sur attribution",
-            Regle::Off => "Désactivé",
+            Regle::Everyone => "Everyone",
+            Regle::Early => "Early players",
+            Regle::Granted => "When given",
+            Regle::Off => "Disabled",
         }
     }
 
@@ -137,25 +137,25 @@ impl Base {
     pub fn valider(&self) -> Result<(), String> {
         for (uuid, f) in &self.players {
             if crate::client::uuid_normalise(uuid).as_deref() != Some(uuid.as_str()) {
-                return Err(format!("UUID invalide : {uuid} (32 chiffres hexadécimaux en minuscules, sans tirets)"));
+                return Err(format!("Invalid UUID: {uuid} (32 lowercase hex digits, no dashes)"));
             }
             for id in f.granted.iter().chain(&f.revoked) {
                 if cosmetique(id).is_none() {
-                    return Err(format!("Cosmétique inconnu chez {uuid} : {id}"));
+                    return Err(format!("Unknown cosmetic for {uuid}: {id}"));
                 }
             }
             if f.note.len() > MAX_NOTE {
-                return Err(format!("Note trop longue chez {uuid}"));
+                return Err(format!("Note too long for {uuid}"));
             }
         }
         for id in self.cosmetics.keys() {
             if cosmetique(id).is_none() {
-                return Err(format!("Cosmétique inconnu dans les règles : {id}"));
+                return Err(format!("Unknown cosmetic in the rules: {id}"));
             }
         }
         if let Some(d) = &self.early_before {
             if date_unix(d).is_none() {
-                return Err(format!("Date des premiers joueurs invalide : {d} (AAAA-MM-JJ)"));
+                return Err(format!("Invalid early players date: {d} (YYYY-MM-DD)"));
             }
         }
         Ok(())
@@ -204,6 +204,13 @@ impl Registre {
             if self.sale.swap(false, Ordering::Relaxed) {
                 self.ecrire();
             }
+        }
+    }
+
+    /// Écrit tout de suite ce qui ne l'est pas encore (à l'arrêt du serveur).
+    pub fn sauver(&self) {
+        if self.sale.swap(false, Ordering::Relaxed) {
+            self.ecrire();
         }
     }
 
@@ -308,7 +315,7 @@ impl Registre {
     /// Remplace toute la base (éditeur JSON du tableau de bord). Le journal envoyé est ignoré : on garde le vrai.
     pub fn remplacer(&self, mut nouvelle: Base) -> Result<(), String> {
         nouvelle.valider()?;
-        self.modifier("Base remplacée depuis l'éditeur JSON", |base| {
+        self.modifier("Database replaced from the JSON editor", |base| {
             nouvelle.log = std::mem::take(&mut base.log);
             *base = nouvelle;
         });
@@ -472,6 +479,6 @@ mod tests {
         r.remplacer(nouvelle).unwrap();
         let b = r.copie();
         assert_eq!(b.players.len(), 1);
-        assert_eq!(b.log.iter().map(|e| e.text.as_str()).collect::<Vec<_>>(), ["avant", "Base remplacée depuis l'éditeur JSON"]);
+        assert_eq!(b.log.iter().map(|e| e.text.as_str()).collect::<Vec<_>>(), ["avant", "Database replaced from the JSON editor"]);
     }
 }

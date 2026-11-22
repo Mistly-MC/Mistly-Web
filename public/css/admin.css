@@ -4,7 +4,7 @@
 body.admin{
   --g:#7ee2b0;--warn:#f6c27a;--bad:#f59a9a;--blue:#a99cf0;
   --lilac:#a99cf0;--pink:#f2a7dc;--peach:#f6b48f;--mint:#8fe0bd;
-  --frame:#131315;--card:#1d1d20;--card-2:#242428;--edge:rgb(255 255 255 / .06);--edge-2:rgb(255 255 255 / .1);
+  --frame:#121214;--inset:#19191c;--card:#222226;--card-2:#2a2a2f;--edge:rgb(255 255 255 / .06);--edge-2:rgb(255 255 255 / .1);
   --txt:#f4f4f5;--sub:#9a9aa3;
   min-height:100vh;background:#0a0a0b;font-size:14px;color:var(--txt)}
 body.admin.login-page{display:block}
@@ -25,11 +25,17 @@ body.admin.login-page{display:block}
 .rail-logo{display:flex;flex-direction:column;align-items:center;gap:6px}
 .rail-logo img{image-rendering:pixelated;border-radius:10px}
 .rail-logo span{font-family:var(--pixel);font-size:9px;letter-spacing:.12em;color:var(--sub)}
-.rail-nav{display:flex;flex-direction:column;align-items:center;gap:14px;margin:auto 0}
+.rail-nav{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;margin:auto 0}
+.rail-pill{position:absolute;top:0;left:50%;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:var(--pink);opacity:0;pointer-events:none;
+  box-shadow:0 0 0 6px rgb(242 167 220 / .14),0 10px 26px -6px rgb(242 167 220 / .6);transition:transform .5s cubic-bezier(.6,0,.2,1.25),opacity .2s}
+.rail-nav.ready .rail-pill{opacity:1}
+.rail-nav a{z-index:1}
 .rail-nav a,.rail-foot a{position:relative;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;color:var(--sub);transition:color .2s,background .2s,transform .2s}
 .rail-nav a:hover,.rail-foot a:hover{color:var(--txt);background:rgb(255 255 255 / .05)}
 .rail-nav .ic,.rail-foot .ic{width:19px;height:19px}
-.rail-nav a[aria-current]{color:#2a1530;background:var(--pink);box-shadow:0 0 0 6px rgb(242 167 220 / .14),0 10px 26px -6px rgb(242 167 220 / .6)}
+.rail-nav a[aria-current]{color:#2a1530;transition:color .3s .15s}
+.rail-nav a[aria-current]:hover{background:none}
+.rail-nav:not(.ready) a[aria-current]{background:var(--pink)}
 .tip{position:absolute;left:calc(100% + 14px);top:50%;z-index:20;padding:6px 10px;border-radius:9px;font-size:12.5px;font-weight:500;white-space:nowrap;color:var(--txt);background:#2b2b30;
   box-shadow:0 10px 30px -10px rgb(0 0 0 / .8);opacity:0;visibility:hidden;transform:translate(-4px,-50%);transition:opacity .15s,transform .15s,visibility .15s;pointer-events:none}
 .rail a:hover .tip,.rail a:focus-visible .tip{opacity:1;visibility:visible;transform:translate(0,-50%)}
@@ -85,7 +91,9 @@ body.admin.login-page{display:block}
 
 /* ---------- Vue d'ensemble ---------- */
 .ov{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
-.ov-main{min-width:0}
+/* Le bloc central, en retrait dans le cadre (comme sur la maquette) ; la colonne de droite est posée sur le cadre */
+.ov-main,.page:not(:has(.ov)){min-width:0;padding:16px;border-radius:28px;background:var(--inset);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .035),inset 0 10px 30px -20px rgb(0 0 0 / .8)}
+.page:not(:has(.ov)){padding:20px}
 .ov-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}
 .ov-card{--c:var(--lilac);position:relative;display:flex;flex-direction:column;gap:6px;padding:18px 18px 16px;border-radius:20px;background:var(--card);overflow:hidden;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
 .ov-card:hover{transform:translateY(-3px)}
@@ -157,7 +165,7 @@ body.admin.login-page{display:block}
 .p-mint{--c:var(--mint)}
 
 /* La colonne de droite */
-.ov-side{position:sticky;top:0;display:flex;flex-direction:column;gap:22px;padding:22px 20px;border-radius:22px;background:#18181b}
+.ov-side{position:sticky;top:0;display:flex;flex-direction:column;gap:22px;padding:8px 6px 22px}
 .side-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .msgs{display:flex;flex-direction:column;gap:12px}
 .msgs li{display:flex;align-items:center;gap:12px;min-width:0}
@@ -284,6 +292,22 @@ body.admin.login-page{display:block}
 .legend dt{font-size:14px;font-weight:600}
 .legend dd{font-size:13px;color:var(--sub);margin-top:4px}
 
+/* ---------- Boutique ---------- */
+.shopcfg .tbl th.c,.shopcfg .tbl td.c{text-align:center}
+.shopcfg select{min-width:190px;border-radius:999px}
+.admin .shopcfg input.price{width:110px;border-radius:999px;text-align:right;font-variant-numeric:tabular-nums}
+.shopcfg tr.hidden-row td{opacity:.55}
+.switch{position:relative;display:inline-block;width:42px;height:24px;cursor:pointer;vertical-align:middle}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;border-radius:999px;background:#3a3a41;transition:background .2s}
+.switch span::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgb(0 0 0 / .4);transition:transform .25s cubic-bezier(.3,1.5,.5,1)}
+.switch input:checked+span{background:var(--lilac)}
+.switch.danger input:checked+span{background:var(--bad)}
+.switch input:checked+span::after{transform:translateX(18px)}
+.switch input:focus-visible+span{box-shadow:0 0 0 4px rgb(169 156 240 / .3)}
+.savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:6px;padding:14px 18px;border-radius:20px;background:rgb(34 34 38 / .92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 -10px 30px -20px rgb(0 0 0 / .9)}
+.savebar p{font-size:13px}
+
 /* ---------- Rapports ---------- */
 .logbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:13px}
 .logbar div{display:flex;align-items:center;gap:14px}
@@ -403,3 +427,8 @@ body.admin.login-page{display:block}
   .tb-live i,.live i,.page,.flash,.lg-main,.chart-box .curve{animation:none}
   .chart-box .curve{stroke-dashoffset:0}
 }
+
+/* Les champs dans une pastille (recherche, rapport) : pas de second cadre dedans */
+.admin .tb-search input,.admin .tb-search input:focus,.admin .quick input,.admin .quick input:focus,.admin .search input,.admin .search input:focus{padding:0;border:0;border-radius:0;background:none;box-shadow:none;outline:0}
+.quick:focus-within{box-shadow:0 0 0 4px rgb(169 156 240 / .12)}
+.bad-txt{color:var(--bad)}

@@ -186,7 +186,7 @@ macro_rules! garde {
     ($state:expr, $entetes:expr, post) => {
         garde!($state, $entetes);
         if !meme_origine(&$entetes) {
-            return (StatusCode::FORBIDDEN, "Origine refusée").into_response();
+            return (StatusCode::FORBIDDEN, "Origin refused").into_response();
         }
     };
 }
@@ -226,7 +226,7 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
         return StatusCode::NOT_FOUND.into_response();
     }
     if !meme_origine(&entetes) {
-        return (StatusCode::FORBIDDEN, "Origine refusée").into_response();
+        return (StatusCode::FORBIDDEN, "Origin refused").into_response();
     }
     let adresse = crate::presence::adresse(&entetes);
     if !a.peut_essayer(&adresse) {
@@ -237,9 +237,9 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
         eprintln!("Tableau de bord : mot de passe refusé");
         return retour("/admin/login", false, "Wrong password.");
     }
-    state.registre.modifier("Connexion au tableau de bord", |_| ());
+    state.registre.modifier("Signed in to the dashboard", |_| ());
     let mut res = redirection("/admin");
-    let c = format!("{COOKIE}={}; Path=/admin; Max-Age={SESSION}; HttpOnly; Secure; SameSite=Strict", a.nouvelle_session());
+    let c = format!("{COOKIE}={}; Path=/; Max-Age={SESSION}; HttpOnly; Secure; SameSite=Strict", a.nouvelle_session());
     if let Ok(v) = HeaderValue::from_str(&c) {
         res.headers_mut().insert(header::SET_COOKIE, v);
     }
@@ -249,7 +249,7 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
 pub async fn deconnexion(State(state): State<Arc<AppState>>, entetes: HeaderMap) -> Response {
     garde!(state, entetes, post);
     let mut res = redirection("/admin/login");
-    let c = format!("{COOKIE}=; Path=/admin; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
+    let c = format!("{COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
     if let Ok(v) = HeaderValue::from_str(&c) {
         res.headers_mut().insert(header::SET_COOKIE, v);
     }
@@ -383,22 +383,22 @@ pub async fn ajouter(State(state): State<Arc<AppState>>, entetes: HeaderMap, For
         match state.skins.lookup(state.github.http(), saisie, false).await {
             crate::skins::Lookup::Found(p) => match p.uuid.as_deref().and_then(uuid_normalise) {
                 Some(u) => (u, Some(p.name.clone())),
-                None => return retour("/admin/players", false, "Mojang ne répond pas, réessaie dans un moment."),
+                None => return retour("/admin/players", false, "Mojang isn't answering, try again in a moment."),
             },
-            crate::skins::Lookup::NotFound => return retour("/admin/players", false, &format!("Aucun compte Minecraft ne s'appelle {saisie}.")),
-            crate::skins::Lookup::Unavailable => return retour("/admin/players", false, "Mojang ne répond pas, réessaie dans un moment."),
+            crate::skins::Lookup::NotFound => return retour("/admin/players", false, &format!("No Minecraft account is called {saisie}.")),
+            crate::skins::Lookup::Unavailable => return retour("/admin/players", false, "Mojang isn't answering, try again in a moment."),
         }
     } else {
-        return retour("/admin/players", false, "Entre un pseudo Minecraft ou un UUID.");
+        return retour("/admin/players", false, "Enter a Minecraft username or a UUID.");
     };
     let affiche = format!("{} ({})", nom.as_deref().unwrap_or("?"), avec_tirets(&uuid));
-    state.registre.modifier(&format!("Joueur ajouté : {affiche}"), |b| {
+    state.registre.modifier(&format!("Player added: {affiche}"), |b| {
         let f = b.players.entry(uuid.clone()).or_default();
         if f.name.is_none() {
             f.name = nom;
         }
     });
-    retour(&format!("/admin/players/{uuid}"), true, "Joueur ajouté.")
+    retour(&format!("/admin/players/{uuid}"), true, "Player added.")
 }
 
 pub async fn fiche(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(uuid): Path<String>, Query(m): Query<Message>) -> Response {
@@ -407,7 +407,7 @@ pub async fn fiche(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(
         return StatusCode::NOT_FOUND.into_response();
     };
     let Some(f) = state.registre.fiche(&uuid) else {
-        return retour("/admin/players", false, "Ce joueur n'est pas dans la base.");
+        return retour("/admin/players", false, "This player is not in the database.");
     };
     let en_ligne = state.client.liste_en_ligne().into_iter().find(|j| j.uuid == uuid);
     let early = state.registre.early_avant();
@@ -447,7 +447,7 @@ pub async fn agir(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(u
         return StatusCode::NOT_FOUND.into_response();
     };
     let Some(f) = state.registre.fiche(&uuid) else {
-        return retour("/admin/players", false, "Ce joueur n'est pas dans la base.");
+        return retour("/admin/players", false, "This player is not in the database.");
     };
     let chemin = format!("/admin/players/{uuid}");
     let qui = format!("{} ({})", f.name.as_deref().unwrap_or("?"), avec_tirets(&uuid));
@@ -456,11 +456,11 @@ pub async fn agir(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(u
     let message = match (a.action.as_str(), cosmetique) {
         ("grant" | "revoke" | "default", Some(c)) => {
             let verbe = match a.action.as_str() {
-                "grant" => "Donné",
-                "revoke" => "Retiré",
-                _ => "Remis par défaut",
+                "grant" => "Given",
+                "revoke" => "Taken",
+                _ => "Reset to default",
             };
-            r.modifier(&format!("{verbe} à {qui} : {}", c.nom), |b| {
+            r.modifier(&format!("{verbe} to {qui}: {}", c.nom), |b| {
                 if let Some(f) = b.players.get_mut(&uuid) {
                     f.granted.remove(c.id);
                     f.revoked.remove(c.id);
@@ -472,33 +472,33 @@ pub async fn agir(State(state): State<Arc<AppState>>, entetes: HeaderMap, Path(u
                 }
             });
             state.client.reverifier(r, &uuid);
-            format!("{verbe} : {}.", c.nom)
+            format!("{verbe}: {}.", c.nom)
         }
         ("ban", _) => {
-            r.modifier(&format!("Banni : {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = true));
+            r.modifier(&format!("Banned: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = true));
             state.client.expulser(&uuid);
-            "Joueur banni du réseau Mistly.".into()
+            "Player banned from the Mistly network.".into()
         }
         ("unban", _) => {
-            r.modifier(&format!("Débanni : {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = false));
-            "Bannissement levé.".into()
+            r.modifier(&format!("Unbanned: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.banned = false));
+            "Ban lifted.".into()
         }
         ("kick", _) => {
-            r.modifier(&format!("Expulsé : {qui}"), |_| ());
+            r.modifier(&format!("Kicked: {qui}"), |_| ());
             state.client.expulser(&uuid);
-            "Joueur déconnecté du réseau Mistly (son jeu se reconnecte tout seul).".into()
+            "Player disconnected from the Mistly network (their game reconnects by itself).".into()
         }
         ("note", _) => {
             let note: String = a.note.unwrap_or_default().trim().chars().take(registre::MAX_NOTE).collect();
-            r.modifier(&format!("Note modifiée : {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.note = note));
-            "Note enregistrée.".into()
+            r.modifier(&format!("Note changed: {qui}"), |b| b.players.get_mut(&uuid).map(|f| f.note = note));
+            "Note saved.".into()
         }
         ("forget", _) => {
-            r.modifier(&format!("Fiche supprimée : {qui}"), |b| b.players.remove(&uuid));
+            r.modifier(&format!("Record deleted: {qui}"), |b| b.players.remove(&uuid));
             state.client.expulser(&uuid);
-            return retour("/admin/players", true, "Fiche supprimée.");
+            return retour("/admin/players", true, "Record deleted.");
         }
-        _ => return retour(&chemin, false, "Action inconnue."),
+        _ => return retour(&chemin, false, "Unknown action."),
     };
     retour(&chemin, true, &message)
 }
@@ -539,17 +539,17 @@ pub async fn changer_regle(State(state): State<Arc<AppState>>, entetes: HeaderMa
     if let Some(date) = c.early_before {
         let date = date.trim().to_string();
         if date.is_empty() {
-            state.registre.modifier("Date des premiers joueurs : celle de EARLY_BEFORE", |b| b.early_before = None);
-            return retour("/admin/cosmetics", true, "La date revient à celle de EARLY_BEFORE.");
+            state.registre.modifier("Early players date: the EARLY_BEFORE one", |b| b.early_before = None);
+            return retour("/admin/cosmetics", true, "The date is back to the EARLY_BEFORE one.");
         }
         if registre::date_unix(&date).is_none() {
-            return retour("/admin/cosmetics", false, "Date invalide (AAAA-MM-JJ).");
+            return retour("/admin/cosmetics", false, "Invalid date (YYYY-MM-DD).");
         }
-        state.registre.modifier(&format!("Date des premiers joueurs : {date}"), |b| b.early_before = Some(date));
-        return retour("/admin/cosmetics", true, "Date des premiers joueurs enregistrée.");
+        state.registre.modifier(&format!("Early players date: {date}"), |b| b.early_before = Some(date));
+        return retour("/admin/cosmetics", true, "Early players date saved.");
     }
     let (Some(cos), Some(regle)) = (c.cosmetic.as_deref().and_then(registre::cosmetique), c.rule.as_deref().and_then(Regle::depuis)) else {
-        return retour("/admin/cosmetics", false, "Choix invalide.");
+        return retour("/admin/cosmetics", false, "Invalid choice.");
     };
     state.registre.modifier(&format!("{} : {}", cos.nom, regle.libelle()), |b| {
         if regle == cos.regle_par_defaut {
@@ -562,6 +562,43 @@ pub async fn changer_regle(State(state): State<Arc<AppState>>, entetes: HeaderMa
         state.client.reverifier(&state.registre, &j.uuid);
     }
     retour("/admin/cosmetics", true, &format!("{} : {}.", cos.nom, regle.libelle()))
+}
+
+// ---------- Boutique ----------
+
+pub async fn boutique(State(state): State<Arc<AppState>>, entetes: HeaderMap, Query(m): Query<Message>) -> Response {
+    garde!(state, entetes);
+    page(vue::boutique(&m.vue(), &crate::views::shop::pour_admin()))
+}
+
+/// Enregistre les réglages de toute la boutique (`<article>.prix`, `.statut`, `.nouveau`…).
+pub async fn enregistrer_boutique(State(state): State<Arc<AppState>>, entetes: HeaderMap, Form(champs): Form<Vec<(String, String)>>) -> Response {
+    garde!(state, entetes, post);
+    use crate::boutique::{Reglage, Statut};
+    let mut reglages: std::collections::BTreeMap<String, Reglage> = std::collections::BTreeMap::new();
+    for l in crate::views::shop::pour_admin() {
+        reglages.insert(l.cle.to_string(), Reglage::default());
+    }
+    for (cle, valeur) in champs {
+        let Some((article, champ)) = cle.split_once('.') else { continue };
+        let Some(r) = reglages.get_mut(article) else { continue };
+        match champ {
+            "prix" => match crate::boutique::lire_prix(&valeur) {
+                Ok(p) => r.prix = p,
+                Err(()) => return retour("/admin/shop", false, &format!("Invalid price for {article}: {valeur}")),
+            },
+            "statut" => r.statut = Statut::depuis(&valeur),
+            "nouveau" => r.nouveau = true,
+            "populaire" => r.populaire = true,
+            "cache" => r.cache = true,
+            _ => {}
+        }
+    }
+    if let Err(e) = crate::boutique::remplacer(reglages) {
+        return retour("/admin/shop", false, &format!("Could not save the shop: {e}"));
+    }
+    state.registre.modifier("Shop settings saved", |_| ());
+    retour("/admin/shop", true, "Shop saved.")
 }
 
 // ---------- Rapports de logs ----------
@@ -577,14 +614,14 @@ pub async fn rapports(State(state): State<Arc<AppState>>, entetes: HeaderMap, Qu
     if let Some(code) = q.code.as_deref().map(|c| c.trim().to_ascii_uppercase()).filter(|c| !c.is_empty()) {
         let code = if code.starts_with("MR-") { code } else { format!("MR-{code}") };
         if !crate::telemetrie::code_valide(&code) {
-            return page(vue::rapports(Some("Code invalide (MR- suivi de 7 caractères)."), &[], None));
+            return page(vue::rapports(Some("Invalid code (MR- followed by 7 characters)."), &[], None));
         }
         return match tokio::fs::read(dossier.join(format!("{code}.json"))).await {
             Ok(o) => {
                 let v: serde_json::Value = serde_json::from_slice(&o).unwrap_or_default();
                 page(vue::rapports(None, &[], Some(&v)))
             }
-            Err(_) => page(vue::rapports(Some(&format!("Aucun rapport {code}.")), &[], None)),
+            Err(_) => page(vue::rapports(Some(&format!("No report {code}.")), &[], None)),
         };
     }
     let recents = tokio::task::spawn_blocking(move || {
@@ -656,7 +693,7 @@ pub async fn enregistrer_base(State(state): State<Arc<AppState>>, entetes: Heade
     garde!(state, entetes, post);
     let nouvelle: registre::Base = match serde_json::from_str(&e.json) {
         Ok(b) => b,
-        Err(err) => return retour("/admin/database", false, &format!("JSON invalide : {err}")),
+        Err(err) => return retour("/admin/database", false, &format!("Invalid JSON: {err}")),
     };
     match state.registre.remplacer(nouvelle) {
         Ok(()) => {
@@ -667,7 +704,7 @@ pub async fn enregistrer_base(State(state): State<Arc<AppState>>, entetes: Heade
                     state.client.reverifier(&state.registre, &j.uuid);
                 }
             }
-            retour("/admin/database", true, "Base enregistrée.")
+            retour("/admin/database", true, "Database saved.")
         }
         Err(err) => retour("/admin/database", false, &err),
     }

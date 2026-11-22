@@ -922,6 +922,36 @@ fn redirection_permanente(cible: &str) -> Response {
     res
 }
 
+/// Le tableau de bord sur son sous-domaine (`a0.<domaine>`), avant le routage : `/` devient
+/// `/admin`, et les chemins hors de `/admin` y sont rangés (`/players` → `/admin/players`). Les
+/// fichiers statiques et les têtes des joueurs (`/skin/…`) restent servis tels quels.
+pub fn sous_domaine_admin(mut req: axum::extract::Request) -> axum::extract::Request {
+    let sur_a0 = req
+        .headers()
+        .get("x-forwarded-host")
+        .or_else(|| req.headers().get(header::HOST))
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|h| h.to_ascii_lowercase().starts_with("a0."));
+    if !sur_a0 {
+        return req;
+    }
+    let chemin = req.uri().path();
+    let garde = ["/admin", "/css/", "/js/", "/assets/", "/vendor/", "/skin/", "/robots.txt", "/site.webmanifest"]
+        .iter()
+        .any(|p| chemin.starts_with(p));
+    if !garde {
+        let nouveau = format!(
+            "/admin{}{}",
+            if chemin == "/" { "" } else { chemin },
+            req.uri().query().map(|q| format!("?{q}")).unwrap_or_default()
+        );
+        if let Ok(uri) = nouveau.parse() {
+            *req.uri_mut() = uri;
+        }
+    }
+    req
+}
+
 /// La requête arrive-t-elle sur le sous-domaine de la documentation (`docs.<domaine>`) ?
 fn sous_domaine_docs(entetes: &HeaderMap) -> bool {
     entetes
@@ -1065,6 +1095,14 @@ pub async fn domaine_principal(
             return res;
         }
         return next.run(req).await;
+    }
+    // Avec ADMIN_URL réglée, le tableau de bord du site principal part vers son sous-domaine
+    if (chemin == "/admin" || chemin.starts_with("/admin/"))
+        && !hote.as_deref().is_some_and(|h| h.starts_with("a0."))
+        && let Some(url) = std::env::var("ADMIN_URL").ok().map(|u| u.trim().trim_end_matches('/').to_string()).filter(|u| !u.is_empty())
+    {
+        let requete = req.uri().query().map(|q| format!("?{q}")).unwrap_or_default();
+        return redirection_permanente(&format!("{url}{chemin}{requete}"));
     }
     // Avec DOCS_URL réglée, /docs et ses pages partent vers le sous-domaine de la doc
     if let Some(reste) = chemin.strip_prefix("/docs")

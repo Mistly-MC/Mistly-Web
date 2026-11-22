@@ -13,6 +13,9 @@
 //! - `STATUS_URL` (facultatif, ex. `https://status.mistly.cc`) : la page de statut sur son
 //!   sous-domaine ; les liens « Statut » y mènent et `/status` y redirige. Le sous-domaine
 //!   `status.<domaine>` sert la page de statut à sa racine, réglée ou non
+//! - `ADMIN_URL` (facultatif, ex. `https://a0.mistly.cc`) : le tableau de bord sur son sous-domaine ;
+//!   `/admin` du site principal y redirige. Le sous-domaine `a0.<domaine>` sert le tableau de bord à
+//!   sa racine, réglée ou non
 //! - `DOCS_URL` (facultatif, ex. `https://docs.mistly.cc`) : la documentation sur son sous-domaine ;
 //!   ses liens y mènent et `/docs` y redirige. Le sous-domaine `docs.<domaine>` sert la doc à sa
 //!   racine (`/`, `/installation`…), réglée ou non
@@ -38,6 +41,7 @@
 //!   (`/api/telemetry/summary`, `/api/telemetry/report/{code}`) avec `Authorization: Bearer …`
 
 mod admin;
+mod boutique;
 mod contenu;
 mod contributeurs;
 mod deploiements;
@@ -137,6 +141,7 @@ async fn main() {
     docs::init();
     legal::init();
     contenu::init();
+    boutique::init();
 
     let state = Arc::new(AppState {
         github: Arc::new(github::GitHub::new(
@@ -214,6 +219,7 @@ async fn main() {
         ))
         .service(static_files);
 
+    let registre = state.registre.clone();
     let app = Router::new()
         .route("/", get(routes::index))
         .route("/patch-notes", get(routes::patch_notes))
@@ -275,6 +281,7 @@ async fn main() {
         .route("/admin/players/add", post(admin::ajouter).layer(DefaultBodyLimit::max(4 * 1024)))
         .route("/admin/players/{uuid}", get(admin::fiche).post(admin::agir).layer(DefaultBodyLimit::max(16 * 1024)))
         .route("/admin/cosmetics", get(admin::cosmetiques).post(admin::changer_regle).layer(DefaultBodyLimit::max(4 * 1024)))
+        .route("/admin/shop", get(admin::boutique).post(admin::enregistrer_boutique).layer(DefaultBodyLimit::max(64 * 1024)))
         .route("/admin/reports", get(admin::rapports))
         .route("/admin/log", get(admin::journal))
         .route("/admin/database", get(admin::base).post(admin::enregistrer_base).layer(DefaultBodyLimit::max(64 * 1024 * 1024)))
@@ -309,5 +316,32 @@ async fn main() {
         .await
         .expect("port déjà utilisé ?");
     println!("Mistly-site sur http://localhost:{port}");
-    axum::serve(listener, app).await.expect("serveur");
+    // Le sous-domaine du tableau de bord (a0.<domaine>) est réécrit avant le routage
+    let app = tower::Layer::layer(&tower::util::MapRequestLayer::new(routes::sous_domaine_admin), app);
+    axum::serve(listener, axum::ServiceExt::<axum::extract::Request>::into_make_service(app))
+        .with_graceful_shutdown(arret())
+        .await
+        .expect("serveur");
+    // Coolify arrête le conteneur (SIGTERM) à chaque déploiement : on écrit ce qui reste à écrire
+    registre.sauver();
+    println!("Mistly-site arrêté, registre enregistré");
+}
+
+/// Attend Ctrl+C ou SIGTERM (arrêt du conteneur).
+async fn arret() {
+    let ctrl_c = async {
+        let _ = tokio::signal::ctrl_c().await;
+    };
+    #[cfg(unix)]
+    let term = async {
+        if let Ok(mut s) = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) {
+            s.recv().await;
+        }
+    };
+    #[cfg(not(unix))]
+    let term = std::future::pending::<()>();
+    tokio::select! {
+        _ = ctrl_c => {}
+        _ = term => {}
+    }
 }

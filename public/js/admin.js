@@ -153,6 +153,33 @@
     s.addEventListener("change", () => s.form.requestSubmit());
   }
 
+  // La barre d'icônes : le rond rose part de l'icône de la page d'avant et glisse jusqu'à
+  // celle de la page ouverte ; un clic le fait partir tout de suite vers la nouvelle.
+  const rail = document.querySelector(".rail-nav");
+  if (rail) {
+    const rond = rail.querySelector(".rail-pill");
+    const liens = [...rail.querySelectorAll("a")];
+    const vers = (a, anime) => {
+      if (!a) return;
+      if (!anime) rond.style.transition = "none";
+      rond.style.transform = `translateY(${a.offsetTop}px)`;
+      if (!anime) { void rond.offsetWidth; rond.style.transition = ""; }
+    };
+    const ici = liens.findIndex(a => a.hasAttribute("aria-current"));
+    let avant = -1;
+    try { avant = Number(sessionStorage.getItem("adm-rail") ?? -1); } catch {}
+    vers(liens[avant >= 0 && avant < liens.length ? avant : ici], false);
+    rail.classList.add("ready");
+    requestAnimationFrame(() => requestAnimationFrame(() => vers(liens[ici], !calme)));
+    try { sessionStorage.setItem("adm-rail", ici); } catch {}
+    liens.forEach(a => a.addEventListener("click", () => {
+      liens.forEach(x => x.removeAttribute("aria-current"));
+      a.setAttribute("aria-current", "page");
+      vers(a, !calme);
+    }));
+    addEventListener("resize", () => vers(liens[ici], false));
+  }
+
   // Barre du haut : « / » place le curseur dans la recherche des joueurs
   const tbq = document.getElementById("tb-q");
   addEventListener("keydown", e => {
@@ -188,7 +215,7 @@
   const online = document.getElementById("online");
   if (online) {
     const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-    const names = { misty_cape: "Cape Mistly", misty_elytra: "Élytres Mistly", early_cape: "Cape early player", cloudly: "Cloudly (chapeau)" };
+    const names = { misty_cape: "Mistly Cape", misty_elytra: "Mistly Elytra", early_cape: "Early player cape", cloudly: "Cloudly (hat)" };
     const since = (s) => (s < 60 ? "< 1 min" : s < 3600 ? `${Math.floor(s / 60)} min` : `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}`);
     const tick = async () => {
       if (document.hidden) return;
@@ -229,8 +256,8 @@
   if (chart && chart.dataset.series) {
     let data = null;
     try { data = JSON.parse(chart.dataset.series); } catch {}
-    const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-    const jour = (d) => { const [, m, j] = d.split("-"); return `${+j} ${MOIS[+m - 1]}`; };
+    const MOIS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const jour = (d) => { const [, m, j] = d.split("-"); return `${MOIS[+m - 1]} ${+j}`; };
     const NS = "http://www.w3.org/2000/svg";
     const el = (nom, attrs) => { const e = document.createElementNS(NS, nom); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
     // une courbe lisse qui passe par chaque point (Catmull-Rom vers Bézier)
@@ -298,7 +325,7 @@
         const r = svg.getBoundingClientRect();
         const i = Math.max(0, Math.min(labels.length - 1, Math.round((e.clientX - r.left - g) / L * (labels.length - 1))));
         ligne.setAttribute("x1", x(i)); ligne.setAttribute("x2", x(i)); ligne.setAttribute("visibility", "visible");
-        bulle.innerHTML = `<b>${jour(labels[i])}</b><span><i style="background:#a99cf0"></i>${A[i]} installations</span><span><i style="background:#f2a7dc"></i>${B[i]} événements</span>`;
+        bulle.innerHTML = `<b>${jour(labels[i])}</b><span><i style="background:#a99cf0"></i>${A[i]} installs</span><span><i style="background:#f2a7dc"></i>${B[i]} events</span>`;
         bulle.style.left = x(i) + "px";
         bulle.style.top = Math.min(yA(A[i]), yB(B[i])) + "px";
         bulle.hidden = false;
@@ -331,8 +358,8 @@
     document.querySelector("[data-filter-errors]")?.addEventListener("change", (e) => log.classList.toggle("only-errors", e.target.checked));
     const copy = document.querySelector("[data-copy-log]");
     copy?.addEventListener("click", () => navigator.clipboard?.writeText(text).then(() => {
-      copy.textContent = "Copié";
-      setTimeout(() => (copy.textContent = "Copier"), 1200);
+      copy.textContent = "Copied";
+      setTimeout(() => (copy.textContent = "Copy"), 1200);
     }));
   }
 

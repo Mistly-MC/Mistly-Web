@@ -72,6 +72,7 @@ enum Onglet {
     Accueil,
     Joueurs,
     Cosmetiques,
+    Boutique,
     Rapports,
     Journal,
     Base,
@@ -79,23 +80,23 @@ enum Onglet {
 
 // ---------- Mise en forme ----------
 
-const MOIS: [&str; 12] = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const MOIS: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /// « 16 nov. 2026, 14:03 » (UTC).
 fn date(secs: u64) -> String {
     let Ok(d) = time::OffsetDateTime::from_unix_timestamp(secs as i64) else { return "?".into() };
-    format!("{} {} {}, {:02}:{:02}", d.day(), MOIS[d.month() as usize - 1], d.year(), d.hour(), d.minute())
+    format!("{} {} {}, {:02}:{:02}", MOIS[d.month() as usize - 1], d.day(), d.year(), d.hour(), d.minute())
 }
 
 /// « il y a 3 h », « il y a 2 j ».
 fn il_y_a(secs: u64) -> String {
     let ecart = crate::registre::maintenant().saturating_sub(secs);
     match ecart {
-        0..60 => "à l'instant".into(),
-        60..3600 => format!("il y a {} min", ecart / 60),
-        3600..86_400 => format!("il y a {} h", ecart / 3600),
-        86_400..2_592_000 => format!("il y a {} j", ecart / 86_400),
-        _ => format!("il y a {} mois", ecart / 2_592_000),
+        0..60 => "just now".into(),
+        60..3600 => format!("{} min ago", ecart / 60),
+        3600..86_400 => format!("{} h ago", ecart / 3600),
+        86_400..2_592_000 => format!("{} d ago", ecart / 86_400),
+        _ => format!("{} mo ago", ecart / 2_592_000),
     }
 }
 
@@ -131,12 +132,13 @@ impl Onglet {
     /// Le titre de la page, son icône et son groupe dans le menu.
     fn titre(self) -> &'static str {
         match self {
-            Onglet::Accueil => "Vue d'ensemble",
-            Onglet::Joueurs => "Joueurs",
-            Onglet::Cosmetiques => "Cosmétiques",
-            Onglet::Rapports => "Rapports",
-            Onglet::Journal => "Journal",
-            Onglet::Base => "Base de données",
+            Onglet::Accueil => "Overview",
+            Onglet::Joueurs => "Players",
+            Onglet::Cosmetiques => "Cosmetics",
+            Onglet::Boutique => "Shop",
+            Onglet::Rapports => "Reports",
+            Onglet::Journal => "Log",
+            Onglet::Base => "Database",
         }
     }
     fn icone(self) -> Markup {
@@ -144,6 +146,7 @@ impl Onglet {
             Onglet::Accueil => icons::grid(),
             Onglet::Joueurs => icons::user(),
             Onglet::Cosmetiques => icons::sparkles(),
+            Onglet::Boutique => icons::bag(),
             Onglet::Rapports => icons::alert(),
             Onglet::Journal => icons::notes(),
             Onglet::Base => icons::archive(),
@@ -154,6 +157,7 @@ impl Onglet {
             Onglet::Accueil => "/admin",
             Onglet::Joueurs => "/admin/players",
             Onglet::Cosmetiques => "/admin/cosmetics",
+            Onglet::Boutique => "/admin/shop",
             Onglet::Rapports => "/admin/reports",
             Onglet::Journal => "/admin/log",
             Onglet::Base => "/admin/database",
@@ -163,10 +167,10 @@ impl Onglet {
 
 fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Markup) -> Markup {
     let v = ASSET_VERSION.as_str();
-    let onglets = [Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Rapports, Onglet::Journal, Onglet::Base];
+    let onglets = [Onglet::Accueil, Onglet::Joueurs, Onglet::Cosmetiques, Onglet::Boutique, Onglet::Rapports, Onglet::Journal, Onglet::Base];
     html! {
         (DOCTYPE)
-        html lang="fr" data-theme="dark" {
+        html lang="en" data-theme="dark" {
             head {
                 meta charset="utf-8";
                 meta name="viewport" content="width=device-width, initial-scale=1";
@@ -187,7 +191,9 @@ fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Mark
                             img src="/assets/icone.png" alt="" width="34" height="34";
                             span { "MISTLY" }
                         }
-                        nav.rail-nav aria-label="Tableau de bord" {
+                        nav.rail-nav aria-label="Dashboard" {
+                            // le rond rose : un seul, qui glisse d'une icône à l'autre (admin.js)
+                            span.rail-pill aria-hidden="true" {}
                             @for o in onglets {
                                 a href=(o.lien()) aria-current=[(onglet == Some(o)).then_some("page")] aria-label=(o.titre()) {
                                     (o.icone())
@@ -196,21 +202,21 @@ fn shell(titre: &str, onglet: Option<Onglet>, flash: Option<&Flash>, corps: Mark
                             }
                         }
                         div.rail-foot {
-                            a href="/" target="_blank" rel="noopener" aria-label="Voir le site" { (icons::globe()) span.tip { "Voir le site" } }
+                            a href="/" target="_blank" rel="noopener" aria-label="View site" { (icons::globe()) span.tip { "View site" } }
                         }
                     }
                     main.content {
                         header.topbar {
                             h1.tb-title { @if let Some(o) = onglet { (o.titre()) } @else { (titre) } }
                             form.tb-search method="get" action="/admin/players" role="search" {
-                                input #tb-q type="search" name="q" placeholder="Rechercher un joueur…" aria-label="Rechercher un joueur" autocomplete="off";
+                                input #tb-q type="search" name="q" placeholder="Search for a player…" aria-label="Search for a player" autocomplete="off";
                                 (icons::search())
                             }
                             div.tb-right {
                                 span.tb-live title="Session" { i {} code #uptime { "00:00:00" } }
                                 span.tb-av { img src="/assets/icone.png" alt="" width="22" height="22"; }
                                 form method="post" action="/admin/logout" {
-                                    button.tb-out type="submit" aria-label="Se déconnecter" title="Se déconnecter" { (icons::arrow_right()) }
+                                    button.tb-out type="submit" aria-label="Sign out" title="Sign out" { (icons::arrow_right()) }
                                 }
                             }
                         }
@@ -331,42 +337,42 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
         }
     };
     shell(
-        "Vue d'ensemble",
+        "Overview",
         Some(Onglet::Accueil),
         Some(flash),
         html! {
             div.ov {
                 div.ov-main {
                     div.ov-cards {
-                        (carte("p-lilac", icons::download(), "Launchers ouverts", c.launchers.to_string(), Some("n-launchers"), vec![
-                            (icons::check(), format!("{} en partie maintenant", c.en_partie)),
-                            (icons::check(), format!("Record : {} en même temps", c.record)),
+                        (carte("p-lilac", icons::download(), "Open launchers", c.launchers.to_string(), Some("n-launchers"), vec![
+                            (icons::check(), format!("{} in game right now", c.en_partie)),
+                            (icons::check(), format!("Record: {} at once", c.record)),
                             (icons::check(), format!("Version {}", c.version.as_deref().unwrap_or("?"))),
                         ]))
                         (carte("p-pink", icons::user(), "Mistly Client", c.client.to_string(), Some("n-client"), vec![
-                            (icons::check(), format!("{} joueurs dans la base", c.joueurs)),
-                            (icons::check(), format!("{} actifs sur 24 h", c.actifs_24h)),
-                            (icons::check(), format!("{} banni(s)", c.bannis)),
+                            (icons::check(), format!("{} players in the database", c.joueurs)),
+                            (icons::check(), format!("{} active in 24 h", c.actifs_24h)),
+                            (icons::check(), format!("{} banned", c.bannis)),
                         ]))
-                        (carte("p-peach", icons::sparkles(), "Croissance", format!("+{}", c.nouveaux_24h), None, vec![
-                            (icons::check(), "nouveaux joueurs sur 24 h".into()),
-                            (icons::check(), format!("+{} sur 7 jours", c.nouveaux_7j)),
-                            (icons::check(), format!("Disponibilité : {}", c.dispo.map_or_else(|| "?".into(), |d| format!("{d:.1} %")))),
+                        (carte("p-peach", icons::sparkles(), "Growth", format!("+{}", c.nouveaux_24h), None, vec![
+                            (icons::check(), "new players in 24 h".into()),
+                            (icons::check(), format!("+{} in 7 days", c.nouveaux_7j)),
+                            (icons::check(), format!("Uptime: {}", c.dispo.map_or_else(|| "?".into(), |d| format!("{d:.1} %")))),
                         ]))
                     }
                     @if let Some(t) = telemetrie { (telemetrie_bloc(t)) } @else {
-                        section.ov-panel { p.empty { "La télémétrie n'est pas disponible." } }
+                        section.ov-panel { p.empty { "Telemetry is not available." } }
                     }
                 }
                 aside.ov-side {
                     div.side-sec {
-                        div.side-head { h2 { "En jeu maintenant" } span.live { i {} "direct" } }
+                        div.side-head { h2 { "Playing now" } span.live { i {} "live" } }
                         (liste_en_ligne(en_ligne))
                     }
                     div.side-sec {
-                        div.side-head { h2 { "Derniers changements" } a.more href="/admin/log" { "Tout voir" } }
+                        div.side-head { h2 { "Latest changes" } a.more href="/admin/log" { "View all" } }
                         @if journal.is_empty() {
-                            p.empty { "Aucun changement pour l'instant." }
+                            p.empty { "No changes yet." }
                         } @else {
                             ul.msgs {
                                 @for e in journal.iter().take(6) {
@@ -379,10 +385,10 @@ pub fn accueil(flash: &Flash, c: &Chiffres, en_ligne: &[Ligne], telemetrie: Opti
                         }
                     }
                     div.side-sec {
-                        div.side-head { h2 { "Ouvrir un rapport" } }
+                        div.side-head { h2 { "Open a report" } }
                         form.quick method="get" action="/admin/reports" {
-                            input type="text" name="code" placeholder="MR-ABCD234" aria-label="Code du rapport" autocomplete="off" spellcheck="false";
-                            button type="submit" aria-label="Ouvrir" { (icons::arrow_right()) }
+                            input type="text" name="code" placeholder="MR-ABCD234" aria-label="Report code" autocomplete="off" spellcheck="false";
+                            button type="submit" aria-label="Open" { (icons::arrow_right()) }
                         }
                     }
                 }
@@ -397,14 +403,14 @@ fn liste_en_ligne(en_ligne: &[Ligne]) -> Markup {
     html! {
         div #online {
             @if en_ligne.is_empty() {
-                p.empty { "Personne n'est en jeu avec Mistly Client." }
+                p.empty { "Nobody is playing with Mistly Client." }
             } @else {
                 ul.msgs {
                     @for l in en_ligne {
                         li {
                             (tete(l.nom.as_deref(), 34))
                             a href=(format!("/admin/players/{}", l.uuid)) {
-                                strong { (nom_ou_uuid(l.nom.as_deref(), &l.uuid)) @if l.note { " " span.tag title="A une note" { "note" } } }
+                                strong { (nom_ou_uuid(l.nom.as_deref(), &l.uuid)) @if l.note { " " span.tag title="Has a note" { "note" } } }
                                 span {
                                     @let porte: Vec<&str> = [l.cosmetique, l.chapeau].into_iter().filter(|c| !c.is_empty()).map(nom_cosmetique).collect();
                                     @if porte.is_empty() { "—" } @else { (porte.join(" + ")) }
@@ -453,43 +459,43 @@ fn telemetrie_bloc(t: &Value) -> Markup {
         section.ov-panel.ov-chart {
             div.chart-head {
                 div {
-                    h2 { "Activité" }
+                    h2 { "Activity" }
                     div.legend-line {
-                        span.k-a { i {} "Installations actives" }
-                        span.k-b { i {} "Événements" }
+                        span.k-a { i {} "Active installs" }
+                        span.k-b { i {} "Events" }
                     }
                 }
-                div.tabs role="group" aria-label="Période" {
-                    button type="button" data-jours="7" { "7 jours" }
-                    button type="button" data-jours="14" { "14 jours" }
-                    button type="button" data-jours="30" aria-pressed="true" { "30 jours" }
+                div.tabs role="group" aria-label="Range" {
+                    button type="button" data-jours="7" { "7 days" }
+                    button type="button" data-jours="14" { "14 days" }
+                    button type="button" data-jours="30" aria-pressed="true" { "30 days" }
                 }
             }
             div.chart-box #chart data-series=(series.to_string()) {
-                @if jours.len() < 2 { p.empty { "Pas encore assez de jours pour tracer une courbe." } }
+                @if jours.len() < 2 { p.empty { "Not enough days yet to draw a curve." } }
             }
             div.ov-mini {
-                div { span { "Installations" } strong { (t["installs"].as_u64().unwrap_or(0)) } }
-                div { span { "Parties lancées" } strong { (t["events"]["game_start"].as_u64().unwrap_or(0)) } }
-                div { span { "Plantages" } strong { (plantages) } }
-                div { span { "Rapports" } strong { (t["reports"].as_u64().unwrap_or(0)) } }
+                div { span { "Installs" } strong { (t["installs"].as_u64().unwrap_or(0)) } }
+                div { span { "Games started" } strong { (t["events"]["game_start"].as_u64().unwrap_or(0)) } }
+                div { span { "Crashes" } strong { (plantages) } }
+                div { span { "Reports" } strong { (t["reports"].as_u64().unwrap_or(0)) } }
             }
         }
         section.ov-panel {
-            div.panel-head { h2 { "Répartition" } span.muted { "30 derniers jours, joueurs qui ont accepté la télémétrie" } }
+            div.panel-head { h2 { "Breakdown" } span.muted { "Last 30 days, players who accepted telemetry" } }
             div.rep-cols {
                 div {
-                    h3 { "Versions du launcher" }
+                    h3 { "Launcher versions" }
                     @if versions.is_empty() { p.empty { "—" } }
-                    ul { @for (k, n) in versions.iter().take(4) { (ligne("p-lilac", icons::tag(), &format!("Launcher {k}"), format!("{n} installation(s)"), format!("{n}"))) } }
+                    ul { @for (k, n) in versions.iter().take(4) { (ligne("p-lilac", icons::tag(), &format!("Launcher {k}"), format!("{n} install(s)"), format!("{n}"))) } }
                 }
                 div {
-                    h3 { "Parties par loader" }
+                    h3 { "Games by loader" }
                     @if loaders.is_empty() { p.empty { "—" } }
                     ul {
                         @for (k, n) in loaders.iter().take(4) {
                             @let c = crashs.iter().find(|x| x.0 == *k).map_or(0, |x| x.1);
-                            (ligne(if c > 0 { "p-pink" } else { "p-mint" }, icons::package(), k, format!("{n} partie(s) · {c} plantage(s)"), format!("{n}")))
+                            (ligne(if c > 0 { "p-pink" } else { "p-mint" }, icons::package(), k, format!("{n} game(s) · {c} crash(es)"), format!("{n}")))
                         }
                     }
                 }
@@ -501,23 +507,23 @@ fn telemetrie_bloc(t: &Value) -> Markup {
 // ---------- Joueurs ----------
 
 pub fn joueurs(flash: &Flash, q: &str, filtre: &str, lignes: &[Fiche], total: usize, page: usize, pages: usize) -> Markup {
-    let filtres = [("all", "Tous"), ("online", "En ligne"), ("granted", "Cosmétiques modifiés"), ("banned", "Bannis"), ("notes", "Avec une note"), ("manual", "Ajoutés à la main")];
+    let filtres = [("all", "All"), ("online", "Online"), ("granted", "Changed cosmetics"), ("banned", "Banned"), ("notes", "With a note"), ("manual", "Added by hand")];
     let lien_page = |p: usize| format!("/admin/players?q={}&filter={filtre}&page={p}", encoder(q));
     shell(
-        "Joueurs",
+        "Players",
         Some(Onglet::Joueurs),
         Some(flash),
         html! {
-            (entete("Joueurs", Some("Tous les comptes vus par Mistly Client, et ceux ajoutés à la main.")))
+            (entete("Players", Some("Every account seen by Mistly Client, and those added by hand.")))
             div.toolbar {
                 form.search method="get" action="/admin/players" {
                     (icons::search())
-                    input type="search" name="q" value=(q) placeholder="Pseudo ou UUID…" aria-label="Rechercher un joueur";
+                    input type="search" name="q" value=(q) placeholder="Username or UUID…" aria-label="Search for a player";
                     input type="hidden" name="filter" value=(filtre);
                 }
                 form.add method="post" action="/admin/players/add" {
-                    input type="text" name="name" placeholder="Pseudo ou UUID à ajouter" aria-label="Ajouter un joueur" required;
-                    button.btn.sm type="submit" { "Ajouter" }
+                    input type="text" name="name" placeholder="Username or UUID to add" aria-label="Add a player" required;
+                    button.btn.sm type="submit" { "Add" }
                 }
             }
             div.chips {
@@ -527,10 +533,10 @@ pub fn joueurs(flash: &Flash, q: &str, filtre: &str, lignes: &[Fiche], total: us
             }
             section.panel.flush {
                 @if lignes.is_empty() {
-                    p.empty { "Aucun joueur ne correspond." }
+                    p.empty { "No player matches." }
                 } @else {
                     table.tbl {
-                        thead { tr { th { "Joueur" } th { "Cosmétiques" } th { "Première connexion" } th { "Dernier signe" } th.num { "Connexions" } } }
+                        thead { tr { th { "Player" } th { "Cosmetics" } th { "First seen" } th { "Last seen" } th.num { "Sign-ins" } } }
                         tbody {
                             @for l in lignes {
                                 @let f = &l.fiche;
@@ -543,7 +549,7 @@ pub fn joueurs(flash: &Flash, q: &str, filtre: &str, lignes: &[Fiche], total: us
                                                 small.mono { (avec_tirets(&l.uuid)) }
                                             }
                                         }
-                                        @if l.en_ligne { span.tag.on { "en ligne" } }
+                                        @if l.en_ligne { span.tag.on { "online" } }
                                         @if f.banned { span.tag.bad { "banni" } }
                                         @if !f.note.is_empty() { span.tag title=(f.note) { "note" } }
                                     }
@@ -552,7 +558,7 @@ pub fn joueurs(flash: &Flash, q: &str, filtre: &str, lignes: &[Fiche], total: us
                                         @for c in &f.revoked { span.tag.take { "− " (nom_cosmetique(c)) } }
                                         @if f.granted.is_empty() && f.revoked.is_empty() { "—" }
                                     }
-                                    td.muted { @match f.first_seen { Some(t) => (date(t)), None => "ajouté à la main" } }
+                                    td.muted { @match f.first_seen { Some(t) => (date(t)), None => "added by hand" } }
                                     td.muted { @match f.last_seen { Some(t) => (il_y_a(t)), None => "jamais" } }
                                     td.num.muted { (f.logins) }
                                 }
@@ -562,12 +568,12 @@ pub fn joueurs(flash: &Flash, q: &str, filtre: &str, lignes: &[Fiche], total: us
                 }
             }
             div.pager {
-                span.muted { (total) " joueur(s)" }
+                span.muted { (total) " player(s)" }
                 @if pages > 1 {
                     div {
-                        @if page > 1 { a.btn.sm href=(lien_page(page - 1)) { "Précédents" } }
+                        @if page > 1 { a.btn.sm href=(lien_page(page - 1)) { "Previous" } }
                         span.muted { "page " (page) " / " (pages) }
-                        @if page < pages { a.btn.sm href=(lien_page(page + 1)) { "Suivants" } }
+                        @if page < pages { a.btn.sm href=(lien_page(page + 1)) { "Next" } }
                     }
                 }
             }
@@ -604,43 +610,43 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
         _ => false,
     };
     shell(
-        nom.unwrap_or("Joueur"),
+        nom.unwrap_or("Player"),
         Some(Onglet::Joueurs),
         Some(flash),
         html! {
-            nav.crumbs { a href="/admin/players" { "Joueurs" } span { "/" } span { (nom_ou_uuid(nom, uuid)) } }
+            nav.crumbs { a href="/admin/players" { "Players" } span { "/" } span { (nom_ou_uuid(nom, uuid)) } }
             section.profile.panel {
                 div.avatar { (tete(nom, 96)) }
                 div.who-big {
                     h1 {
-                        (nom.unwrap_or("Pseudo inconnu"))
-                        @if en_ligne.is_some() { span.tag.on { "en ligne" } }
+                        (nom.unwrap_or("Unknown username"))
+                        @if en_ligne.is_some() { span.tag.on { "online" } }
                         @if f.banned { span.tag.bad { "banni" } }
                     }
-                    button.uuid type="button" data-copy=(avec_tirets(uuid)) title="Copier l'UUID" { code { (avec_tirets(uuid)) } (icons::copy()) }
+                    button.uuid type="button" data-copy=(avec_tirets(uuid)) title="Copy the UUID" { code { (avec_tirets(uuid)) } (icons::copy()) }
                     div.facts {
-                        div { span { "Première connexion" } strong { @match f.first_seen { Some(t) => (date(t)), None => "ajouté à la main" } } }
-                        div { span { "Dernier signe" } strong { @match f.last_seen { Some(t) => (il_y_a(t)), None => "jamais" } } }
-                        div { span { "Connexions" } strong { (f.logins) } }
-                        div { span { "Premier joueur" } strong { @if early_ok { "oui" } @else { "non" } } }
-                        @if let Some(j) = en_ligne { div { span { "En jeu depuis" } strong { (duree(j.depuis)) } } }
+                        div { span { "First seen" } strong { @match f.first_seen { Some(t) => (date(t)), None => "added by hand" } } }
+                        div { span { "Last seen" } strong { @match f.last_seen { Some(t) => (il_y_a(t)), None => "jamais" } } }
+                        div { span { "Sign-ins" } strong { (f.logins) } }
+                        div { span { "Early player" } strong { @if early_ok { "oui" } @else { "non" } } }
+                        @if let Some(j) = en_ligne { div { span { "Playing for" } strong { (duree(j.depuis)) } } }
                     }
                     @if let Some(n) = nom {
                         div.links {
-                            a href=(format!("/shop?player={n}")) target="_blank" rel="noopener" { "Aperçu 3D" (icons::external()) }
+                            a href=(format!("/shop?player={n}")) target="_blank" rel="noopener" { "3D preview" (icons::external()) }
                             a href=(format!("https://namemc.com/profile/{n}")) target="_blank" rel="noopener" { "NameMC" (icons::external()) }
                         }
                     }
                 }
                 div.actions {
                     @if en_ligne.is_some() {
-                        form method="post" action=(action) { input type="hidden" name="action" value="kick"; button.btn.sm type="submit" { "Expulser du réseau" } }
+                        form method="post" action=(action) { input type="hidden" name="action" value="kick"; button.btn.sm type="submit" { "Kick from the network" } }
                     }
                     @if f.banned {
-                        form method="post" action=(action) { input type="hidden" name="action" value="unban"; button.btn.sm type="submit" { "Lever le bannissement" } }
+                        form method="post" action=(action) { input type="hidden" name="action" value="unban"; button.btn.sm type="submit" { "Lift the ban" } }
                     } @else {
-                        form method="post" action=(action) data-confirm="Bannir ce joueur du réseau Mistly ? Il perd ses cosmétiques et ne peut plus se connecter." {
-                            input type="hidden" name="action" value="ban"; button.btn.sm.danger type="submit" { "Bannir" }
+                        form method="post" action=(action) data-confirm="Ban this player from the Mistly network? They lose their cosmetics and can no longer connect." {
+                            input type="hidden" name="action" value="ban"; button.btn.sm.danger type="submit" { "Ban" }
                         }
                     }
                 }
@@ -648,27 +654,27 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
 
             div.grid2 {
                 section.panel {
-                    div.panel-head { h2 { (icons::sparkles()) "Cosmétiques" } a.more href="/admin/cosmetics" { "Règles" (icons::arrow_right()) } }
-                    @if f.banned { p.note-bad { "Banni : aucun cosmétique n'est relayé tant que le bannissement dure." } }
+                    div.panel-head { h2 { (icons::sparkles()) "Cosmetics" } a.more href="/admin/cosmetics" { "Rules" (icons::arrow_right()) } }
+                    @if f.banned { p.note-bad { "Banned: no cosmetic is relayed while the ban lasts." } }
                     table.tbl.cos {
-                        thead { tr { th { "Cosmétique" } th { "État" } th {} } }
+                        thead { tr { th { "Cosmetic" } th { "Status" } th {} } }
                         tbody {
                             @for e in cosmetiques {
                                 tr {
                                     td {
                                         strong { (e.c.nom) }
-                                        small.muted { (if e.c.place == Place::Tete { "tête" } else { "dos" }) " · règle : " (e.regle.libelle()) }
+                                        small.muted { (if e.c.place == Place::Tete { "head" } else { "dos" }) " · rule: " (e.regle.libelle()) }
                                     }
                                     td {
-                                        @if e.permis { span.state.yes { "peut le porter" } } @else { span.state.no { "ne peut pas" } }
-                                        @if e.donne { span.tag.give { "donné" } }
-                                        @if e.retire { span.tag.take { "retiré" } }
-                                        @if e.porte { span.tag.on { "le porte" } }
+                                        @if e.permis { span.state.yes { "can wear it" } } @else { span.state.no { "cannot" } }
+                                        @if e.donne { span.tag.give { "given" } }
+                                        @if e.retire { span.tag.take { "taken" } }
+                                        @if e.porte { span.tag.on { "wears it" } }
                                     }
                                     td.btns {
-                                        @if !e.donne { (bouton("grant", e.c.id, "Donner", "")) }
-                                        @if !e.retire { (bouton("revoke", e.c.id, "Retirer", "danger")) }
-                                        @if e.donne || e.retire { (bouton("default", e.c.id, "Par défaut", "ghost")) }
+                                        @if !e.donne { (bouton("grant", e.c.id, "Give", "")) }
+                                        @if !e.retire { (bouton("revoke", e.c.id, "Take", "danger")) }
+                                        @if e.donne || e.retire { (bouton("default", e.c.id, "Default", "ghost")) }
                                     }
                                 }
                             }
@@ -676,15 +682,15 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
                     }
                 }
                 section.panel {
-                    div.panel-head { h2 { (icons::notes()) "Note de l'équipe" } }
+                    div.panel-head { h2 { (icons::notes()) "Team note" } }
                     form.note method="post" action=(action) {
                         input type="hidden" name="action" value="note";
-                        textarea name="note" rows="6" maxlength=(crate::registre::MAX_NOTE) placeholder="Visible seulement ici." { (f.note) }
-                        button.btn.sm type="submit" { "Enregistrer la note" }
+                        textarea name="note" rows="6" maxlength=(crate::registre::MAX_NOTE) placeholder="Only visible here." { (f.note) }
+                        button.btn.sm type="submit" { "Save the note" }
                     }
-                    div.panel-head.sub { h2 { (icons::refresh()) "Historique" } }
+                    div.panel-head.sub { h2 { (icons::refresh()) "History" } }
                     @if journal.is_empty() {
-                        p.empty { "Aucun changement sur ce joueur." }
+                        p.empty { "No changes on this player." }
                     } @else {
                         ul.log { @for e in journal { li { time title=(date(e.at)) { (il_y_a(e.at)) } span { (e.text) } } } }
                     }
@@ -692,9 +698,9 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
             }
 
             section.panel.danger-zone {
-                div { strong { "Supprimer la fiche" } p.muted { "Oublie ce compte : dates, cosmétiques donnés ou retirés, note. S'il rejoue, une nouvelle fiche est créée (sans la cape early player si la date est passée)." } }
-                form method="post" action=(action) data-confirm="Supprimer définitivement la fiche de ce joueur ?" {
-                    input type="hidden" name="action" value="forget"; button.btn.sm.danger type="submit" { "Supprimer" }
+                div { strong { "Delete the record" } p.muted { "Forgets this account: dates, given or taken cosmetics, note. If they play again, a new record is created (without the early player cape if the date has passed)." } }
+                form method="post" action=(action) data-confirm="Permanently delete this player's record?" {
+                    input type="hidden" name="action" value="forget"; button.btn.sm.danger type="submit" { "Delete" }
                 }
             }
         },
@@ -705,14 +711,14 @@ pub fn fiche(flash: &Flash, uuid: &str, f: &FicheBase, en_ligne: Option<&EnLigne
 
 pub fn cosmetiques(flash: &Flash, lignes: &[RegleCosmetique], early: &Early) -> Markup {
     shell(
-        "Cosmétiques",
+        "Cosmetics",
         Some(Onglet::Cosmetiques),
         Some(flash),
         html! {
-            (entete("Cosmétiques", Some("Qui peut porter chaque cosmétique. Un cosmétique donné ou retiré à un joueur, depuis sa fiche, passe avant la règle (sauf « Désactivé »).")))
+            (entete("Cosmetics", Some("Who can wear each cosmetic. A cosmetic given to or taken from a player on their page overrides the rule (except “Disabled”).")))
             section.panel.flush {
                 table.tbl {
-                    thead { tr { th { "Cosmétique" } th { "Règle" } th.num { "Donnés" } th.num { "Retirés" } th.num { "Portés maintenant" } } }
+                    thead { tr { th { "Cosmetic" } th { "Rule" } th.num { "Given" } th.num { "Taken" } th.num { "Worn now" } } }
                     tbody {
                         @for l in lignes {
                             tr {
@@ -720,9 +726,9 @@ pub fn cosmetiques(flash: &Flash, lignes: &[RegleCosmetique], early: &Early) -> 
                                 td {
                                     form.rule method="post" action="/admin/cosmetics" {
                                         input type="hidden" name="cosmetic" value=(l.c.id);
-                                        select name="rule" aria-label=(format!("Règle de {}", l.c.nom)) data-autosubmit {
+                                        select name="rule" aria-label=(format!("Rule for {}", l.c.nom)) data-autosubmit {
                                             @for r in Regle::TOUTES {
-                                                option value=(r.code()) selected[r == l.regle] { (r.libelle()) @if r == l.c.regle_par_defaut { " (par défaut)" } }
+                                                option value=(r.code()) selected[r == l.regle] { (r.libelle()) @if r == l.c.regle_par_defaut { " (default)" } }
                                             }
                                         }
                                         noscript { button.btn.sm type="submit" { "OK" } }
@@ -741,30 +747,85 @@ pub fn cosmetiques(flash: &Flash, lignes: &[RegleCosmetique], early: &Early) -> 
                     div {
                         dt { (r.libelle()) }
                         dd { (match r {
-                            Regle::Everyone => "Tous les joueurs de Mistly Client.",
-                            Regle::Early => "Les comptes vus avant la date des premiers joueurs.",
-                            Regle::Granted => "Seulement les joueurs à qui il a été donné.",
-                            Regle::Off => "Personne, même ceux à qui il a été donné.",
+                            Regle::Everyone => "Every Mistly Client player.",
+                            Regle::Early => "Accounts seen before the early players date.",
+                            Regle::Granted => "Only players it was given to.",
+                            Regle::Off => "Nobody, not even those it was given to.",
                         }) }
                     }
                 }
             }
             section.panel {
-                div.panel-head { h2 { (icons::crown()) "Date des premiers joueurs" } }
+                div.panel-head { h2 { (icons::crown()) "Early players date" } }
                 p.muted {
-                    "Les comptes vus pour la première fois avant cette date ont droit aux cosmétiques réglés sur « Premiers joueurs » (la cape early player). "
+                    "Accounts first seen before this date get the cosmetics set to “Early players” (the early player cape). "
                     @match &early.date {
-                        Some(d) => { "Date actuelle : " strong { (d) } @if !early.depuis_la_base { " (variable EARLY_BEFORE)" } "." }
-                        None => { "Aucune date : tout le monde y a droit." }
+                        Some(d) => { "Current date: " strong { (d) } @if !early.depuis_la_base { " (EARLY_BEFORE variable)" } "." }
+                        None => { "No date: everyone gets it." }
                     }
-                    @if let Some(n) = early.eligibles { " " (n) " joueur(s) y ont droit." }
+                    @if let Some(n) = early.eligibles { " " (n) " player(s) y ont droit." }
                 }
                 form.inline method="post" action="/admin/cosmetics" {
-                    input type="date" name="early_before" value=[early.date.as_deref()] aria-label="Date des premiers joueurs";
-                    button.btn.sm type="submit" { "Enregistrer" }
+                    input type="date" name="early_before" value=[early.date.as_deref()] aria-label="Early players date";
+                    button.btn.sm type="submit" { "Save" }
                     @if early.depuis_la_base {
-                        button.btn.sm.ghost type="submit" name="early_before" value="" { "Revenir à EARLY_BEFORE" }
+                        button.btn.sm.ghost type="submit" name="early_before" value="" { "Back to EARLY_BEFORE" }
                     }
+                }
+            }
+        },
+    )
+}
+
+// ---------- Boutique ----------
+
+/// Les réglages de la boutique : une ligne par article (prix, statut, nouveautés, populaires,
+/// caché), enregistrées d'un coup.
+pub fn boutique(flash: &Flash, lignes: &[crate::views::shop::LigneAdmin]) -> Markup {
+    use crate::boutique::{self as b, Statut};
+    shell(
+        "Shop",
+        Some(Onglet::Boutique),
+        Some(flash),
+        html! {
+            (entete("Shop", Some("Prices, status and where each item shows up in the shop. Leave a price empty to show none; “Auto” keeps the status set in the code.")))
+            form.shopcfg method="post" action="/admin/shop" {
+                section.panel.flush {
+                    table.tbl {
+                        thead { tr { th { "Item" } th { "Status" } th { "Price (€)" } th.c { "New" } th.c { "Popular" } th.c { "Hidden" } th {} } }
+                        tbody {
+                            @for l in lignes {
+                                @let r = b::de(l.cle);
+                                tr.hidden-row[r.cache] {
+                                    td {
+                                        strong { (l.nom) }
+                                        small.muted { (l.categorie) " · " code { (l.cle) } }
+                                    }
+                                    td {
+                                        select name=(format!("{}.statut", l.cle)) aria-label=(format!("Status of {}", l.nom)) {
+                                            option value="" selected[r.statut.is_none()] { "Auto (" (l.statut_defaut) ")" }
+                                            @for s in Statut::TOUS {
+                                                option value=(s.code()) selected[r.statut == Some(s)] { (s.libelle()) }
+                                            }
+                                        }
+                                    }
+                                    td {
+                                        input.price type="text" inputmode="decimal" name=(format!("{}.prix", l.cle)) placeholder="—"
+                                            value=(r.prix.map(|c| b::prix(c, ".").trim_end_matches(" €").to_string()).unwrap_or_default())
+                                            aria-label=(format!("Price of {}", l.nom));
+                                    }
+                                    td.c { label.switch { input type="checkbox" name=(format!("{}.nouveau", l.cle)) value="1" checked[r.nouveau]; span {} } }
+                                    td.c { label.switch { input type="checkbox" name=(format!("{}.populaire", l.cle)) value="1" checked[r.populaire]; span {} } }
+                                    td.c { label.switch.danger { input type="checkbox" name=(format!("{}.cache", l.cle)) value="1" checked[r.cache]; span {} } }
+                                    td.num { a.more href=(format!("/shop/item/{}", l.cle)) target="_blank" rel="noopener" { "View" (icons::external()) } }
+                                }
+                            }
+                        }
+                    }
+                }
+                div.savebar {
+                    p.muted { "If no item is ticked in “New” or “Popular”, the shop uses its default selection." }
+                    button.btn.play type="submit" { (icons::check()) "Save the shop" }
                 }
             }
         },
@@ -776,35 +837,35 @@ pub fn cosmetiques(flash: &Flash, lignes: &[RegleCosmetique], early: &Early) -> 
 pub fn rapports(erreur: Option<&str>, recents: &[Value], detail: Option<&Value>) -> Markup {
     let flash = Flash { ok: None, err: erreur };
     shell(
-        "Rapports de logs",
+        "Log reports",
         Some(Onglet::Rapports),
         Some(&flash),
         html! {
-            (entete("Rapports de logs", Some("Envoyés par les joueurs avec « Envoyer les logs » dans la console, ou automatiquement après un plantage.")))
+            (entete("Log reports", Some("Sent by players with “Send logs” in the console, or automatically after a crash.")))
             form.search.wide method="get" action="/admin/reports" {
                 (icons::search())
-                input type="search" name="code" placeholder="Code du rapport, par exemple MR-ABCD234" aria-label="Code du rapport" autofocus[detail.is_none()];
-                button.btn.sm type="submit" { "Ouvrir" }
+                input type="search" name="code" placeholder="Report code, for example MR-ABCD234" aria-label="Report code" autofocus[detail.is_none()];
+                button.btn.sm type="submit" { "Open" }
             }
             @if let Some(r) = detail {
                 section.panel {
                     div.panel-head {
                         h2.mono { (r["code"].as_str().unwrap_or("?")) }
-                        a.more href="/admin/reports" { "Tous les rapports" (icons::arrow_right()) }
+                        a.more href="/admin/reports" { "All reports" (icons::arrow_right()) }
                     }
                     div.facts {
-                        @for (cle, libelle) in [("reason", "Raison"), ("version", "Launcher"), ("game", "Jeu"), ("os", "Windows"), ("ram_mo", "RAM (Mo)"), ("langue", "Langue"), ("id", "Installation")] {
+                        @for (cle, libelle) in [("reason", "Reason"), ("version", "Launcher"), ("game", "Game"), ("os", "Windows"), ("ram_mo", "RAM (MB)"), ("langue", "Language"), ("id", "Installation")] {
                             @if let Some(v) = r.get(cle).filter(|v| !v.is_null()) {
                                 div { span { (libelle) } strong.mono { (v.as_str().map_or_else(|| v.to_string(), str::to_string)) } }
                             }
                         }
-                        @if let Some(t) = r["received"].as_u64() { div { span { "Reçu" } strong { (date(t)) } } }
+                        @if let Some(t) = r["received"].as_u64() { div { span { "Received" } strong { (date(t)) } } }
                     }
                     div.logbar {
-                        span.muted { "Journal" }
+                        span.muted { "Log" }
                         div {
-                            label.check { input type="checkbox" data-filter-errors; " Erreurs seulement" }
-                            button.btn.sm type="button" data-copy-log { "Copier" }
+                            label.check { input type="checkbox" data-filter-errors; " Errors only" }
+                            button.btn.sm type="button" data-copy-log { "Copy" }
                         }
                     }
                     pre.logview { (r["log"].as_str().unwrap_or("")) }
@@ -812,10 +873,10 @@ pub fn rapports(erreur: Option<&str>, recents: &[Value], detail: Option<&Value>)
             } @else {
                 section.panel.flush {
                     @if recents.is_empty() {
-                        p.empty { "Aucun rapport." }
+                        p.empty { "No reports." }
                     } @else {
                         table.tbl {
-                            thead { tr { th { "Code" } th { "Raison" } th { "Jeu" } th { "Dernière ligne" } th.num { "Reçu" } } }
+                            thead { tr { th { "Code" } th { "Reason" } th { "Game" } th { "Last line" } th.num { "Received" } } }
                             tbody {
                                 @for r in recents {
                                     @let code = r["code"].as_str().unwrap_or("?");
@@ -840,14 +901,14 @@ pub fn rapports(erreur: Option<&str>, recents: &[Value], detail: Option<&Value>)
 
 pub fn journal(log: &[Entree]) -> Markup {
     shell(
-        "Journal",
+        "Log",
         Some(Onglet::Journal),
         None,
         html! {
-            (entete("Journal", Some("Tout ce qui a été changé depuis le tableau de bord, du plus récent au plus ancien.")))
+            (entete("Log", Some("Everything changed from the dashboard, newest first.")))
             section.panel {
                 @if log.is_empty() {
-                    p.empty { "Le journal est vide." }
+                    p.empty { "The log is empty." }
                 } @else {
                     ul.log.full { @for e in log.iter().rev() { li { time { (date(e.at)) } span { (e.text) } } } }
                 }
@@ -860,26 +921,29 @@ pub fn journal(log: &[Entree]) -> Markup {
 
 pub fn base(flash: &Flash, json: &str, joueurs: usize, journal: usize) -> Markup {
     shell(
-        "Base de données",
+        "Database",
         Some(Onglet::Base),
         Some(flash),
         html! {
-            (entete("Base de données", Some("Le contenu de joueurs.json : fiches des joueurs, règles des cosmétiques et date des premiers joueurs.")))
+            (entete("Database", Some("The content of joueurs.json: player records, cosmetic rules and the early players date.")))
             div.toolbar {
-                span.muted { (joueurs) " fiche(s) · " (journal) " entrée(s) au journal (non éditable ici)" }
-                a.btn.sm href="/admin/database.json" download { (icons::download()) "Télécharger une sauvegarde" }
+                span.muted {
+                    (joueurs) " record(s) · " (journal) " log entries (not editable here) · data folder: "
+                    @match std::env::var("MISTY_CACHE_DIR") { Ok(d) => code { (d) }, Err(_) => strong.bad-txt { "none, nothing is saved to disk" } }
+                }
+                a.btn.sm href="/admin/database.json" download { (icons::download()) "Download a backup" }
             }
             section.panel {
-                form.dbedit method="post" action="/admin/database" data-confirm="Remplacer toute la base par ce contenu ? Pense à télécharger une sauvegarde avant." {
-                    textarea name="json" spellcheck="false" autocomplete="off" aria-label="Contenu JSON de la base" { (json) }
+                form.dbedit method="post" action="/admin/database" data-confirm="Replace the whole database with this content? Download a backup first." {
+                    textarea name="json" spellcheck="false" autocomplete="off" aria-label="Database JSON content" { (json) }
                     div.dbbar {
                         p.muted {
-                            "UUID en clé (32 chiffres hexadécimaux, sans tirets). "
-                            "Cosmétiques : " @for (i, c) in crate::registre::CATALOGUE.iter().enumerate() { @if i > 0 { ", " } code { (c.id) } } ". "
-                            "Règles : " code { "everyone" } ", " code { "early" } ", " code { "granted" } ", " code { "off" } "."
+                            "UUID as key (32 hex digits, no dashes). "
+                            "Cosmetics: " @for (i, c) in crate::registre::CATALOGUE.iter().enumerate() { @if i > 0 { ", " } code { (c.id) } } ". "
+                            "Rules: " code { "everyone" } ", " code { "early" } ", " code { "granted" } ", " code { "off" } "."
                         }
                         span #json-state.muted {}
-                        button.btn.play.sm type="submit" { "Enregistrer la base" }
+                        button.btn.play.sm type="submit" { "Save the database" }
                     }
                 }
             }

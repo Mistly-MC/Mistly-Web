@@ -131,6 +131,14 @@ impl Objet {
         self.article.map_or_else(|| emote_texte(tr, self.cle).1, |a| a.texte(tr))
     }
     fn statut(&self) -> Statut {
+        if let Some(s) = crate::boutique::de(self.cle).statut {
+            return match s {
+                crate::boutique::Statut::Available => Statut::Gratuit,
+                crate::boutique::Statut::Early => Statut::Early,
+                crate::boutique::Statut::New => Statut::Nouveau,
+                crate::boutique::Statut::Soon => Statut::Bientot,
+            };
+        }
         match self.article {
             Some(a) if a.early => Statut::Early,
             Some(a) if !a.bientot => Statut::Gratuit,
@@ -138,14 +146,23 @@ impl Objet {
             _ => Statut::Bientot,
         }
     }
+    /// Son prix réglé dans le tableau de bord (« 4,99 € »), s'il en a un.
+    fn prix(&self, tr: &Tr) -> Option<String> {
+        crate::boutique::de(self.cle).prix.map(|c| crate::boutique::prix(c, &tr.decimal_sep))
+    }
     /// La clé de son visuel (`art_carte`).
     fn art(&self) -> String {
         if self.article.is_some() { self.cle.to_string() } else { format!("emote-{}", self.cle) }
     }
 }
 
-/// Tous les articles, dans l'ordre de la boutique.
+/// Les articles visibles, dans l'ordre de la boutique (sans ceux cachés depuis le tableau de bord).
 pub fn objets() -> Vec<Objet> {
+    objets_tous().into_iter().filter(|o| !crate::boutique::de(o.cle).cache).collect()
+}
+
+/// Tous les articles, même cachés.
+fn objets_tous() -> Vec<Objet> {
     let cat = |a: &Article| match a.back {
         Some("pet") => Catalogue::Pets,
         None => Catalogue::Hats,
@@ -163,6 +180,39 @@ pub fn objet(cle: &str) -> Option<Objet> {
 
 fn liste(cles: &[&str]) -> Vec<Objet> {
     cles.iter().filter_map(|c| objet(c)).collect()
+}
+
+/// Les nouveautés (`populaire` : les populaires) : celles cochées dans le tableau de bord, sinon
+/// la liste par défaut.
+fn selection(populaire: bool) -> Vec<Objet> {
+    let toutes: Vec<&'static str> = objets().iter().map(|o| o.cle).collect();
+    let marquees = crate::boutique::marques(&toutes, populaire);
+    if marquees.is_empty() { liste(if populaire { &POPULAIRES } else { &NOUVEAUTES }) } else { liste(&marquees) }
+}
+
+/// Une ligne du tableau de bord : clé, nom (anglais), catégorie et statut par défaut.
+pub struct LigneAdmin {
+    pub cle: &'static str,
+    pub nom: String,
+    pub categorie: String,
+    pub statut_defaut: &'static str,
+}
+
+/// Tous les articles, pour le tableau de bord (en anglais).
+pub fn pour_admin() -> Vec<LigneAdmin> {
+    let tr = crate::i18n::Lang::En.tr();
+    objets_tous()
+        .into_iter()
+        .map(|o| {
+            let defaut = match o.article {
+                Some(a) if a.early => "Early players",
+                Some(a) if !a.bientot => "Available",
+                None if o.cle == "hug" => "New",
+                _ => "Soon",
+            };
+            LigneAdmin { cle: o.cle, nom: o.nom(tr).to_string(), categorie: o.cat.nom(tr).to_string(), statut_defaut: defaut }
+        })
+        .collect()
 }
 
 /// Les nouveautés, les populaires et les diapositives du carrousel.
@@ -238,7 +288,10 @@ fn carte(p: &Page, o: &Objet, ordre: usize) -> Markup {
             button.sx-heart type="button" data-wish=(o.cle) aria-pressed="false" aria-label=(tr.shop_wish_add) title=(tr.shop_wish_add) { (icons::heart()) }
             span.sx-foot {
                 strong { (nom) }
-                span.sx-state.(s.classe()) { @if s.disponible() { (icons::check()) } (s.badge(tr)) }
+                span.sx-foot-row {
+                    span.sx-state.(s.classe()) { @if s.disponible() { (icons::check()) } (s.badge(tr)) }
+                    @if let Some(px) = o.prix(tr) { span.sx-prix { (px) } }
+                }
             }
         }
     }
@@ -337,13 +390,13 @@ pub fn render(p: &Page) -> Markup {
                     (titre_section(p, &tr.shop_popular, Some(&tr.shop_popular_p), None))
                     div.sx-scroller {
                         button.sx-nav.prev type="button" aria-label=(tr.shop_prev) { (icons::arrow_left()) }
-                        div.sx-strip { @for (i, o) in liste(&POPULAIRES).iter().enumerate() { (carte(p, o, i)) } }
+                        div.sx-strip { @for (i, o) in selection(true).iter().enumerate() { (carte(p, o, i)) } }
                         button.sx-nav.next type="button" aria-label=(tr.shop_next) { (icons::arrow_right()) }
                     }
                 }
                 section.sx-row {
                     (titre_section(p, &tr.shop_new_t, None, None))
-                    div.sx-grid.cinq { @for (i, o) in liste(&NOUVEAUTES).iter().enumerate() { (carte(p, o, i)) } }
+                    div.sx-grid.cinq { @for (i, o) in selection(false).iter().enumerate() { (carte(p, o, i)) } }
                 }
                 // Vus récemment : rempli par boutique.js, caché tant qu'il est vide
                 section.sx-row.sx-recent hidden {
@@ -485,7 +538,12 @@ pub fn render_objet(p: &Page, o: &Objet, player: Option<&str>, value: &str, inva
                     aside.sx-info {
                         div.sx-price {
                             span.sx-state.(s.classe()) { @if s.disponible() { (icons::check()) } (s.badge(tr)) }
-                            strong { @if s.disponible() { (tr.shop_free_client) } @else { (tr.shop_soon) } }
+                            @if let Some(px) = o.prix(tr) {
+                                strong.sx-big-prix { (px) }
+                                span.sx-price-note { @if s.disponible() { (tr.shop_available) } @else { (tr.shop_soon) } }
+                            } @else {
+                                strong { @if s.disponible() { (tr.shop_free_client) } @else { (tr.shop_soon) } }
+                            }
                         }
                         p.sx-desc { (o.texte(tr)) }
                         ul.sx-facts {
