@@ -236,7 +236,7 @@
   }
 
   // Cartes « bientôt » de la boutique : un bruit de caractères qui ondule
-  document.querySelectorAll(".ascii-noise").forEach((pre, i) => {
+  const bruit = (pre, i) => {
     let cols = 0, rows = 0;
     const size = () => {
       cols = Math.ceil(pre.clientWidth / 7.2);
@@ -255,7 +255,59 @@
       }
       pre.textContent = out;
     }, 10);
-  });
+  };
+  document.querySelectorAll(".ascii-noise").forEach(bruit);
+
+  // Patch notes : Launcher ou Mistly Client. La pastille blanche glisse vers l'autre projet, puis
+  // la liste est remplacée sans recharger la page.
+  const projets = document.querySelector(".projects");
+  if (projets) {
+    const pill = projets.querySelector(".pill");
+    const placer = (a, anime) => {
+      if (!anime) pill.style.transition = "none";
+      pill.style.width = a.offsetWidth + "px";
+      pill.style.transform = `translateX(${a.offsetLeft}px)`;
+      if (!anime) { pill.offsetWidth; pill.style.transition = ""; }
+    };
+    const actif = () => projets.querySelector("a[aria-current]");
+    if (actif()) { placer(actif(), false); projets.classList.add("slide"); }
+    addEventListener("resize", () => actif() && placer(actif(), false));
+    const versions = document.getElementById("versions");
+    const aller = async (a, pousser) => {
+      if (a === actif()) return;
+      actif()?.removeAttribute("aria-current");
+      a.setAttribute("aria-current", "page");
+      placer(a, true);
+      versions.classList.add("swapping");
+      const [html] = await Promise.all([
+        fetch(a.href).then(r => (r.ok ? r.text() : Promise.reject())).catch(() => null),
+        new Promise(r => setTimeout(r, 380)),
+      ]);
+      if (!html) { location.href = a.href; return; }
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const barre = versions.querySelector(".pn-barre"), nb = doc.querySelector("#versions .pn-barre");
+      // les filtres (après la barre des projets), la liste, et le dépôt affiché en haut
+      barre.querySelector(".chips")?.replaceWith(nb?.querySelector(".chips") ?? "");
+      if (!barre.querySelector(".chips") && nb?.querySelector(".chips")) barre.append(nb.querySelector(".chips"));
+      while (barre.nextSibling) barre.nextSibling.remove();
+      let n = nb?.nextSibling;
+      while (n) { const s = n.nextSibling; barre.parentNode.append(n); n = s; }
+      document.querySelector(".pn-copy .tags a")?.replaceWith(doc.querySelector(".pn-copy .tags a") ?? "");
+      versions.querySelectorAll(".pn-grid .ascii-noise").forEach(bruit);
+      if (pousser) history.pushState({ projet: a.href }, "", a.href);
+      requestAnimationFrame(() => versions.classList.remove("swapping"));
+    };
+    projets.querySelectorAll("a").forEach(a => a.addEventListener("click", e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || reduce) return;
+      e.preventDefault();
+      aller(a, true);
+    }));
+    addEventListener("popstate", () => {
+      const client = new URLSearchParams(location.search).get("project") === "client";
+      const a = projets.querySelectorAll("a")[client ? 1 : 0];
+      if (a) aller(a, false);
+    });
+  }
 
   // Thème clair / sombre : le choix est gardé ; sans choix, on suit le système
   document.querySelectorAll("[data-theme-toggle]").forEach(b => b.addEventListener("click", () => {

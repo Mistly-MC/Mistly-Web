@@ -82,6 +82,7 @@ pub fn render(p: &Page, releases: Option<&[Release]>, filter: Filter, projet: &P
                 div.pn-barre {
                     pre.ascii-noise aria-hidden="true" {}
                     nav.projects aria-label=(tr.pn_project) {
+                        i.pill aria-hidden="true" {}
                         a href="/patch-notes#versions" aria-current=[(!projet.client).then_some("page")] {
                             "Launcher" @if let Some(n) = projet.launcher { span { (n) } }
                         }
