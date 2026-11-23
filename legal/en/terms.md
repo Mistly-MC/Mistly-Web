@@ -1,14 +1,14 @@
 +++
 title = "Terms of use"
 description = "The rules for using the website, the Mistly launcher, Mistly Client and Discord verification."
-updated = "2026-11-10"
+updated = "2026-11-23"
 +++
 
 By using the mistly.cc website, the Mistly launcher or Mistly Client, you accept the terms below.
 
 ## Free and open-source software
 
-Mistly is free and open source, under the [MIT License](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt). You may use, modify and redistribute it under that license.
+Mistly is free and its source code is public, under the [Misty License 1.0](/license). You may use, modify and redistribute it under that license, but you may not sell it.
 
 ## Minecraft and your accounts
 
@@ -37,7 +37,7 @@ For now, the shop lets you try Mistly cosmetics on your skin. No purchase is pos
 
 ## No warranty
 
-Mistly is provided **"as is", without warranty** of any kind, as stated in the MIT License. We do our best for it to work well, but we cannot guarantee that the site, the launcher or Mistly Client will always be available or free of errors. Remember to back up your worlds.
+Mistly is provided **"as is", without warranty** of any kind, as stated in its license. We do our best for it to work well, but we cannot guarantee that the site, the launcher or Mistly Client will always be available or free of errors. Remember to back up your worlds.
 
 To the extent permitted by law, the Mistly team cannot be held liable for damage related to their use, including the loss of worlds, files or accounts.
 

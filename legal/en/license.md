@@ -1,16 +1,16 @@
 +++
 title = "License"
 description = "Mistly Launcher and Mistly Client are free to use, modify and share, but may not be sold: the full text of the Misty License 1.0."
-updated = "2026-11-20"
+updated = "2026-11-23"
 +++
 
-Mistly Launcher and Mistly Client are distributed under the **Misty License 1.0**: you can use, copy, modify, share and contribute to them for free, but you may not sell them. Versions published before this license remain under the MIT License. The text is also in [the launcher repository](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt).
+Mistly Launcher, Mistly Client and the code of this website are distributed under the **Misty License 1.0**: you can use, copy, modify, share and contribute to them for free, but you may not sell them. Versions published before this license remain under the MIT License. The text is also in [the launcher repository](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt).
 
 ## Misty License 1.0
 
 Copyright (c) 2026 Misty-MC and contributors
 
-This license applies to Misty Launcher (https://github.com/Mistly-MC/Mistly-Launcher) and Misty Client (https://github.com/Mistly-MC/Mistly-Client), together "the Software".
+This license applies to Misty Launcher (https://github.com/Mistly-MC/Mistly-Launcher), Misty Client (https://github.com/Mistly-MC/Mistly-Client) and the Mistly website (https://github.com/Mistly-MC/Mistly-Web), together "the Software".
 
 ### 1. Permissions
 

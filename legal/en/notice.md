@@ -1,12 +1,12 @@
 +++
 title = "Legal notice"
 description = "Who publishes the Mistly website, who hosts it and how to reach us."
-updated = "2026-11-10"
+updated = "2026-11-23"
 +++
 
 ## Publisher
 
-The **mistly.cc** website and the Mistly launcher are published by the Mistly team, on a non-professional and non-commercial basis. The source code is public, under the MIT License, in the [Mistly-MC](https://github.com/Mistly-MC) GitHub organization.
+The **mistly.cc** website and the Mistly launcher are published by the Mistly team, on a non-professional and non-commercial basis. The source code is public, under the Misty License 1.0, in the [Mistly-MC](https://github.com/Mistly-MC) GitHub organization.
 
 ## Contact
 
@@ -23,7 +23,7 @@ The launcher's files are also published on **GitHub** (GitHub, Inc., 88 Colin P.
 
 ## Intellectual property
 
-The code of the website and of the launcher is released under the [MIT License](https://github.com/Mistly-MC/Mistly-Web/blob/main/LICENSE): you may reuse it under that license. The "Mistly" name, the logo and the site's visuals remain those of the Mistly team.
+The code of the website and of the launcher is released under the [Misty License 1.0](/license): you may reuse it under that license, but not sell it. Versions published before this license remain under the MIT License. The "Mistly" name, the logo and the site's visuals remain those of the Mistly team.
 
 The Silkscreen font is distributed under the SIL Open Font License, and skinview3d (3D skin preview) under the MIT License.
 
