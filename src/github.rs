@@ -494,12 +494,13 @@ fn noms_assets(html: &str, repo: &str, tag: &str) -> Vec<String> {
     noms
 }
 
-/// Téléchargements de l'installeur, de la version portable et de la version Linux, toutes versions confondues.
-pub fn total_downloads(list: &[Release]) -> u64 {
+/// Téléchargements de l'installeur, de la version portable et de la version Linux, toutes versions
+/// confondues, sans ceux faits par le site lui-même (`copies`, voir `miroir`).
+pub fn total_downloads(list: &[Release], copies: impl Fn(&str) -> u64) -> u64 {
     list.iter()
         .flat_map(|r| &r.assets)
         .filter(|a| [Kind::Setup, Kind::Portable, Kind::Linux].iter().any(|k| k.matches(&a.name)))
-        .map(|a| a.download_count)
+        .map(|a| a.download_count.saturating_sub(copies(&a.name)))
         .sum()
 }
 
@@ -562,6 +563,21 @@ mod tests {
         assert!(!Kind::Portable.matches("Misty-0.4.0-linux-x86_64.tar.gz"));
         assert!(!Kind::Portable.matches("Misty-0.4.0.zip.minisig"));
         assert_eq!(Kind::from_slug("linux"), Some(Kind::Linux));
+    }
+
+    #[test]
+    fn total_sans_les_copies_du_site() {
+        let asset = |name: &str, n| Asset { name: name.into(), size: 1, browser_download_url: String::new(), content_type: None, download_count: n };
+        let r = Release {
+            tag_name: "0.4.0".into(), name: None, body: None, html_url: String::new(), published_at: None,
+            prerelease: false, draft: false,
+            assets: vec![asset("Misty-Setup-0.4.0.exe", 10), asset("Misty-0.4.0.zip", 5), asset("Misty-0.4.0.zip.minisig", 7)],
+        };
+        let liste = [r];
+        assert_eq!(total_downloads(&liste, |_| 0), 15);
+        assert_eq!(total_downloads(&liste, |n| if n == "Misty-0.4.0.zip" { 3 } else { 0 }), 12);
+        // jamais en dessous de zéro
+        assert_eq!(total_downloads(&liste, |_| 100), 0);
     }
 
     /// GitHub injoignable : la première page attend au plus le délai d'une requête, les suivantes

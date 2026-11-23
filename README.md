@@ -13,7 +13,7 @@ Rendered server-side in Rust: pages, translations, patch notes and the pixel-art
 [![Rust](https://img.shields.io/badge/written%20in-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 [![axum](https://img.shields.io/badge/server-axum-6f9cff?style=flat-square)](https://github.com/tokio-rs/axum)
 [![Docker](https://img.shields.io/badge/deploy-Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](Dockerfile)
-[![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-Misty%20License%201.0-success?style=flat-square)](LICENSE.txt)
 
 [**Website**](https://mistly.cc/) · [**Docs**](https://mistly.cc/docs) · [**Patch notes**](https://mistly.cc/patch-notes) · [**Launcher**](https://github.com/Mistly-MC/Mistly-Launcher) · [**Releases**](https://github.com/Mistly-MC/Mistly-Launcher/releases)
 
@@ -59,7 +59,8 @@ public/
 
 ## 📄 License
 
-The code is released under the [MIT License](LICENSE).
+The code is released under the [Misty License 1.0](LICENSE.txt), the same as the launcher and Mistly Client: free to use, modify and share, but not to sell. Versions published before it remain under the MIT License.
+Contributing: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 The Silkscreen, Geist and Geist Mono fonts are distributed under the SIL Open Font License (see [public/assets/FONTS.md](public/assets/FONTS.md)).
 [skinview3d](https://github.com/bs-community/skinview3d) (3D skin preview in the shop) is bundled under the [MIT License](public/vendor/skinview3d/LICENSE).
 

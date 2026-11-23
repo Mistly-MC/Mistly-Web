@@ -26,7 +26,7 @@ body.admin.login-page{display:block}
 .rail-logo img{image-rendering:pixelated;border-radius:10px}
 .rail-logo span{font-family:var(--pixel);font-size:9px;letter-spacing:.12em;color:var(--sub)}
 .rail-nav{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;margin:auto 0}
-.rail-pill{position:absolute;top:0;left:50%;width:46px;height:46px;margin-left:-23px;border-radius:50%;background:linear-gradient(135deg,#b8ccf4,#8eaaf0);opacity:0;pointer-events:none;
+.rail-pill{position:absolute;top:0;left:0;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#b8ccf4,#8eaaf0);opacity:0;pointer-events:none;
   box-shadow:0 0 0 6px rgb(142 170 240 / .16),0 10px 26px -6px rgb(142 170 240 / .7);transition:transform .5s cubic-bezier(.6,0,.2,1.25),opacity .2s}
 .rail-nav.ready .rail-pill{opacity:1}
 .rail-nav a{z-index:1}
@@ -494,8 +494,14 @@ body.admin.login-page{display:block}
   .frame{display:block;height:auto;margin:0;border-radius:0;overflow:visible}
   .rail{position:sticky;top:0;z-index:30;flex-direction:row;justify-content:space-between;padding:10px 14px;background:var(--frame);border-bottom:1px solid var(--edge)}
   .rail-logo span{display:none}
-  .rail-nav{flex-direction:row;gap:4px;margin:0}
-  .rail-nav a,.rail-foot a{width:40px;height:40px}
+  .rail{gap:8px}
+  .rail-logo,.rail-foot{flex:none}
+  /* Plus d'icônes que de place sur un téléphone : la rangée défile au doigt */
+  .rail-nav{flex-direction:row;flex:1;min-width:0;gap:4px;margin:0;padding:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .rail-nav::-webkit-scrollbar{display:none}
+  .rail-nav a{flex:none}
+  .rail-nav a,.rail-foot a,.rail-pill{width:40px;height:40px}
+  .rail-pill{box-shadow:0 0 0 4px rgb(142 170 240 / .16)}
   .tip{display:none}
   .content{padding:0 14px}
   .topbar{flex-wrap:wrap;height:auto;padding:14px 0;gap:10px}
@@ -514,6 +520,10 @@ body.admin.login-page{display:block}
   .profile{grid-template-columns:1fr}
   .btns{flex-direction:column;align-items:stretch}
   .tb-live{display:none}
+  /* la barre « Enregistrer » reste collée en bas : sur un téléphone, juste le bouton */
+  .savebar{padding:10px}
+  .savebar p{display:none}
+  .savebar .btn{flex:1;justify-content:center}
 }
 @media (prefers-reduced-motion:reduce){
   .tb-live i,.live i,.page,.flash,.lg-main,.chart-box .curve{animation:none}

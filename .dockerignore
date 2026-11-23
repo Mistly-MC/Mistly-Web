@@ -6,4 +6,6 @@ target
 vendor
 scripts
 README.md
-LICENSE
+LICENSE.txt
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md

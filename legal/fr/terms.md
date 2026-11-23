@@ -1,14 +1,14 @@
 +++
 title = "Conditions d'utilisation"
 description = "Les règles d'utilisation du site, du launcher Mistly, de Mistly Client et de la vérification Discord."
-updated = "2026-11-10"
+updated = "2026-11-23"
 +++
 
 En utilisant le site mistly.cc, le launcher Mistly ou Mistly Client, vous acceptez les conditions ci-dessous.
 
 ## Un logiciel libre et gratuit
 
-Mistly est gratuit et open source, sous [licence MIT](https://github.com/Mistly-MC/Mistly-Launcher/blob/main/LICENSE.txt). Vous pouvez l'utiliser, le modifier et le redistribuer en respectant cette licence.
+Mistly est gratuit et son code source est public, sous [Misty License 1.0](/license). Vous pouvez l'utiliser, le modifier et le redistribuer en respectant cette licence, mais pas le vendre.
 
 ## Minecraft et vos comptes
 
@@ -37,7 +37,7 @@ La boutique permet pour l'instant d'essayer les cosmétiques Mistly sur son skin
 
 ## Sans garantie
 
-Mistly est fourni **« tel quel », sans garantie** d'aucune sorte, comme le prévoit la licence MIT. Nous faisons de notre mieux pour qu'il fonctionne bien, mais nous ne pouvons pas garantir que le site, le launcher ou Mistly Client seront toujours disponibles ou sans erreur. Pensez à sauvegarder vos mondes.
+Mistly est fourni **« tel quel », sans garantie** d'aucune sorte, comme le prévoit sa licence. Nous faisons de notre mieux pour qu'il fonctionne bien, mais nous ne pouvons pas garantir que le site, le launcher ou Mistly Client seront toujours disponibles ou sans erreur. Pensez à sauvegarder vos mondes.
 
 Dans les limites permises par la loi, l'équipe Mistly ne peut être tenue responsable des dommages liés à leur utilisation, notamment de la perte de mondes, de fichiers ou de comptes.
 

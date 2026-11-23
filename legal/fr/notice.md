@@ -1,12 +1,12 @@
 +++
 title = "Mentions légales"
 description = "Qui édite le site de Mistly, qui l'héberge et comment nous contacter."
-updated = "2026-11-10"
+updated = "2026-11-23"
 +++
 
 ## Éditeur
 
-Le site **mistly.cc** et le launcher Mistly sont édités par l'équipe Mistly, à titre non professionnel et sans but commercial. Le code source est public, sous licence MIT, dans l'organisation GitHub [Mistly-MC](https://github.com/Mistly-MC).
+Le site **mistly.cc** et le launcher Mistly sont édités par l'équipe Mistly, à titre non professionnel et sans but commercial. Le code source est public, sous Misty License 1.0, dans l'organisation GitHub [Mistly-MC](https://github.com/Mistly-MC).
 
 ## Contact
 
@@ -23,7 +23,7 @@ Les fichiers du launcher sont aussi publiés sur **GitHub** (GitHub, Inc., 88 Co
 
 ## Propriété intellectuelle
 
-Le code du site et du launcher est distribué sous [licence MIT](https://github.com/Mistly-MC/Mistly-Web/blob/main/LICENSE) : vous pouvez le réutiliser en respectant cette licence. Le nom « Mistly », le logo et les visuels du site restent ceux de l'équipe Mistly.
+Le code du site et du launcher est distribué sous [Misty License 1.0](/license) : vous pouvez le réutiliser en respectant cette licence, mais pas le vendre. Les versions publiées avant cette licence restent sous licence MIT. Le nom « Mistly », le logo et les visuels du site restent ceux de l'équipe Mistly.
 
 La police Silkscreen est distribuée sous licence SIL Open Font License, et skinview3d (aperçu 3D des skins) sous licence MIT.
 
