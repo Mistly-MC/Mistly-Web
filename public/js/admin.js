@@ -139,8 +139,13 @@
   const placerRond = (a, anime) => {
     if (!rond || !a) return;
     if (!anime) rond.style.transition = "none";
-    rond.style.transform = `translateY(${a.offsetTop}px)`;
+    // en colonne (ordinateur) ou en rangée (téléphone) : le rond suit l'icône dans les deux sens
+    rond.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`;
     if (!anime) { void rond.offsetWidth; rond.style.transition = ""; }
+    // rangée qui défile (téléphone) : l'icône ouverte reste visible
+    if (rail.scrollWidth > rail.clientWidth) {
+      rail.scrollTo({ left: a.offsetLeft - (rail.clientWidth - a.offsetWidth) / 2, behavior: anime ? "smooth" : "auto" });
+    }
   };
   // l'icône d'une adresse : la plus longue qui la commence (« /admin » seulement pour elle-même)
   const icone = (chemin) => {
