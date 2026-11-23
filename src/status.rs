@@ -19,7 +19,12 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime};
 use time::{Date, OffsetDateTime};
 
+/// Un tour de vérifications par minute
 const INTERVALLE: Duration = Duration::from_secs(60);
+/// Décalage des vérifications après le début de chaque minute
+const DECALAGE: u64 = 1;
+/// Cases vides d'affilée remplies par la dernière mesure (un redémarrage du site, un tour en cours)
+const TROU_MAX: usize = 2;
 const DELAI: Duration = Duration::from_secs(6);
 const LENT: Duration = Duration::from_millis(2500);
 /// Jours comptés pour la disponibilité
@@ -242,14 +247,21 @@ impl Status {
         }
     }
 
+    /// Un tour au démarrage, puis un au début de chaque minute. Attendre 60 s *après* un tour (qui
+    /// dure jusqu'à `DELAI`) faisait glisser les tours : une minute sautée de temps en temps, donc un
+    /// trou « Pas de données » dans les barres.
     pub async fn verifier_en_boucle(self: std::sync::Arc<Self>) {
         loop {
             self.verifier_tout().await;
-            tokio::time::sleep(INTERVALLE).await;
+            let secondes = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+            let attente = 60 - (secondes + 60 - DECALAGE) % 60;
+            tokio::time::sleep(Duration::from_secs(attente)).await;
         }
     }
 
     async fn verifier_tout(&self) {
+        // la minute du tour est celle de son début, pas de sa fin
+        let debut = OffsetDateTime::now_utc();
         // toutes les vérifications en même temps
         let poignees: Vec<_> = SERVICES
             .iter()
@@ -262,7 +274,7 @@ impl Status {
         for p in poignees {
             resultats.push(p.await.unwrap_or(Mesure { etat: Etat::HorsLigne, latence: None }));
         }
-        self.enregistrer(&resultats, OffsetDateTime::now_utc());
+        self.enregistrer(&resultats, debut);
         // écriture sur le disque hors du verrou
         let json = serde_json::to_vec(&*self.donnees.lock().unwrap()).ok();
         if let Some(json) = json {
@@ -365,13 +377,14 @@ impl Status {
                     })
                     .collect();
                 let mesures = donnees.minutes.get(s.nom);
-                let minutes: Vec<(i64, Option<Minute>)> = (0..MINUTES as i64)
+                let mut minutes: Vec<(i64, Option<Minute>)> = (0..MINUTES as i64)
                     .rev()
                     .map(|n| {
                         let m = minute - n;
                         (m * 60, mesures.and_then(|v| v.iter().rev().find(|x| x.t.div_euclid(60) == m)).copied())
                     })
                     .collect();
+                boucher_trous(&mut minutes);
                 let somme = jours.iter().filter_map(|(_, j)| *j).fold(Jour::default(), Jour::plus);
                 let dispo = (somme.total() > 0).then(|| somme.dispo());
                 Ligne { index, actuel: actuel[index], jours, minutes, dispo }
@@ -400,6 +413,27 @@ impl Status {
 }
 
 /// Une vérification : une requête, sans suivre les redirections, avec un délai maximal.
+/// Une ou deux minutes sans mesure (site redémarré, tour de la minute pas encore fini) reprennent la
+/// mesure précédente ; un trou plus long reste « Pas de données ».
+fn boucher_trous(minutes: &mut [(i64, Option<Minute>)]) {
+    let mut derniere = None;
+    let mut vides = 0;
+    for (_, m) in minutes.iter_mut() {
+        match m {
+            Some(x) => {
+                derniere = Some(*x);
+                vides = 0;
+            }
+            None => {
+                vides += 1;
+                if vides <= TROU_MAX {
+                    *m = derniere;
+                }
+            }
+        }
+    }
+}
+
 async fn verifier(http: &reqwest::Client, url: &str) -> Mesure {
     let debut = Instant::now();
     match http.get(url).send().await {
@@ -447,8 +481,21 @@ mod tests {
         assert_eq!(debut, t0.unix_timestamp().div_euclid(60) * 60);
         assert_eq!(derniere.map(|m| m.etat), Some(Etat::EnLigne));
         assert_eq!(l.minutes[MINUTES - 3].1.map(|m| m.etat), Some(Etat::HorsLigne));
-        assert!(l.minutes[MINUTES - 2].1.is_none());
+        // une minute sans mesure reprend la précédente
+        assert_eq!(l.minutes[MINUTES - 2].1.map(|m| m.etat), Some(Etat::HorsLigne));
         assert!(l.minutes[0].1.is_none());
+    }
+
+    #[test]
+    fn trous_courts_bouches() {
+        let m = |etat| Some(Minute { t: 0, etat, ms: None });
+        let mut v = vec![(0, None), (60, m(Etat::EnLigne)), (120, None), (180, None), (240, None), (300, m(Etat::Lent)), (360, None)];
+        boucher_trous(&mut v);
+        let etats: Vec<_> = v.iter().map(|(_, x)| x.map(|x| x.etat)).collect();
+        assert_eq!(
+            etats,
+            [None, Some(Etat::EnLigne), Some(Etat::EnLigne), Some(Etat::EnLigne), None, Some(Etat::Lent), Some(Etat::Lent)]
+        );
     }
 
     #[test]
