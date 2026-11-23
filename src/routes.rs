@@ -83,7 +83,7 @@ pub async fn index(
     let releases = state.github.releases().await;
     let latest = releases.as_deref().and_then(|l| github::latest(l));
     let p = page(&state, lang, "/", releases.as_ref().map(|l| l.len()));
-    let downloads = releases.as_deref().map_or(0, |l| github::total_downloads(l));
+    let downloads = releases.as_deref().map_or(0, |l| github::total_downloads(l, |nom| state.github.miroir.copies(nom)));
     let linux = visiteur_linux(&headers);
     let mut res = html_response(StatusCode::OK, home::render(&p, latest, downloads, linux), lang, remember);
     // la page change selon le système du visiteur (bouton Linux mis en avant)

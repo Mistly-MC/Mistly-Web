@@ -4,9 +4,16 @@
 //! GitHub, ni d'une lenteur de GitHub. Les fichiers sont téléchargés en arrière-plan dans un
 //! fichier temporaire, vérifiés (taille annoncée) puis renommés : une copie présente est
 //! toujours complète. Seule la dernière version est gardée.
+//!
+//! GitHub compte chaque copie comme un téléchargement : le miroir note les siennes
+//! (`misty-site-downloads-copies.json`, à côté du dossier des copies) et l'accueil les retire du
+//! total. Sans ça, chaque redémarrage du site sans sa copie (nouveau conteneur, volume non
+//! persistant) ajoutait 3 téléchargements.
 
 use crate::github::{Kind, Release};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 
@@ -14,6 +21,9 @@ pub struct Miroir {
     dossier: PathBuf,
     /// Client sans délai total (gros fichiers) mais avec délai de connexion et de lecture
     http: reqwest::Client,
+    /// Fichier des copies faites par le site : nom du fichier → nombre de copies
+    fichier_copies: PathBuf,
+    copies: Mutex<HashMap<String, u64>>,
 }
 
 impl Miroir {
@@ -24,7 +34,25 @@ impl Miroir {
             .read_timeout(Duration::from_secs(30))
             .build()
             .expect("client HTTP");
-        Self { dossier, http }
+        let fichier_copies = dossier.with_file_name("misty-site-downloads-copies.json");
+        let copies = std::fs::read(&fichier_copies)
+            .ok()
+            .and_then(|o| serde_json::from_slice(&o).ok())
+            .unwrap_or_default();
+        Self { dossier, http, fichier_copies, copies: Mutex::new(copies) }
+    }
+
+    /// Téléchargements de ce fichier faits par le site lui-même (comptés par GitHub, pas par un joueur).
+    pub fn copies(&self, nom: &str) -> u64 {
+        self.copies.lock().unwrap().get(nom).copied().unwrap_or(0)
+    }
+
+    fn noter_copie(&self, nom: &str) {
+        let mut copies = self.copies.lock().unwrap();
+        *copies.entry(nom.to_string()).or_default() += 1;
+        if let Ok(json) = serde_json::to_vec(&*copies) {
+            let _ = std::fs::write(&self.fichier_copies, json);
+        }
     }
 
     /// Client pour relayer un fichier depuis GitHub (pas de délai total).
@@ -80,6 +108,8 @@ impl Miroir {
             .await
             .and_then(|r| r.error_for_status())
             .map_err(|e| e.to_string())?;
+        // GitHub a déjà compté ce téléchargement, même s'il est interrompu ensuite
+        self.noter_copie(nom);
         let mut f = tokio::fs::File::create(&tmp).await.map_err(|e| e.to_string())?;
         let mut n = 0u64;
         let resultat = async {
@@ -128,5 +158,20 @@ mod tests {
         assert_eq!(nom_sur("a/b.zip"), None);
         assert_eq!(nom_sur(".."), None);
         assert_eq!(nom_sur(""), None);
+    }
+
+    #[test]
+    fn copies_gardees_sur_le_disque() {
+        let base = std::env::temp_dir().join("misty-site-test-copies");
+        let _ = std::fs::remove_dir_all(&base);
+        std::fs::create_dir_all(&base).unwrap();
+        let m = Miroir::new(base.join("misty-site-downloads"));
+        assert_eq!(m.copies("Misty-0.4.0.zip"), 0);
+        m.noter_copie("Misty-0.4.0.zip");
+        m.noter_copie("Misty-0.4.0.zip");
+        // redémarrage : les copies déjà faites sont relues
+        let m = Miroir::new(base.join("misty-site-downloads"));
+        assert_eq!(m.copies("Misty-0.4.0.zip"), 2);
+        assert_eq!(m.copies("Misty-Setup-0.4.0.exe"), 0);
     }
 }
