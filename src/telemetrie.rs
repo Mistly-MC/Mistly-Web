@@ -30,8 +30,8 @@ use crate::AppState;
 const GARDE_JOURS: i64 = 90;
 /// Événements par heure et par adresse.
 const MAX_EVENEMENTS: u32 = 240;
-/// Rapports par heure et par adresse.
-const MAX_RAPPORTS: u32 = 12;
+/// Rapports par heure et par adresse (le launcher en envoie un par minute au plus).
+const MAX_RAPPORTS: u32 = 6;
 /// Taille maximale d'un journal dans un rapport.
 const MAX_LOG: usize = 700 * 1024;
 
