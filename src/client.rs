@@ -13,6 +13,7 @@
 //! - `GET /api/client/early/{uuid}` : ce compte a-t-il droit à la cape early player ?
 //!
 //! - `GET /api/client/cosmetics/{uuid}` : les cosmétiques que ce compte peut porter.
+//! - `/api/client/friends…` (jeton) : les demandes d'ami, voir `amis.rs`.
 //!
 //! Qui peut porter quoi (cape early player réservée aux premiers joueurs, cosmétiques donnés ou
 //! retirés, comptes bannis) se décide dans le registre des joueurs (`registre.rs`), modifiable
@@ -103,6 +104,16 @@ impl Client {
         }
         e.1 += 1;
         e.1 <= if login { MAX_LOGIN_PAR_MINUTE } else { MAX_PAR_MINUTE }
+    }
+
+    /// Limite de débit des requêtes avec jeton (pour les autres modules de l'API, comme les amis).
+    pub fn autorise_public(&self, adresse: &str) -> bool {
+        self.autorise(adresse, false)
+    }
+
+    /// Compte du jeton présenté (`Authorization: Bearer …`), pour les autres modules de l'API.
+    pub fn compte_public(&self, entetes: &HeaderMap) -> Option<String> {
+        self.compte(entetes)
     }
 
     /// Nouveau jeton pour ce compte (l'ancien, s'il y en avait un, ne sert plus).
