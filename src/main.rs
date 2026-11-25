@@ -40,6 +40,7 @@
 //!   (`/api/telemetry/summary`, `/api/telemetry/report/{code}`) avec `Authorization: Bearer …`
 
 mod admin;
+mod amis;
 mod todo;
 mod boutique;
 mod contenu;
@@ -96,6 +97,8 @@ pub struct AppState {
     pub presence: presence::Presence,
     /// Joueurs en jeu avec Mistly Client, et leurs cosmétiques Mistly (/api/client/…).
     pub client: client::Client,
+    /// Demandes d'ami entre joueurs Mistly (amis.json).
+    pub amis: amis::Amis,
     /// Registre des joueurs : cosmétiques donnés ou retirés, bannissements, notes (joueurs.json).
     pub registre: Arc<registre::Registre>,
     /// Tableau de bord de l'équipe (/admin).
@@ -170,6 +173,7 @@ async fn main() {
         telemetrie: Arc::new(telemetrie::Telemetrie::new()),
         presence: presence::Presence::new(),
         client: client::Client::new(),
+        amis: amis::Amis::new(),
         registre: Arc::new(registre::Registre::new()),
         admin: admin::Admin::new(),
         discord: Arc::new(discord::Discord::new()),
@@ -273,6 +277,10 @@ async fn main() {
         .route("/api/client/players", post(client::joueurs).layer(DefaultBodyLimit::max(8 * 1024)))
         .route("/api/client/early/{uuid}", get(client::early))
         .route("/api/client/cosmetics/{uuid}", get(client::cosmetiques))
+        .route("/api/client/friends", get(amis::liste))
+        .route("/api/client/friends/request", post(amis::demander).layer(DefaultBodyLimit::max(1024)))
+        .route("/api/client/friends/respond", post(amis::repondre).layer(DefaultBodyLimit::max(1024)))
+        .route("/api/client/friends/remove", post(amis::retirer).layer(DefaultBodyLimit::max(1024)))
         // tableau de bord de l'équipe (ADMIN_PASSWORD)
         .route("/admin", get(admin::accueil))
         .route("/admin/login", get(admin::page_connexion).post(admin::connexion).layer(DefaultBodyLimit::max(4 * 1024)))
