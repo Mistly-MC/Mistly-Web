@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Pages du tableau de bord de l'équipe (`/admin`), en français seulement.
 
 use super::icons;
@@ -882,7 +894,7 @@ pub struct Diag {
 /// Une route de l'API : méthode, chemin, qui peut l'appeler, ce qu'elle fait.
 type Route = (&'static str, &'static str, &'static str, &'static str);
 /// Les routes de l'API, par groupe, pour la page Docs.
-const API: [(&str, &[Route]); 6] = [
+const API: [(&str, &[Route]); 5] = [
     ("Website & launcher", &[
         ("GET", "/api/latest", "public", "Latest launcher release: version, date, notes and file sizes. Used by the launcher's updater and the website. 503 while GitHub was never reached."),
         ("GET", "/download/{setup|portable|linux}", "public", "Downloads the latest launcher file: server copy first, then relayed from GitHub, then a redirect to GitHub."),
@@ -903,13 +915,6 @@ const API: [(&str, &[Route]); 6] = [
         ("POST", "/api/telemetry/report", "launcher", "The last console lines of a game (sent by the player, or after a crash). Answers the report code (MR-XXXXXXX)."),
         ("GET", "/api/telemetry/summary", "TELEMETRY_TOKEN", "30-day summary: installs, events, versions, games and crashes by loader, reports. Bearer token."),
         ("GET", "/api/telemetry/report/{code}", "TELEMETRY_TOKEN", "One log report. Bearer token. Also readable here in Reports."),
-    ]),
-    ("Discord bot (captcha)", &[
-        ("GET", "/verify", "public", "Captcha page a new member opens from Mistly Bot."),
-        ("POST", "/verify/new · /verify/answer", "public", "New puzzle, and the answer check (then the bot gives the role)."),
-        ("GET", "/verify/captcha/{id}/{file}", "public", "Puzzle images."),
-        ("POST", "/api/verify/config", "VERIFY_SECRET", "The bot sends each server's settings (role to give)."),
-        ("GET/POST", "/activity · /activity/start · /activity/log", "Discord", "The same captcha inside Discord (Activity)."),
     ]),
     ("Pages & search engines", &[
         ("GET", "/docs/search.json", "public", "Full-text index of the documentation, for the docs search box."),

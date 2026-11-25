@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Télémétrie du launcher (seulement chez les joueurs qui l'ont acceptée) et rapports de logs.
 //!
 //! - `POST /api/telemetry` : un événement (démarrage, partie lancée, partie finie ou plantée,
@@ -267,7 +279,7 @@ pub async fn rapport(
             r.insert(cle.into(), json!(v));
         }
     }
-    r.insert("log".into(), json!(&log[debut..]));
+    r.insert("log".into(), json!(masquer(&log[debut..])));
     let code = code_rapport();
     r.insert("code".into(), json!(code));
     // salon de l'équipe sur Discord (en arrière-plan : le joueur a sa réponse tout de suite)
@@ -289,6 +301,71 @@ pub async fn rapport(
     }
     eprintln!("Télémétrie : rapport {code}");
     Json(json!({ "id": code })).into_response()
+}
+
+/// Ce qui ne regarde pas l'équipe est masqué dans un journal avant d'être gardé : les messages du
+/// chat (« [CHAT] … », « <pseudo> message ») et les adresses des serveurs où le joueur se
+/// connecte (« Connecting to play.exemple.com, 25565 », adresses IP).
+pub fn masquer(log: &str) -> String {
+    log.lines()
+        .map(|ligne| {
+            if let Some(i) = ligne.find("[CHAT]") {
+                return format!("{}[CHAT] (hidden)", &ligne[..i]);
+            }
+            if let Some(i) = ligne.find("Connecting to ") {
+                return format!("{}Connecting to (hidden server)", &ligne[..i]);
+            }
+            masquer_ip(ligne)
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Remplace les adresses IPv4 (avec leur port) par « x.x.x.x ».
+fn masquer_ip(ligne: &str) -> String {
+    let octets = ligne.as_bytes();
+    let mut sortie = String::with_capacity(ligne.len());
+    let mut i = 0;
+    while i < octets.len() {
+        // une adresse commence par un chiffre qui ne suit ni un chiffre ni un point
+        if octets[i].is_ascii_digit() && (i == 0 || !(octets[i - 1].is_ascii_alphanumeric() || octets[i - 1] == b'.')) {
+            let mut j = i;
+            let mut groupes = 0;
+            loop {
+                let debut = j;
+                while j < octets.len() && octets[j].is_ascii_digit() && j - debut < 3 {
+                    j += 1;
+                }
+                if j == debut {
+                    break;
+                }
+                groupes += 1;
+                if groupes == 4 || j >= octets.len() || octets[j] != b'.' {
+                    break;
+                }
+                j += 1;
+            }
+            if groupes == 4 && (j >= octets.len() || !octets[j].is_ascii_alphanumeric()) {
+                sortie.push_str("x.x.x.x");
+                // et son port
+                if j < octets.len() && octets[j] == b':' {
+                    let mut k = j + 1;
+                    while k < octets.len() && octets[k].is_ascii_digit() {
+                        k += 1;
+                    }
+                    if k > j + 1 {
+                        j = k;
+                    }
+                }
+                i = j;
+                continue;
+            }
+        }
+        let c = ligne[i..].chars().next().unwrap();
+        sortie.push(c);
+        i += c.len_utf8();
+    }
+    sortie
 }
 
 /// `GET /api/telemetry/report/{code}` (jeton)
@@ -441,6 +518,19 @@ pub fn chiffres_du_jour(dossier: &std::path::Path, jour: time::Date) -> Value {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn chat_et_serveurs_masques() {
+        let log = "[08:41:12] [Render thread/INFO]: Connecting to play.example.com, 25565\n[08:41:15] [Render thread/INFO]: [CHAT] <Cloudy> hi!\n[08:41:16] [main/INFO]: Server 192.168.1.20:25565 ok, version 1.21.11\nLoaded 1204 advancements";
+        let m = super::masquer(log);
+        assert!(!m.contains("example.com"));
+        assert!(!m.contains("Cloudy"));
+        assert!(!m.contains("192.168"));
+        assert!(m.contains("x.x.x.x ok"));
+        assert!(m.contains("version 1.21.11"));
+        assert!(m.contains("Loaded 1204 advancements"));
+    }
+
     use super::*;
 
     #[test]

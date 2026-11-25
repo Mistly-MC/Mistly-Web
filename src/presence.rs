@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Joueurs en ligne sur le launcher.
 //!
 //! Chaque launcher ouvert envoie un signe de vie toutes les 60 secondes (`POST /api/presence`)

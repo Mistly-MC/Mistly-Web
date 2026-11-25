@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Page de statut : l'état des services dont Mistly a besoin, vérifiés par le site lui-même.
 //!
 //! Servie sur `/status` et à la racine du sous-domaine `status.<domaine>` (où les autres pages

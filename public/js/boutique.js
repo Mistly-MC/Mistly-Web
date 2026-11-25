@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 // Boutique : la barre (pastille qui glisse sur l'onglet choisi, contenu remplacé sans recharger),
 // la recherche, la wishlist et les articles vus récemment (gardés dans le navigateur), le
 // carrousel, les rangées qui défilent, le tri et les filtres d'une catégorie, et le partage.

@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Squelette commun : <head>, barre de navigation et pied de page.
 
 use super::icons;
@@ -217,7 +229,7 @@ pub fn render(p: &Page, head: Head, main: Markup) -> Markup {
                 link rel="stylesheet" href=(format!("/css/layout.css?v={v}"));
                 @for css in head.css { link rel="stylesheet" href=(format!("/css/{css}.css?v={v}")); }
                 // Le thème choisi (clair ou sombre) est posé avant l'affichage, sans clignotement
-                script { (PreEscaped("document.documentElement.classList.add('js');try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}")) }
+                script { (PreEscaped("document.documentElement.classList.add('js');try{var m=document.cookie.match(/(?:^|; )mistly-theme=(light|dark)/),t=m?m[1]:localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}")) }
                 @for js in head.scripts { script src=(format!("{js}?v={v}")) defer {} }
                 script src=(format!("/js/site.js?v={v}")) defer {}
             }

@@ -1,12 +1,26 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Tableau de bord de l'équipe (`/admin`) : joueurs en ligne, fiche de chaque joueur (donner ou
 //! retirer des cosmétiques, bannir, expulser, note), règles des cosmétiques, rapports de logs,
 //! journal des changements et éditeur de la base.
 //!
 //! Protégé par le mot de passe `ADMIN_PASSWORD` (12 caractères ou plus ; sans lui, `/admin`
 //! n'existe pas). La session est un cookie signé (HMAC-SHA256, clé tirée du mot de passe : le
-//! changer déconnecte tout le monde), `HttpOnly`, `Secure`, `SameSite=Strict`, valable 12 heures.
-//! Les formulaires vérifient en plus l'en-tête `Origin`. Les essais de mot de passe sont limités
-//! par adresse.
+//! changer déconnecte tout le monde), `HttpOnly`, `Secure`, `SameSite=Strict`. Elle expire après
+//! 5 minutes sans activité (chaque page ou action la prolonge ; le rafraîchissement automatique
+//! des pages, lui, ne la prolonge pas). Les formulaires vérifient en plus l'en-tête `Origin`.
+//! Trop de mots de passe faux depuis une adresse la bloquent, de plus en plus longtemps
+//! (15 minutes, puis 30, 1 heure… jusqu'à 24 heures).
 
 use axum::Form;
 use axum::extract::{Path, Query, State};
@@ -25,10 +39,28 @@ use crate::registre::{self, Regle};
 use crate::views::admin as vue;
 
 const COOKIE: &str = "mistly_admin";
-/// Durée d'une session.
-const SESSION: u64 = 12 * 3600;
-/// Essais de mot de passe par adresse, sur 15 minutes.
-const MAX_ESSAIS: u32 = 8;
+/// Une session expire après ce temps sans activité.
+const SESSION: u64 = 5 * 60;
+/// Mots de passe faux par adresse avant un blocage.
+const MAX_ESSAIS: u32 = 5;
+/// Premier blocage ; chaque blocage suivant dure deux fois plus (24 heures au plus).
+const BLOCAGE: Duration = Duration::from_secs(15 * 60);
+const BLOCAGE_MAX: Duration = Duration::from_secs(24 * 3600);
+/// Les blocages passés sont oubliés après ce temps sans mot de passe faux.
+const OUBLI: Duration = Duration::from_secs(24 * 3600);
+/// En-tête des requêtes du rafraîchissement automatique (admin.js) : elles ne prolongent pas la
+/// session.
+const AUTO: &str = "x-mistly-auto";
+
+/// Essais d'une adresse : mots de passe faux depuis le dernier blocage, blocages déjà subis, fin
+/// du blocage en cours, dernier essai raté.
+#[derive(Clone, Copy)]
+struct Essais {
+    rates: u32,
+    blocages: u32,
+    bloque_jusqua: Option<Instant>,
+    dernier: Instant,
+}
 /// Joueurs par page dans la liste.
 pub const PAR_PAGE: usize = 50;
 
@@ -36,8 +68,8 @@ pub struct Admin {
     mot_de_passe: Option<String>,
     /// Clé des cookies de session, tirée du mot de passe
     cle: Vec<u8>,
-    /// adresse → (début de la fenêtre, essais ratés)
-    essais: Mutex<HashMap<String, (Instant, u32)>>,
+    /// adresse → ses essais ratés et ses blocages
+    essais: Mutex<HashMap<String, Essais>>,
 }
 
 impl Admin {
@@ -81,16 +113,32 @@ impl Admin {
         self.actif() && cookie(entetes, COOKIE).is_some_and(|v| self.session_valide(&v))
     }
 
-    /// Encore droit à un essai ? (n'en compte pas)
-    fn peut_essayer(&self, adresse: &str) -> bool {
+    /// Temps de blocage restant pour cette adresse (None : elle peut essayer).
+    fn bloquee(&self, adresse: &str) -> Option<Duration> {
         let mut e = self.essais.lock().unwrap();
-        e.retain(|_, (debut, _)| debut.elapsed() < Duration::from_secs(900));
-        e.get(adresse).is_none_or(|(_, n)| *n < MAX_ESSAIS)
+        e.retain(|_, x| x.dernier.elapsed() < OUBLI || x.bloque_jusqua.is_some_and(|f| f > Instant::now()));
+        let fin = e.get(adresse)?.bloque_jusqua?;
+        fin.checked_duration_since(Instant::now())
     }
 
-    fn rate(&self, adresse: &str) {
+    /// Un mot de passe faux ; au bout de MAX_ESSAIS, l'adresse est bloquée (renvoie la durée).
+    fn rate(&self, adresse: &str) -> Option<Duration> {
         let mut e = self.essais.lock().unwrap();
-        e.entry(adresse.to_string()).or_insert((Instant::now(), 0)).1 += 1;
+        let x = e.entry(adresse.to_string()).or_insert(Essais { rates: 0, blocages: 0, bloque_jusqua: None, dernier: Instant::now() });
+        x.dernier = Instant::now();
+        x.rates += 1;
+        if x.rates < MAX_ESSAIS {
+            return None;
+        }
+        let duree = BLOCAGE.saturating_mul(1 << x.blocages.min(10)).min(BLOCAGE_MAX);
+        x.rates = 0;
+        x.blocages += 1;
+        x.bloque_jusqua = Some(Instant::now() + duree);
+        Some(duree)
+    }
+
+    fn reussi(&self, adresse: &str) {
+        self.essais.lock().unwrap().remove(adresse);
     }
 
     fn mot_de_passe_juste(&self, essai: &str) -> bool {
@@ -203,6 +251,24 @@ impl Message {
     }
 }
 
+// ---------- Session ----------
+
+/// Chaque page ou action du tableau de bord prolonge la session de 5 minutes (pas les requêtes du
+/// rafraîchissement automatique : sans activité, la session expire).
+pub async fn prolonger(State(state): State<Arc<AppState>>, req: axum::extract::Request, next: axum::middleware::Next) -> Response {
+    let chemin = req.uri().path().to_string();
+    let auto = req.headers().contains_key(AUTO);
+    let connecte = chemin.starts_with("/admin") && chemin != "/admin/logout" && state.admin.connecte(req.headers());
+    let mut res = next.run(req).await;
+    if connecte && !auto && !res.headers().contains_key(header::SET_COOKIE) {
+        let c = format!("{COOKIE}={}; Path=/; Max-Age={SESSION}; HttpOnly; Secure; SameSite=Strict", state.admin.nouvelle_session());
+        if let Ok(v) = HeaderValue::from_str(&c) {
+            res.headers_mut().insert(header::SET_COOKIE, v);
+        }
+    }
+    res
+}
+
 // ---------- Connexion ----------
 
 pub async fn page_connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, Query(m): Query<Message>) -> Response {
@@ -229,15 +295,22 @@ pub async fn connexion(State(state): State<Arc<AppState>>, entetes: HeaderMap, F
         return (StatusCode::FORBIDDEN, "Origin refused").into_response();
     }
     let adresse = crate::presence::adresse(&entetes);
-    if !a.peut_essayer(&adresse) {
-        return retour("/admin/login", false, "Too many attempts. Try again in 15 minutes.");
+    if let Some(reste) = a.bloquee(&adresse) {
+        let minutes = reste.as_secs().div_ceil(60);
+        return retour("/admin/login", false, &format!("Too many wrong passwords: this address is blocked for {minutes} more minute(s)."));
     }
     if !a.mot_de_passe_juste(&f.password) {
-        a.rate(&adresse);
+        let blocage = a.rate(&adresse);
         eprintln!("Tableau de bord : mot de passe refusé ({adresse})");
         state.registre.modifier_par(Some(&adresse), "Failed sign-in (wrong password)", |_| ());
+        if let Some(d) = blocage {
+            let minutes = d.as_secs() / 60;
+            state.registre.modifier_par(Some(&adresse), &format!("Address blocked for {minutes} min (too many wrong passwords)"), |_| ());
+            return retour("/admin/login", false, &format!("Too many wrong passwords: this address is blocked for {minutes} minutes."));
+        }
         return retour("/admin/login", false, "Wrong password.");
     }
+    a.reussi(&adresse);
     state.registre.modifier_par(Some(&adresse), "Signed in to the dashboard", |_| ());
     let mut res = redirection("/admin");
     let c = format!("{COOKIE}={}; Path=/; Max-Age={SESSION}; HttpOnly; Secure; SameSite=Strict", a.nouvelle_session());
@@ -646,9 +719,6 @@ pub async fn docs(State(state): State<Arc<AppState>>, entetes: HeaderMap) -> Res
         ("GITHUB_TOKEN", regle("GITHUB_TOKEN"), "GitHub API: releases, deployments, contributor stats"),
         ("TELEMETRY_TOKEN", regle("TELEMETRY_TOKEN"), "Reads /api/telemetry/summary and reports"),
         ("DISCORD_WEBHOOK", regle("DISCORD_WEBHOOK"), "Team channel: reports and daily summary"),
-        ("VERIFY_SECRET", regle("VERIFY_SECRET"), "Mistly Bot captcha (with DISCORD_TOKEN)"),
-        ("DISCORD_TOKEN", regle("DISCORD_TOKEN"), "Mistly Bot token, to give the verified role"),
-        ("DISCORD_CLIENT_SECRET", regle("DISCORD_CLIENT_SECRET"), "Captcha inside Discord (Activity)"),
         ("EARLY_BEFORE", regle("EARLY_BEFORE"), "Default early players date (the dashboard's wins)"),
         ("STATUS_URL", regle("STATUS_URL"), "Sends /status to status.mistly.cc"),
         ("SHOP_URL", regle("SHOP_URL"), "Sends /shop to shop.mistly.cc"),
@@ -753,7 +823,11 @@ pub async fn rapports(State(state): State<Arc<AppState>>, entetes: HeaderMap, Qu
         }
         return match tokio::fs::read(dossier.join(format!("{code}.json"))).await {
             Ok(o) => {
-                let v: serde_json::Value = serde_json::from_slice(&o).unwrap_or_default();
+                let mut v: serde_json::Value = serde_json::from_slice(&o).unwrap_or_default();
+                // les anciens rapports aussi : chat et serveurs masqués à l'affichage
+                if let Some(l) = v["log"].as_str().map(crate::telemetrie::masquer) {
+                    v["log"] = serde_json::json!(l);
+                }
                 page(vue::rapports(None, &[], Some(&v)))
             }
             Err(_) => page(vue::rapports(Some(&format!("No report {code}.")), &[], None)),
@@ -873,12 +947,20 @@ mod tests {
         assert!(a.mot_de_passe_juste("un-mot-de-passe-long"));
         assert!(!a.mot_de_passe_juste("un-mot-de-passe-lon"));
         assert!(!Admin::avec(None).mot_de_passe_juste(""));
-        for _ in 0..MAX_ESSAIS {
-            assert!(a.peut_essayer("1.2.3.4"));
+        for _ in 0..MAX_ESSAIS - 1 {
+            assert!(a.bloquee("1.2.3.4").is_none());
+            assert!(a.rate("1.2.3.4").is_none());
+        }
+        // 5e mot de passe faux : 15 minutes, puis le double au blocage suivant
+        assert_eq!(a.rate("1.2.3.4"), Some(BLOCAGE));
+        assert!(a.bloquee("1.2.3.4").is_some());
+        assert!(a.bloquee("5.6.7.8").is_none());
+        for _ in 0..MAX_ESSAIS - 1 {
             a.rate("1.2.3.4");
         }
-        assert!(!a.peut_essayer("1.2.3.4"));
-        assert!(a.peut_essayer("5.6.7.8"));
+        assert_eq!(a.rate("1.2.3.4"), Some(BLOCAGE * 2));
+        a.reussi("1.2.3.4");
+        assert!(a.bloquee("1.2.3.4").is_none());
     }
 
     #[test]
