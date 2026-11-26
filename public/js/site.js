@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 // Petites améliorations côté navigateur. Tout le contenu est rendu par le serveur Rust :
 // sans ce script, le site reste entièrement utilisable.
 (() => {
@@ -316,6 +328,9 @@
     const suivant = actuel === "light" ? "dark" : "light";
     root.dataset.theme = suivant;
     try { localStorage.setItem("theme", suivant); } catch {}
+    // partagé avec les sous-domaines (shop., docs., status.)
+    const domaine = location.hostname.split(".").slice(-2).join(".");
+    document.cookie = `mistly-theme=${suivant}; Path=/; Max-Age=31536000; SameSite=Lax${domaine.includes(".") && !/^[\d.]+$/.test(domaine) && location.hostname !== "localhost" ? `; Domain=${domaine}` : ""}`;
   }));
 
   // Menus déroulants (langue, menu mobile) : fermeture au clic à côté ou avec Échap

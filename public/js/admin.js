@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 // Tableau de bord de l'équipe : têtes des joueurs, copie, confirmations, chiffres en direct,
 // filtre du journal d'un rapport et vérification du JSON de la base.
 (() => {
@@ -205,7 +217,7 @@
     const online = document.getElementById("online");
     if (!online || document.hidden) return;
     try {
-      const r = await fetch("/admin/online.json", { cache: "no-store" });
+      const r = await fetch("/admin/online.json", { cache: "no-store", headers: { "X-Mistly-Auto": "1" } });
       if (!r.ok) return;
       const d = await r.json();
       const set = (id, v) => {
@@ -447,6 +459,53 @@
     aller(u.href, true);
   });
   addEventListener("popstate", () => aller(location.href, false));
+
+  // ---------- Rafraîchissement automatique, toutes les 5 secondes ----------
+  // Le contenu de la page est relu en silence et remplacé s'il a changé, sans recharger ni
+  // bouger le défilement. Jamais pendant une édition : un champ actif, un formulaire modifié
+  // (TODO, base, notes…), une sélection de texte ou une page cachée. Ces requêtes ne prolongent
+  // pas la session (en-tête X-Mistly-Auto) : sans activité, elle expire après 5 minutes.
+  let modifie = false, derniers = null, derniereUrl = location.href;
+  document.addEventListener("input", (e) => { if (e.target.closest(".scroll form")) modifie = true; });
+  document.addEventListener("submit", () => { modifie = false; });
+  const occupe = () => {
+    const actif = document.activeElement;
+    if (actif && actif.closest(".scroll") && /^(INPUT|TEXTAREA|SELECT)$/.test(actif.tagName)) return true;
+    if (actif?.isContentEditable) return true;
+    if (String(getSelection?.() || "").length) return true;
+    return modifie || document.hidden || zone?.classList.contains("sortie");
+  };
+  if (zone) setInterval(async () => {
+    if (occupe() || enCours) return;
+    try {
+      const r = await fetch(location.href, { cache: "no-store", headers: { "X-Requested-With": "admin", "X-Mistly-Auto": "1" } });
+      // session expirée : la page de connexion
+      if (r.redirected && new URL(r.url).pathname === "/admin/login") { location.href = "/admin/login"; return; }
+      if (!r.ok || occupe()) return;
+      const doc = new DOMParser().parseFromString(await r.text(), "text/html");
+      const neuve = doc.querySelector(".scroll");
+      if (!neuve) { location.href = "/admin/login"; return; }
+      // le HTML brut reçu, bloc par bloc (le DOM, lui, est modifié par la page : têtes, courbes)
+      const bruts = [...neuve.children].map(n => n.outerHTML);
+      const avant = derniers;
+      derniers = bruts;
+      // premier passage, ou une autre page entre-temps : on retient seulement
+      if (!avant || derniereUrl !== location.href) { derniereUrl = location.href; return; }
+      const anciens = [...zone.children], nouveaux = [...neuve.children];
+      if (anciens.length !== nouveaux.length || avant.length !== bruts.length) {
+        const haut = zone.scrollTop;
+        zone.innerHTML = neuve.innerHTML;
+        zone.scrollTop = haut;
+        brancher(zone);
+        return;
+      }
+      nouveaux.forEach((n, i) => {
+        if (avant[i] === bruts[i]) return;
+        anciens[i].replaceWith(n);
+        brancher(n);
+      });
+    } catch {}
+  }, 5000);
   // Retour arrière depuis une autre page : le rond revient sur la bonne icône
   addEventListener("pageshow", (e) => { if (e.persisted) allumer(location.pathname, false); });
 

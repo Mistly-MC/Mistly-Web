@@ -1,3 +1,16 @@
+/*
+  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+
+  Mistly Web · https://mistly.cc
+  Code : https://github.com/Mistly-MC/Mistly-Web
+  Discord : https://discord.gg/rdQJUgvUh3
+  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+*/
 /* Page des patch notes et page 404 (chargée après home.css, dont elle réutilise le hero). */
 
 .pn-hero{padding-bottom:clamp(48px,6vw,80px)}

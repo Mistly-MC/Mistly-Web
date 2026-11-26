@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Site de Mistly : serveur web en Rust (axum).
 //!
 //! Variables d'environnement :
@@ -31,9 +43,6 @@
 //!   depuis le tableau de bord passe avant)
 //! - `ADMIN_PASSWORD` (facultatif, 12 caractères ou plus) : ouvre le tableau de bord de l'équipe
 //!   (`/admin`) : joueurs, cosmétiques donnés ou retirés, bannissements, rapports de logs
-//! - `VERIFY_SECRET` et `DISCORD_TOKEN` (facultatifs) : captcha `/verify` de Mistly Bot (même secret
-//!   que le bot, et le token du bot pour donner le rôle) ; `DISCORD_CLIENT_SECRET` en plus pour le
-//!   captcha dans Discord (Activité, page `/activity`)
 //! - `DISCORD_WEBHOOK` (facultatif) : webhook d'un salon privé de l'équipe, qui reçoit les rapports
 //!   de logs et le résumé quotidien de la télémétrie
 //! - `TELEMETRY_TOKEN` (facultatif, 16 caractères ou plus) : ouvre la lecture de la télémétrie
@@ -48,8 +57,6 @@ mod contributeurs;
 mod deploiements;
 mod client;
 mod discord;
-mod puzzle;
-mod verify;
 mod docs;
 mod format;
 mod github;
@@ -105,8 +112,6 @@ pub struct AppState {
     pub admin: admin::Admin,
     /// Salon Discord de l'équipe (rapports, résumé du jour).
     pub discord: Arc<discord::Discord>,
-    /// Captcha de vérification des serveurs Discord qui utilisent Mistly Bot.
-    pub verification: Arc<verify::Verification>,
 }
 
 /// Durée de cache des fichiers statiques. Une adresse avec `?v=` (CSS, JS, WebAssembly : voir
@@ -177,7 +182,6 @@ async fn main() {
         registre: Arc::new(registre::Registre::new()),
         admin: admin::Admin::new(),
         discord: Arc::new(discord::Discord::new()),
-        verification: Arc::new(verify::Verification::new()),
         skins: skins::Skins::new(env_or("SKIN_API", "https://mc-heads.net")),
         scene: scene::render(&scene::SceneOptions {
             seed: 7,
@@ -259,14 +263,6 @@ async fn main() {
         .route("/status.json", get(routes::status_json))
         .route("/api/latest", get(routes::api_latest))
         .route("/download/{kind}", get(routes::download))
-        .route("/verify", get(routes::verify_page))
-        .route("/verify/answer", post(routes::verify_answer).layer(DefaultBodyLimit::max(32 * 1024)))
-        .route("/verify/new", post(routes::verify_new))
-        .route("/verify/captcha/{id}/{file}", get(routes::verify_image))
-        .route("/activity", get(routes::activity_page))
-        .route("/activity/start", post(routes::activity_start))
-        .route("/activity/log", post(routes::activity_log).layer(DefaultBodyLimit::max(2 * 1024)))
-        .route("/api/verify/config", post(routes::verify_config).layer(DefaultBodyLimit::max(4 * 1024)))
         .route(
             "/api/presence",
             post(presence::signe).layer(DefaultBodyLimit::max(2 * 1024)),
@@ -308,6 +304,7 @@ async fn main() {
         .route("/api/telemetry/summary", get(telemetrie::resume))
         .route("/api/telemetry/report/{code}", get(telemetrie::lire_rapport))
         .fallback_service(static_files)
+        .layer(axum::middleware::from_fn_with_state(state.clone(), admin::prolonger))
         .layer(axum::middleware::from_fn_with_state(state.clone(), routes::domaine_principal))
         // les téléchargements (zip, exe) sont déjà compressés : sans recompression, leur taille
         // reste annoncée (barre de progression du navigateur et de la mise à jour du launcher)

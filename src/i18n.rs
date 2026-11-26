@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Traductions : un fichier TOML par langue dans `locales/`, intégré au binaire à la compilation.
 //! Chaque clé est obligatoire : une clé manquante fait échouer `cargo test` (et le démarrage).
 
@@ -542,39 +554,6 @@ traductions! {
     pub st_proj_site: String,
     pub nav_roadmap: String,
     pub nav_blog: String,
-    pub vf_title: String,
-    pub vf_sub: String,
-    pub vf_input: String,
-    pub vf_submit: String,
-    pub vf_new: String,
-    pub vf_hint: String,
-    pub vf_wrong: String,
-    pub vf_ok_title: String,
-    pub vf_ok_p: String,
-    pub vf_bad_title: String,
-    pub vf_bad_p: String,
-    pub vf_off_title: String,
-    pub vf_off_p: String,
-    pub vf_many_p: String,
-    pub vf_role_title: String,
-    pub vf_role_p: String,
-    pub vf_loading: String,
-    pub vf_close: String,
-    pub vf_auth_p: String,
-    pub vf_auth_t: String,
-    pub vf_autoclose: String,
-    pub vf_title_short: String,
-    pub vf_for: String,
-    pub vf_step_1: String,
-    pub vf_step_2: String,
-    pub vf_step_3: String,
-    pub vf_consent_p: String,
-    pub vf_drag: String,
-    pub vf_slide: String,
-    pub vf_here_t: String,
-    pub vf_here_p: String,
-    pub vf_already_t: String,
-    pub vf_already_p: String,
     pub st_group_misty: String,
     pub st_group_minecraft: String,
     pub st_group_mods: String,
@@ -631,6 +610,22 @@ pub fn init() {
 }
 
 pub const COOKIE: &str = "misty-lang";
+
+/// Attribut `Domain` des cookies du site (langue, pseudo) : le domaine de `SITE_URL`, pour que
+/// shop., docs. et status. partagent les mêmes réglages. Vide en local (localhost, adresse IP).
+pub fn domaine_cookie() -> &'static str {
+    static D: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    D.get_or_init(|| {
+        let url = std::env::var("SITE_URL").unwrap_or_else(|_| "https://mistly.cc".into());
+        let hote = url.split("://").nth(1).unwrap_or(&url).split(['/', ':']).next().unwrap_or("").to_ascii_lowercase();
+        let hote = hote.strip_prefix("www.").unwrap_or(&hote).to_string();
+        if hote.is_empty() || hote == "localhost" || !hote.contains('.') || hote.chars().all(|c| c.is_ascii_digit() || c == '.') {
+            String::new()
+        } else {
+            format!("; Domain={hote}")
+        }
+    })
+}
 
 /// Choisit la langue : paramètre `?lang=`, puis cookie, puis en-tête `Accept-Language`, sinon anglais.
 /// Renvoie aussi `true` si la langue vient du paramètre (il faut alors poser le cookie).

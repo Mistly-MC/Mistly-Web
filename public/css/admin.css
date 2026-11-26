@@ -1,3 +1,16 @@
+/*
+  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+
+  Mistly Web · https://mistly.cc
+  Code : https://github.com/Mistly-MC/Mistly-Web
+  Discord : https://discord.gg/rdQJUgvUh3
+  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+*/
 /* Tableau de bord de l'équipe (/admin) : une « application » dans un grand cadre arrondi, une
    barre d'icônes à gauche (rond pastel sur la page ouverte), de grandes cartes douces, des
    couleurs pastel (lilas, rose, pêche, menthe) et des courbes lisses. */
@@ -281,6 +294,10 @@ body.admin.login-page{display:block}
 .note textarea,.dbedit textarea{width:100%;resize:vertical;margin-bottom:10px;line-height:1.55}
 .note-bad{margin-bottom:12px;padding:10px 14px;border-radius:14px;font-size:13px;color:#ffd9d9;background:rgb(245 154 154 / .1)}
 .tbl.cos td:first-child strong{display:block}
+/* la case des boutons reste une case de tableau (en flex, elle était moins haute que la ligne :
+   un décroché sombre apparaissait sous les autres cases) */
+.tbl td.btns{display:table-cell;text-align:right;white-space:nowrap}
+.tbl td.btns form{display:inline-block;margin-left:6px}
 .danger-zone{display:flex;align-items:center;justify-content:space-between;gap:20px;background:linear-gradient(90deg,rgb(245 154 154 / .08),var(--card) 60%)}
 .danger-zone strong{color:var(--bad);font-size:15px;font-weight:600}
 .danger-zone p{font-size:13.5px;max-width:720px;margin-top:4px}
@@ -468,8 +485,9 @@ body.admin.login-page{display:block}
 .lg-art{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgb(var(--fg-rgb) / .07);
   background:radial-gradient(900px 480px at 75% 25%,rgb(111 156 255 / .22),transparent 70%),linear-gradient(180deg,#070b17 0%,#0d1834 55%,#13234a 100%)}
 .lg-sky{position:absolute;inset:0}
-.lg-sky .scene{position:absolute;left:0;bottom:0;width:100%;height:64%}
-.lg-art .adm-bg{position:absolute;opacity:1}
+/* le paysage et la brume se fondent dans le ciel (sans eux, une coupure nette se voyait au-dessus) */
+.lg-sky .scene{position:absolute;left:0;bottom:0;width:100%;height:64%;-webkit-mask-image:linear-gradient(180deg,transparent,#000 28%);mask-image:linear-gradient(180deg,transparent,#000 28%)}
+.lg-art .adm-bg{position:absolute;opacity:1;-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 45%);mask-image:linear-gradient(180deg,transparent 0%,#000 45%)}
 .lg-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgb(5 5 7 / .45),transparent 30%);pointer-events:none}
 .lg-badge{position:absolute;top:18px;left:18px;z-index:1;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;font-size:12.5px;color:#dbe3f6;background:rgb(9 9 11 / .55);border:1px solid rgb(255 255 255 / .1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .lg-badge img{image-rendering:pixelated}
@@ -518,7 +536,18 @@ body.admin.login-page{display:block}
   .log li,.log.full li{grid-template-columns:1fr;gap:2px}
   .danger-zone{flex-direction:column;align-items:flex-start}
   .profile{grid-template-columns:1fr}
+  /* l'avatar garde sa taille (sinon il prend toute la largeur et devient ovale) */
+  .profile .avatar{justify-self:start;width:max-content;aspect-ratio:1}
   .btns{flex-direction:column;align-items:stretch}
+  /* cosmétiques d'un joueur : une carte par cosmétique (nom et état à gauche, boutons à droite) */
+  .tbl.cos{display:block;overflow:visible}
+  .tbl.cos thead{display:none}
+  .tbl.cos tbody{display:flex;flex-direction:column;gap:8px}
+  .tbl.cos tr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px;padding:12px 14px;border-radius:16px;background:var(--card-2)}
+  .tbl.cos td{display:block;padding:0;background:none!important;border-radius:0!important}
+  .tbl.cos td:nth-child(2){grid-row:2;margin-top:6px}
+  .tbl.cos td.btns{grid-column:2;grid-row:1/span 2;display:flex;flex-direction:column;gap:6px;white-space:normal}
+  .tbl.cos td.btns form{display:contents}
   .tb-live{display:none}
   /* la barre « Enregistrer » reste collée en bas : sur un téléphone, juste le bouton */
   .savebar{padding:10px}

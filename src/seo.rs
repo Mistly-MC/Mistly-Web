@@ -1,3 +1,15 @@
+//  ███╗   ███╗██╗███████╗████████╗██╗     ██╗   ██╗
+//  ████╗ ████║██║██╔════╝╚══██╔══╝██║     ╚██╗ ██╔╝
+//  ██╔████╔██║██║███████╗   ██║   ██║      ╚████╔╝
+//  ██║╚██╔╝██║██║╚════██║   ██║   ██║       ╚██╔╝
+//  ██║ ╚═╝ ██║██║███████║   ██║   ███████╗   ██║
+//  ╚═╝     ╚═╝╚═╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝
+//
+//  Mistly Web · https://mistly.cc
+//  Code : https://github.com/Mistly-MC/Mistly-Web
+//  Discord : https://discord.gg/rdQJUgvUh3
+//  Misty License 1.0 : free to use, modify and share, not to sell (LICENSE.txt)
+//
 //! Référencement : données structurées (JSON-LD), robots.txt et sitemap.xml.
 
 use crate::docs;
@@ -122,7 +134,7 @@ pub fn doc_jsonld(site: &str, tr: &Tr, page: &docs::DocPage, lang: Lang) -> Stri
 
 pub fn robots_txt(site: &str) -> String {
     format!(
-        "User-agent: *\nAllow: /\nDisallow: /download/\nDisallow: /api/\nDisallow: /verify\nDisallow: /activity\nDisallow: /admin\n\nSitemap: {site}/sitemap.xml\n"
+        "User-agent: *\nAllow: /\nDisallow: /download/\nDisallow: /api/\nDisallow: /admin\n\nSitemap: {site}/sitemap.xml\n"
     )
 }
 
